@@ -268,7 +268,7 @@ work_date, 일자, date"></textarea></div>
       <div class="row2"><input id="lb_name" placeholder="모듈 이름 (예: 수주 · 출하 기본)"><label class="ck"><input id="lb_deep" type="checkbox" checked>연결된 블록까지 함께 저장</label></div>
       <div class="acts"><button class="btn primary" onclick="saveModule()">＋ 모듈로 저장</button><button class="btn" onclick="saveModule(true)">현재 설계 전체를 모듈로</button><span class="msg" id="lb_msg" style="font-size:11.5px;color:#8a94a6"></span></div>
     </section>
-    <div class="f"><label>기본 모듈 — 구분별 뼈대 (공통 · 금형제작)</label><div class="links" id="lb_builtin"></div></div>
+    <div class="f"><label>기본 모듈 — 구분별 뼈대 (공통 · 금형제작 · ESG 스마트팩토리)</label><div class="links" id="lb_builtin"></div></div>
     <div class="f"><label>내 모듈 <span style="color:#8a94a6;font-size:11px">(이 브라우저 · ☁ 연결 시 Supabase 공유)</span></label><div class="links" id="lb_mine"></div></div>
   </div>
   <div class="bt"><button class="btn" onclick="libDlg.classList.remove('on')">닫기</button><span class="msg">모듈을 넣은 뒤 블록의 ○ 를 끌어 기존 블록과 연결하세요.</span></div>
@@ -948,7 +948,151 @@ const BUILTIN=[
   {type:'table',name:'gauge_calibrations',meta:{cols:[COL('row_no','No','num',1),COL('gauge_no','계측기번호','text',0,1),COL('cal_date','교정일','date'),COL('result','판정'),COL('agency','교정기관')]}},
   {type:'table',name:'drawings',meta:{cols:[COL('drawing_no','도면번호','text',1),COL('job_no','제번'),COL('drawing_name','도면명'),COL('current_rev','현재개정')]}},
   {type:'table',name:'drawing_revisions',meta:{cols:[COL('row_no','No','num',1),COL('drawing_no','도면번호','text',0,1),COL('rev','개정'),COL('rev_date','개정일','date'),COL('reason','개정사유')]}}],
-  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','저장'],[2,6,'uses','대장 관리'],[2,7,'uses','교정이력'],[3,8,'uses','도면 관리'],[3,9,'uses','개정 저장'],[5,4,'ref','ncr_no → nonconformances.ncr_no'],[7,6,'ref','gauge_no → gauges.gauge_no'],[9,8,'ref','drawing_no → drawings.drawing_no']]}}
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','저장'],[2,6,'uses','대장 관리'],[2,7,'uses','교정이력'],[3,8,'uses','도면 관리'],[3,9,'uses','개정 저장'],[5,4,'ref','ncr_no → nonconformances.ncr_no'],[7,6,'ref','gauge_no → gauges.gauge_no'],[9,8,'ref','drawing_no → drawings.drawing_no']]}},
+ {cat:'ESG 스마트팩토리',name:'설비 · 금형 일상점검',desc:'생산설비/금형 체크시트와 종합현황 (smtec)',data:{nodes:[
+  {type:'section',name:'일상점검',meta:{icon:'☑'}},
+  {type:'screen',name:'생산설비 일상점검',meta:{file:'P_machine_check.html',kind:'input'}},
+  {type:'screen',name:'금형 일상점검',meta:{file:'P_mold_check.html',kind:'input'}},
+  {type:'screen',name:'점검 종합현황',meta:{file:'check_dashboard.html',kind:'status'}},
+  {type:'table',name:'p_machine_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자','text',0,1),COL('machine','설비','text',0,1),COL('chk_overload','과부하'),COL('chk_motor','모터'),COL('chk_safety','안전장치'),COL('chk_oil','급유'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
+  {type:'table',name:'p_mold_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자'),COL('machine','설비'),COL('mold_no','금형번호'),COL('manager','담당'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
+  {type:'table',name:'machine_master_tj',meta:{cols:[COL('ho_code','호기코드','text',1),COL('machine_name','설비명'),COL('sort_order','순서','num')]}},
+  {type:'table',name:'common_code',meta:{cols:[COL('code_group','코드그룹','text',1),COL('code','코드','text',1),COL('code_name','코드명'),COL('sort_order','순서','num')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','체크 저장'],[2,5,'uses','체크 저장'],[1,6,'uses','설비 목록'],[1,7,'uses','점검항목'],[3,4,'uses','집계'],[3,5,'uses','집계']]}},
+ {cat:'ESG 스마트팩토리',name:'검사기 · 측정기 점검',desc:'검사기 체크시트와 측정기(CMM/온습도) 점검로그 (smtec)',data:{nodes:[
+  {type:'section',name:'측정기점검',meta:{icon:'⌗'}},
+  {type:'screen',name:'검사기 일상점검',meta:{file:'QC_machine_check.html',kind:'input'}},
+  {type:'screen',name:'측정기 점검(CMM)',meta:{file:'QC_measure_cmm_auto.html',kind:'input'}},
+  {type:'screen',name:'측정기 점검(온습도)',meta:{file:'QC_measure_temp_humid.html',kind:'input'}},
+  {type:'table',name:'qc_machine_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자','text',0,1),COL('machine','검사기','text',0,1),COL('qr_code','QR'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
+  {type:'table',name:'qc_measure_log',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자','text',0,1),COL('equipment','측정기','text',0,1),COL('items_json','점검항목(JSON)'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
+  {type:'table',name:'common_code',meta:{cols:[COL('code_group','코드그룹','text',1),COL('code','코드','text',1),COL('code_name','코드명'),COL('sort_order','순서','num')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','체크 저장'],[2,5,'uses','로그 저장'],[3,5,'uses','로그 저장'],[1,6,'uses','점검항목'],[2,6,'uses','점검항목']]}},
+ {cat:'ESG 스마트팩토리',name:'치수관리 · 잔량혼입방지',desc:'고객사별 치수관리 포털과 잔량코드 추적 (smtec)',data:{nodes:[
+  {type:'screen',name:'치수관리 포털',meta:{file:'QC_dim.html',kind:'status'}},
+  {type:'screen',name:'잔량 혼입방지',meta:{file:'QC_inventory.html',kind:'input'}},
+  {type:'table',name:'dim_customer',meta:{cols:[COL('id','ID','num',1),COL('customer_name','고객사','text',0,1),COL('page_url','치수페이지URL'),COL('gas_url','GAS URL'),COL('sort_order','순서','num')]}},
+  {type:'table',name:'qc_inventory',meta:{cols:[COL('id','ID','num',1),COL('check_date','일자','date',0,1),COL('check_time','시각'),COL('worker','작업자'),COL('action_type','구분'),COL('code_start','시작코드'),COL('code_end','종료코드'),COL('qty','수량','num'),COL('result','결과')]}}],
+  edges:[[0,2,'uses','고객사 탭'],[1,3,'uses','저장/조회']]}},
+ {cat:'ESG 스마트팩토리',name:'불량관리 · 안돈',desc:'기종/존/유형별 불량 집계 (smtec defect)',data:{nodes:[
+  {type:'screen',name:'불량관리',meta:{file:'defect.html',kind:'input'}},
+  {type:'table',name:'defect_history',meta:{cols:[COL('id','ID','num',1),COL('recorded_at','기록시각','date',0,1),COL('model_id','기종ID','num'),COL('model_name','기종'),COL('side','면'),COL('zone_name','존'),COL('defect_type','불량유형'),COL('defect_category','분류'),COL('qty','불량수','num'),COL('inspect_qty','검사수량','num'),COL('worker','작업자'),COL('inspect_line','검사라인'),COL('prod_line','생산라인'),COL('note','비고')]}},
+  {type:'table',name:'defect_model',meta:{cols:[COL('id','ID','num',1),COL('model_name','기종명'),COL('sort_order','순서','num')]}},
+  {type:'table',name:'defect_type',meta:{cols:[COL('id','ID','num',1),COL('type_name','불량유형'),COL('category','분류')]}},
+  {type:'table',name:'defect_zone',meta:{cols:[COL('id','ID','num',1),COL('zone_name','존'),COL('side','면')]}}],
+  edges:[[0,1,'uses','불량 저장'],[0,2,'uses','기종 조회'],[0,3,'uses','유형 조회'],[0,4,'uses','존 조회'],[1,2,'ref','model_id → defect_model.id']]}},
+ {cat:'ESG 스마트팩토리',name:'보고서 결재 · 게시판',desc:'월간점검보고 PIN 결재선과 수정요청 게시판 (smtec)',data:{nodes:[
+  {type:'screen',name:'보고서 결재',meta:{file:'approval_report.html',kind:'input'}},
+  {type:'screen',name:'수정요청 게시판',meta:{file:'board.html',kind:'input'}},
+  {type:'table',name:'p_monthly_report',meta:{cols:[COL('id','ID','num',1),COL('template_code','점검표코드','text',0,1),COL('target_year','년','num'),COL('target_month','월','num'),COL('summary_comment','요약의견'),COL('improvement_action','개선조치'),COL('current_step','결재단계','num'),COL('next_approver_pin','다음결재자PIN'),COL('status','상태')]}},
+  {type:'table',name:'p_check_template',meta:{cols:[COL('template_code','점검표코드','text',1),COL('template_name','점검표명'),COL('machine_col','설비컬럼')]}},
+  {type:'table',name:'p_check_approval_route',meta:{cols:[COL('id','ID','num',1),COL('template_code','점검표코드','text',0,1),COL('step','순번','num'),COL('approver_pin','결재자PIN'),COL('approver_name','결재자')]}},
+  {type:'table',name:'board_post',meta:{cols:[COL('id','ID','num',1),COL('category','분류'),COL('module','모듈'),COL('title','제목'),COL('content','내용'),COL('author','작성자'),COL('status','상태'),COL('replies','답변(JSON)')]}}],
+  edges:[[0,2,'uses','결재 진행'],[0,3,'uses','점검표 마스터'],[0,4,'uses','결재선'],[1,5,'uses','등록/답변'],[2,3,'ref','template_code → p_check_template'],[4,3,'ref','template_code → p_check_template']]}},
+ {cat:'ESG 스마트팩토리',name:'검사기 카메라 모니터링',desc:'ESP32 카메라 상태와 모션 감지 카운트 (smtec)',data:{nodes:[
+  {type:'screen',name:'검사기 상태확인',meta:{file:'camera.html',kind:'status'}},
+  {type:'table',name:'camera_config',meta:{cols:[COL('camera_id','카메라ID','text',1),COL('location','설치위치')]}},
+  {type:'table',name:'motion_counts',meta:{cols:[COL('id','ID','num',1),COL('camera_id','카메라ID','text',0,1),COL('created_at','감지시각','date'),COL('count','감지수','num')]}}],
+  edges:[[0,1,'uses','카메라 목록/스트림'],[0,2,'uses','가동 판정 집계'],[2,1,'ref','camera_id → camera_config.camera_id']]}},
+ {cat:'ESG 스마트팩토리',name:'측정 도구 (도면마킹 · 3D)',desc:'도면 마킹(draw_tool3)과 3D 측정교육 도구 — DB 없이 동작 (smtec)',data:{nodes:[
+  {type:'screen',name:'도면 마킹도구',meta:{file:'draw_tool3.html',kind:'other'}},
+  {type:'screen',name:'3D 측정도구(캘리퍼)',meta:{file:'QC_measure_caliper.html',kind:'other'}}],
+  edges:[[0,1,'flow','치수점 마킹 → 측정 교육']]}},
+ {cat:'ESG 스마트팩토리',name:'소재 수입검사 · 입고 (IQC)',desc:'소재입고 → 수입검사 → 설비장착 흐름 (smtec)',data:{nodes:[
+  {type:'section',name:'소재IQC',meta:{icon:'▣'}},
+  {type:'screen',name:'소재입고 등록',meta:{file:'material_upload.html',kind:'input'}},
+  {type:'screen',name:'소재 수입검사',meta:{file:'material_IQC.html',kind:'input'}},
+  {type:'screen',name:'소재 장착관리',meta:{file:'material_attach.html',kind:'input'}},
+  {type:'table',name:'raw_material_receipt',meta:{cols:[COL('id','ID','num',1),COL('receipt_date','입고일','date',0,1),COL('part','품번'),COL('lot','LOT'),COL('qty','수량','num'),COL('worker','작업자')]}},
+  {type:'table',name:'inspection_certs',meta:{cols:[COL('id','ID','num',1),COL('cert_no','성적서번호'),COL('heat_no','HEAT NO'),COL('coil_no','코일번호'),COL('part','품번'),COL('maker','제강사'),COL('final_judge','최종판정')]}},
+  {type:'table',name:'iqc_inspections',meta:{cols:[COL('id','ID','num',1),COL('insp_date','검사일','date'),COL('lot_group','LOT그룹'),COL('inspector','검사자'),COL('judge','판정'),COL('updated_at','수정시각','date')]}},
+  {type:'table',name:'material_attachment',meta:{cols:[COL('id','ID','num',1),COL('attach_date','장착일','date'),COL('machine','설비'),COL('part','품번'),COL('lot','LOT'),COL('worker','작업자'),COL('status','상태')]}},
+  {type:'table',name:'excluded_heats',meta:{cols:[COL('id','ID','num',1),COL('heat_no','HEAT NO'),COL('reason','제외사유')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','입고 저장'],[1,5,'uses','성적서 등록'],[2,6,'uses','검사 저장'],[2,5,'uses','final_judge 갱신'],[3,7,'uses','장착 저장'],[3,8,'uses','제외 HEAT 확인'],[6,5,'ref','코일 → 성적서'],[1,2,'flow','입고 → 검사 → 장착']]}},
+ {cat:'ESG 스마트팩토리',name:'출하 · 이동이력',desc:'바코드 기반 이동/출하 수불 (move_history_tj)',data:{nodes:[
+  {type:'section',name:'출하',meta:{icon:'▥'}},
+  {type:'screen',name:'출하(일반)',meta:{file:'shipment_general.html',kind:'input'}},
+  {type:'screen',name:'출하(레이스웨이)',meta:{file:'shipment_raceway.html',kind:'input'}},
+  {type:'table',name:'move_history_tj',meta:{cols:[COL('id','ID','num',1),COL('move_date','이동일','date',0,1),COL('move_time','시각'),COL('process','공정'),COL('departure','출발지'),COL('destination','도착지'),COL('barcode_raw','바코드원문'),COL('base_part','기준품번'),COL('lot','LOT'),COL('qty','수량','num'),COL('weight','중량','num'),COL('worker','작업자'),COL('equipment','장비')]}},
+  {type:'table',name:'material_master_tj',meta:{cols:[COL('id','ID','num',1),COL('part_no','품번'),COL('part_name','품명'),COL('customer','고객사'),COL('sort_order','순서','num')]}},
+  {type:'table',name:'part_hierarchy',meta:{cols:[COL('id','ID','num',1),COL('parent_part','상위품번'),COL('child_part','하위품번'),COL('child_type','하위구분')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','출하 기록'],[2,3,'uses','출하 기록'],[1,4,'uses','품번 조회'],[2,5,'uses','상하위 전개']]}},
+ {cat:'ESG 스마트팩토리',name:'MES 가동 모니터링',desc:'설비 가동/정지, 안돈, 생산카운터, 월말보고 (smtec)',data:{nodes:[
+  {type:'section',name:'MES',meta:{icon:'⚙'}},
+  {type:'screen',name:'가동설비 모니터링',meta:{file:'mes_work.html',kind:'status'}},
+  {type:'screen',name:'MES 이력',meta:{file:'mes_history.html',kind:'status'}},
+  {type:'screen',name:'생산 카운터',meta:{file:'stop_time_counter.html',kind:'input'}},
+  {type:'screen',name:'생산 월말보고서',meta:{file:'mes_monthly_report.html',kind:'status'}},
+  {type:'table',name:'machine_status',meta:{cols:[COL('id','ID','num',1),COL('machine','설비','text',0,1),COL('status','상태(가동/정지)'),COL('updated_at','갱신시각','date')]}},
+  {type:'table',name:'mes_check_log',meta:{cols:[COL('id','ID','num',1),COL('log_date','일자','date'),COL('ho_code','호기'),COL('event','이벤트'),COL('detail','상세')]}},
+  {type:'table',name:'daily_downtime',meta:{cols:[COL('id','ID','num',1),COL('work_date','일자','date'),COL('ho_code','호기'),COL('downtime_min','정지(분)','num'),COL('reason','사유')]}},
+  {type:'table',name:'work_log',meta:{cols:[COL('id','ID','num',1),COL('work_date','작업일','date'),COL('machine','설비'),COL('part','품번'),COL('count','생산수','num'),COL('stop_min','정지(분)','num')]}},
+  {type:'table',name:'andon_msg',meta:{cols:[COL('id','ID','num',1),COL('ho_code','호기'),COL('msg','메시지'),COL('source','발생원'),COL('created_at','시각','date')]}},
+  {type:'table',name:'machine_master_tj',meta:{cols:[COL('ho_code','호기코드','text',1),COL('machine_name','설비명'),COL('sort_order','순서','num')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[1,5,'uses','상태 표시'],[1,9,'uses','안돈 발생/해제'],[1,10,'uses','설비 목록'],[2,6,'uses','이력 조회'],[3,8,'uses','카운트 기록'],[4,8,'uses','월간 집계'],[4,7,'uses','정지 집계'],[7,10,'ref','ho_code → machine_master_tj']]}},
+ {cat:'ESG 스마트팩토리',name:'트윈팩토리 3D',desc:'공장 3D 배치와 설비·계측 매핑, 안돈 연동 (smtec)',data:{nodes:[
+  {type:'screen',name:'트윈팩토리 3D',meta:{file:'twin_factory.html',kind:'status'}},
+  {type:'table',name:'twin_line',meta:{cols:[COL('id','ID','num',1),COL('line_name','라인명'),COL('sort_order','순서','num')]}},
+  {type:'table',name:'twin_zone',meta:{cols:[COL('id','ID','num',1),COL('zone_name','구역명')]}},
+  {type:'table',name:'twin_machine',meta:{cols:[COL('id','ID','num',1),COL('line_id','라인ID','num',0,1),COL('ho_code','호기'),COL('pos_x','X','num'),COL('pos_y','Y','num'),COL('pos_z','Z','num')]}},
+  {type:'table',name:'twin_meas_map',meta:{cols:[COL('id','ID','num',1),COL('machine_id','설비ID','num',0,1),COL('equipment','측정기'),COL('cam_id','카메라')]}},
+  {type:'table',name:'andon_msg',meta:{cols:[COL('id','ID','num',1),COL('ho_code','호기'),COL('msg','메시지'),COL('source','발생원'),COL('created_at','시각','date')]}}],
+  edges:[[0,1,'uses','라인 배치'],[0,2,'uses','구역 배치'],[0,3,'uses','설비 배치'],[0,4,'uses','계측 매핑'],[0,5,'uses','안돈 표시'],[3,1,'ref','line_id → twin_line.id'],[4,3,'ref','machine_id → twin_machine.id']]}},
+ {cat:'ESG 스마트팩토리',name:'금형부품 관리',desc:'기종-금형-부품 계층과 이력 로그 (mold_parts)',data:{nodes:[
+  {type:'screen',name:'금형 부품 관리',meta:{file:'mold_parts.html',kind:'input'}},
+  {type:'table',name:'mold_model',meta:{cols:[COL('id','ID','num',1),COL('name','기종명'),COL('process_count','공정수','num')]}},
+  {type:'table',name:'mold_info',meta:{cols:[COL('id','ID','num',1),COL('model_id','기종ID','num',0,1),COL('mold_no','금형번호'),COL('note','비고')]}},
+  {type:'table',name:'mold_part',meta:{cols:[COL('id','ID','num',1),COL('model_id','기종ID','num'),COL('mold_id','금형ID','num'),COL('position','위치(상형/하형)'),COL('process_no','공정','num'),COL('part_name','부품명'),COL('size','사이즈'),COL('status','상태'),COL('sort_order','순서','num'),COL('note','비고')]}},
+  {type:'table',name:'mold_log',meta:{cols:[COL('id','ID','num',1),COL('model_id','기종ID','num'),COL('mold_id','금형ID','num'),COL('part_id','부품ID','num'),COL('action','작업(등록/수정/삭제)'),COL('detail','상세'),COL('created_at','시각','date')]}}],
+  edges:[[0,1,'uses','기종'],[0,2,'uses','금형'],[0,3,'uses','부품'],[0,4,'uses','이력 기록'],[2,1,'ref','model_id → mold_model.id'],[3,2,'ref','mold_id → mold_info.id'],[4,3,'ref','part_id → mold_part.id']]}},
+ {cat:'ESG 스마트팩토리',name:'금형부품 발주 · 외주가공',desc:'구매요구(PR) 발주와 외주가공 공정 라우팅 (smtec)',data:{nodes:[
+  {type:'section',name:'발주/외주',meta:{icon:'◆'}},
+  {type:'screen',name:'금형부품 발주관리',meta:{file:'purchase_order.html',kind:'input'}},
+  {type:'screen',name:'외주가공 관리',meta:{file:'outsrc.html',kind:'input'}},
+  {type:'table',name:'pr_orders',meta:{cols:[COL('id','ID','num',1),COL('pr_no','PR번호','text',0,1),COL('pr_date','요구일','date'),COL('due_date','납기','date'),COL('status','상태'),COL('category','구분'),COL('customer','고객사'),COL('product_no','제품번호'),COL('mold_no','금형번호'),COL('part_name','부품명'),COL('part_no','부품번호'),COL('dim1','치수1'),COL('qty','수량','num'),COL('requester','요청자'),COL('approver','승인자'),COL('note','비고')]}},
+  {type:'table',name:'pr_purchases',meta:{cols:[COL('id','ID','num',1),COL('pr_order_id','PR ID','num',0,1),COL('po_no','발주번호'),COL('po_date','발주일','date'),COL('vendor','거래처'),COL('price','금액','num')]}},
+  {type:'table',name:'mm_out_route',meta:{cols:[COL('id','ID','num',1),COL('project_id','프로젝트ID','num',0,1),COL('part_no','부품번호'),COL('seq','공정순번','num'),COL('vendor','외주처'),COL('order_date','발주일','date'),COL('receipt_date','입고일','date'),COL('status','상태(미발주/발주/입고)')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','PR 등록'],[1,4,'uses','발주 처리'],[2,5,'uses','공정 라우팅'],[4,3,'ref','pr_order_id → pr_orders.id'],[1,2,'flow','발주 → 외주가공 추적']]}},
+ {cat:'ESG 스마트팩토리',name:'소방 · 세척기 점검',desc:'소방(텔레그램 알림)과 세척기 점검·수리이력 (smtec)',data:{nodes:[
+  {type:'screen',name:'소방점검',meta:{file:'fire_check.html',kind:'input'}},
+  {type:'screen',name:'세척기 일상점검',meta:{file:'wash_machine_check.html',kind:'input'}},
+  {type:'table',name:'fire_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자'),COL('zone','장소'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
+  {type:'table',name:'wash_machine_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자'),COL('machine','세척기'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
+  {type:'table',name:'wash_machine_repair',meta:{cols:[COL('id','ID','num',1),COL('repair_date','수리일','date'),COL('repair_time','시각'),COL('worker','작업자'),COL('machine','세척기'),COL('description','수리내용'),COL('parts','교체부품')]}},
+  {type:'table',name:'common_code',meta:{cols:[COL('code_group','코드그룹','text',1),COL('code','코드','text',1),COL('code_name','코드명'),COL('sort_order','순서','num')]}}],
+  edges:[[0,2,'uses','체크 저장 · 텔레그램 알림'],[1,3,'uses','체크 저장'],[1,4,'uses','수리이력'],[0,5,'uses','점검항목'],[1,5,'uses','점검항목']]}},
+ {cat:'ESG 스마트팩토리',name:'환경 모니터링',desc:'IoT 온습도 센서 현황(1분)과 이력(1시간·30일 보관)',data:{nodes:[
+  {type:'screen',name:'환경 모니터링',meta:{file:'env_dashboard.html',kind:'status'}},
+  {type:'table',name:'env_device',meta:{cols:[COL('device_id','기기ID','text',1),COL('location','설치위치'),COL('threshold','임계값'),COL('calibration','보정값')]}},
+  {type:'table',name:'env_log',meta:{cols:[COL('id','ID','num',1),COL('device_id','기기ID','text',0,1),COL('temperature','온도','num'),COL('humidity','습도','num'),COL('created_at','기록시각','date')]}}],
+  edges:[[0,1,'uses','기기설정'],[0,2,'uses','추이 그래프'],[2,1,'ref','device_id → env_device.device_id']]}},
+ {cat:'ESG 스마트팩토리',name:'근태관리 (연차 · 특근)',desc:'사원 마스터와 연차신청·특근보고 결재 (smtec)',data:{nodes:[
+  {type:'screen',name:'근태관리',meta:{file:'leave_request_백업_연차.html',kind:'input'}},
+  {type:'table',name:'employees',meta:{cols:[COL('id','ID','num',1),COL('name','성명','text',0,1),COL('dept','부서'),COL('position','직급'),COL('hire_date','입사일','date'),COL('sort_order','순서','num')]}},
+  {type:'table',name:'leave_requests',meta:{cols:[COL('id','ID','num',1),COL('request_date','신청일','date',0,1),COL('dept','부서'),COL('name','성명'),COL('leave_type','휴가구분'),COL('start_date','시작일','date'),COL('end_date','종료일','date'),COL('days','일수','num'),COL('reason','사유'),COL('writer','작성'),COL('reviewer','검토'),COL('approver','승인'),COL('status','상태')]}},
+  {type:'table',name:'overtime_reports',meta:{cols:[COL('id','ID','num',1),COL('today_date','일자','date',0,1),COL('dept','부서'),COL('name','성명'),COL('today_normal','정상근무'),COL('today_overtime','연장근무'),COL('holiday_date','휴일일자','date'),COL('holiday_work','휴일근무'),COL('approval','결재')]}}],
+  edges:[[0,1,'uses','사원 조회'],[0,2,'uses','연차 신청/결재'],[0,3,'uses','특근 보고'],[2,1,'ref','name → employees.name'],[3,1,'ref','name → employees.name']]}},
+ {cat:'ESG 스마트팩토리',name:'회의록 · 개선활동',desc:'회의록(결정사항/조치항목)과 개선활동 보고 (smtec)',data:{nodes:[
+  {type:'screen',name:'회의록 관리',meta:{file:'meeting.html',kind:'input'}},
+  {type:'screen',name:'개선활동 보고',meta:{file:'improvement_report.html',kind:'input'}},
+  {type:'table',name:'meeting',meta:{cols:[COL('id','ID','num',1),COL('meeting_date','회의일','date',0,1),COL('meeting_time','시각'),COL('site','사업장'),COL('meeting_type','회의구분'),COL('mid_category','중분류'),COL('sub_category','소분류'),COL('title','제목'),COL('attendees','참석자'),COL('content','내용'),COL('decisions','결정사항'),COL('action_items','조치항목'),COL('next_steps','다음단계'),COL('attachments','첨부(JSON)'),COL('status','상태')]}},
+  {type:'table',name:'meeting_setting',meta:{cols:[COL('id','ID','num',1),COL('category','분류'),COL('parent','상위'),COL('name','이름'),COL('sort_order','순서','num')]}},
+  {type:'table',name:'improvement_logs',meta:{cols:[COL('id','ID','num',1),COL('report_date','보고일','date',0,1),COL('writer','작성자'),COL('title','제목'),COL('content','내용'),COL('location','저장위치(개인/공용)'),COL('status','상태')]}}],
+  edges:[[0,2,'uses','회의록 저장'],[0,3,'uses','분류 설정'],[1,4,'uses','개선보고 저장'],[2,3,'ref','분류 → meeting_setting']]}},
+ {cat:'ESG 스마트팩토리',name:'공장 마스터 관리',desc:'설비·소재·기종·부품계층 등 공통 마스터 일괄관리',data:{nodes:[
+  {type:'screen',name:'마스터 관리',meta:{file:'master_manage.html',kind:'input'}},
+  {type:'table',name:'machine_master_tj',meta:{cols:[COL('ho_code','호기코드','text',1),COL('machine_name','설비명'),COL('sort_order','순서','num')]}},
+  {type:'table',name:'material_master_tj',meta:{cols:[COL('id','ID','num',1),COL('part_no','품번'),COL('part_name','품명'),COL('customer','고객사'),COL('sort_order','순서','num')]}},
+  {type:'table',name:'general_model_tj',meta:{cols:[COL('id','ID','num',1),COL('customer','고객사'),COL('model_name','기종명'),COL('sort_order','순서','num')]}},
+  {type:'table',name:'machining_model_tj',meta:{cols:[COL('id','ID','num',1),COL('model_name','기종명'),COL('note','비고'),COL('sort_order','순서','num')]}},
+  {type:'table',name:'part_hierarchy',meta:{cols:[COL('id','ID','num',1),COL('parent_part','상위품번'),COL('child_part','하위품번'),COL('child_type','하위구분')]}},
+  {type:'table',name:'common_code',meta:{cols:[COL('code_group','코드그룹','text',1),COL('code','코드','text',1),COL('code_name','코드명'),COL('sort_order','순서','num')]}}],
+  edges:[[0,1,'uses',''],[0,2,'uses',''],[0,3,'uses',''],[0,4,'uses',''],[0,5,'uses',''],[0,6,'uses','']]}},
+ {cat:'ESG 스마트팩토리',name:'협업 도구 (표준 · 순회 · 화상)',desc:'작업표준 검색(GAS) · 레이아웃 순회점검 · 화상회의 — DB 없이 동작',data:{nodes:[
+  {type:'screen',name:'작업표준 검색',meta:{file:'gdrive_standard.html',kind:'other'}},
+  {type:'screen',name:'설비 레이아웃 점검',meta:{file:'line_patrol.html',kind:'other'}},
+  {type:'screen',name:'화상회의',meta:{file:'videomeeting.html',kind:'other'}}],
+  edges:[]}}
 ];
 function myModules(){try{return JSON.parse(localStorage.getItem(LIB_LS)||'[]')}catch(e){return []}}
 function setMy(list){try{localStorage.setItem(LIB_LS,JSON.stringify(list))}catch(e){}}
