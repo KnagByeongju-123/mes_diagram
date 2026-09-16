@@ -312,6 +312,7 @@ work_date, 일자, date"></textarea></div>
     </section>
 
     <div class="f"><label>진행 기록 <span style="color:#8a94a6;font-weight:400">— 무엇을 읽었는지 여기에 쌓입니다</span></label>
+      <div class="acts" style="margin-top:2px"><button class="btn primary" id="c_savemod" onclick="saveImportAsModule()" disabled>📦 가져온 화면·DB를 모듈로 저장</button><span style="font-size:11.5px;color:#8a94a6">저장하면 [모듈 보관함 › 내 모듈]에 들어가 다른 설계에서도 꺼내 쓸 수 있습니다 (☁ 연결 시 공유)</span></div>
       <div id="c_log"></div></div>
     <div style="color:#8a94a6;font-size:11.5px">단일 파일 앱(탭으로 화면을 전환하고 Supabase REST 를 직접 부르는 형태)은 탭을 화면으로, 스크립트에서 찾은 테이블을 테이블 블록으로 만들고 함수 이름으로 어느 탭이 쓰는지 추정합니다. 그 외 사이트는 메뉴·페이지·입력폼(보이는 것)만 읽습니다. DB나 화면 로직은 밖에서 보이지 않으므로 "사이트맵 + 폼 구조" 수준의 초안이 됩니다. Edge Function 배포 방법은 ⚙ 설정에 있습니다.</div>
   </div>
@@ -502,7 +503,7 @@ function renderPanel(){
  const outs=D.edges.filter(e=>e.from===n.id),ins=D.edges.filter(e=>e.to===n.id);
  h+=`<div class="f"><label>연결 (${outs.length+ins.length})</label><div class="links">${outs.map(e=>`<button onclick="select({edge:'${e.id}'})"><b>→ ${esc(N(e.to)?.name)}</b><small>${KIND[e.kind]}${e.label?' · '+esc(e.label):''}</small></button>`).join('')}
   ${ins.map(e=>`<button onclick="select({edge:'${e.id}'})"><b>← ${esc(N(e.from)?.name)}</b><small>${KIND[e.kind]}${e.label?' · '+esc(e.label):''}</small></button>`).join('')}${outs.length+ins.length?'':'<span style="color:#8a94a6;font-size:12px">없음</span>'}</div></div>`;
- h+=`<div class="acts">${['module','section','screen'].includes(n.type)?`<button class="btn" onclick="wizardFrom('${n.id}')">❓ 문답으로 채우기</button>`:''}<button class="btn" onclick="cloneNode()">⧉ 복제</button><button class="btn danger" onclick="deleteSel()">✕ 블록 삭제</button></div>`;
+ h+=`<div class="acts">${['module','section','screen'].includes(n.type)?`<button class="btn" onclick="wizardFrom('${n.id}')">❓ 문답으로 채우기</button>`:''}${['module','section','screen'].includes(n.type)?`<button class="btn" onclick="saveNodeAsModule('${n.id}')" title="이 블록과 딸린 화면·사용 테이블(FK 포함)을 한 모듈로 저장">📦 모듈로 저장 (화면+DB)</button>`:''}<button class="btn" onclick="cloneNode()">⧉ 복제</button><button class="btn danger" onclick="deleteSel()">✕ 블록 삭제</button></div>`;
  P.innerHTML=h;
  $('f_name').oninput=e=>{n.name=e.target.value;$('pTitle').textContent=n.name;render()};
  if($('f_icon'))$('f_icon').oninput=e=>{n.meta.icon=e.target.value;render()};
@@ -831,6 +832,7 @@ function loadSample(){
  addEdge(T.sample_orders.id,T.vendors.id,'ref','customer_name → vendor_name');addEdge(T.sample_orders.id,T.items.id,'ref','item_name → item_name');
  addEdge(SC['수주등록'].id,SC['출하등록'].id,'flow','수주 완료 후 출하');addEdge(SC['수주등록'].id,SC['생산실적등록'].id,'flow','수주 → 생산');
  select(null);autoLayout();
+ LAST_IMPORT=D.nodes.filter(n=>!__before.has(n.id)).map(n=>n.id);updateImpBtn();
 }
 
 
@@ -1161,6 +1163,64 @@ function delModule(name){
  renderLib();$('lb_msg').textContent=`'${name}' 삭제했습니다.`;
 }
 /* 선택한 블록(과 연결된 블록)을 모듈로 저장 */
+/* ═══ 블록 묶음 → 모듈 저장 공용 ═══
+   collectModuleIds: 뿌리 블록에서 아래로만 따라간다 —
+   포함(contains) 하위 화면, 화면이 사용(uses)하는 테이블, 테이블 간 FK(ref)는 양방향.
+   flow(업무 흐름)나 상위 블록으로는 번지지 않아 설계 전체가 딸려오지 않는다. */
+function collectModuleIds(rootId){
+ const ids=new Set([rootId]);let q=[rootId];
+ while(q.length){const cur=q.shift();
+  for(const e of D.edges){
+   let o=null;
+   if(e.from===cur&&(e.kind==='contains'||e.kind==='uses'))o=e.to;
+   else if(e.kind==='ref'&&(e.from===cur||e.to===cur)
+     &&N(e.from)?.type==='table'&&N(e.to)?.type==='table')o=e.from===cur?e.to:e.from;
+   if(o&&!ids.has(o)&&N(o)){ids.add(o);q.push(o)}
+  }}
+ return [...ids];
+}
+function packIdsAsModule(ids,name){
+ ids=ids.filter(id=>N(id));
+ if(!ids.length)return null;
+ const idx=new Map(ids.map((id,i)=>[id,i]));
+ const nodes=ids.map(id=>{const n=N(id);return{type:n.type,name:n.name,meta:JSON.parse(JSON.stringify(n.meta)),dx:n.x,dy:n.y}});
+ const edges=D.edges.filter(e=>idx.has(e.from)&&idx.has(e.to)).map(e=>[idx.get(e.from),idx.get(e.to),e.kind,e.label||'']);
+ const mod={name,data:{nodes,edges},at:Date.now()};
+ const my=myModules();const at=my.findIndex(m=>m.name===name);
+ if(at>=0){if(!confirm(`'${name}' 모듈이 이미 있습니다. 덮어쓸까요?`))return null;my[at]=mod}else my.push(mod);
+ LIBALL=LIBALL.filter(m=>m.name!==name);
+ setMy(my);
+ if(SB.url&&SB.key)sb('design_modules?on_conflict=name',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+  body:JSON.stringify([{name,data:mod.data,updated_at:new Date().toISOString()}])}).catch(()=>{});
+ return{nodes:nodes.length,edges:edges.length};
+}
+/* 블록 패널 [📦 모듈로 저장] — 선택 블록 + 부속 화면·테이블을 한 모듈로 */
+function saveNodeAsModule(id){
+ const n=N(id);if(!n)return;
+ const ids=collectModuleIds(id);
+ const tCnt=ids.filter(x=>N(x)?.type==='table').length,sCnt=ids.filter(x=>N(x)?.type==='screen').length;
+ const name=(prompt(`모듈 이름 (화면 ${sCnt} · 테이블 ${tCnt} · 블록 ${ids.length}개 저장)`,n.name)||'').trim();
+ if(!name)return;
+ const r=packIdsAsModule(ids,name);
+ if(r)$('stat').textContent=`'${name}' 모듈 저장 — 블록 ${r.nodes} · 연결 ${r.edges}. [📦 모듈 보관함]의 내 모듈에서 꺼내 쓸 수 있습니다.`;
+}
+/* 웹 가져오기 결과 → 모듈 저장 */
+let LAST_IMPORT=[],LAST_IMPORT_NAME='';
+function updateImpBtn(){const b=$('c_savemod');if(!b)return;
+ const alive=LAST_IMPORT.filter(id=>N(id));
+ b.disabled=!alive.length;
+ b.textContent=alive.length?`📦 가져온 화면·DB를 모듈로 저장 (블록 ${alive.length})`:'📦 가져온 화면·DB를 모듈로 저장';
+}
+function saveImportAsModule(){
+ const ids=LAST_IMPORT.filter(id=>N(id));
+ if(!ids.length)return $('c_msg').textContent='먼저 위에서 가져오기를 실행하세요.';
+ const tCnt=ids.filter(x=>N(x).type==='table').length,sCnt=ids.filter(x=>N(x).type==='screen').length;
+ const name=(prompt(`모듈 이름 (화면 ${sCnt} · 테이블 ${tCnt} · 블록 ${ids.length}개 저장)`,LAST_IMPORT_NAME||'가져온 모듈')||'').trim();
+ if(!name)return;
+ const r=packIdsAsModule(ids,name);
+ if(r){$('c_msg').textContent=`'${name}' 모듈 저장 완료 — 블록 ${r.nodes} · 연결 ${r.edges}`;
+  clog(`📦 모듈 저장: '${name}' (블록 ${r.nodes} · 연결 ${r.edges}) — 모듈 보관함 › 내 모듈`);}
+}
 function saveModule(whole,force){
  const name=($('lb_name').value||'').trim();
  if(!name)return $('lb_msg').textContent='모듈 이름을 입력하세요.';
@@ -2501,8 +2561,10 @@ async function crawl(){
 }
 function buildFromPages(start,pages,o){
  if(o.replace){D={nodes:[],edges:[]}}
+ const __before=new Set(D.nodes.map(n=>n.id));
  const host=new URL(start).host,root=pages.get(start);
  const appName=String(root?.title||host).split(/[|—–·]/)[0].trim().slice(0,20)||host;
+ LAST_IMPORT_NAME=appName;
  const mod=addNode('module',appName,{icon:'🌐',desc:host},0,0);
  const secs=new Map();const scr=new Map();const tbls=new Map();
  const secOf=g=>{g=g||'메뉴';if(!secs.has(g))secs.set(g,(()=>{const n=addNode('section',g,{icon:'▣'},0,0);addEdge(mod.id,n.id,'contains');return n})());return secs.get(g)};
