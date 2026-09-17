@@ -118,6 +118,10 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
 .mbg.on{display:flex}
 /* 화면 미리보기 — 기본을 크게, ⛶ 전체화면 토글, 배율 축소 지원 */
 #pvDlg .modal{width:min(1600px,97vw);height:min(960px,95vh)}
+#pvDlg .t{cursor:move;user-select:none;touch-action:none}
+#pvDlg .t button,#pvDlg .t .x{cursor:pointer}
+#pvDlg .modal.full .t{cursor:default}
+#pvDlg .modal.dragging iframe{pointer-events:none}
 #pvDlg .modal.full{width:100vw;height:100vh;max-height:100vh;border-radius:0}
 #pvDlg .bd{overflow:hidden}
 #pv_wrap{width:100%;height:100%;overflow:auto;background:#fff}
@@ -1667,16 +1671,40 @@ function pvZoom(d){
  i=Math.max(0,Math.min(PV_STEPS.length-1,i+d));
  pvScale=PV_STEPS[i];pvApply();
 }
+let pvPos={x:0,y:0};
+function pvMove(x,y){
+ const m=pvDlg.querySelector('.modal');
+ /* 화면 밖으로 완전히 나가지 않게 제한 (제목줄이 항상 잡히도록) */
+ const r=m.getBoundingClientRect(),vw=innerWidth,vh=innerHeight;
+ const bx=Math.max(-(r.width-120),Math.min(vw-120,x)),by=Math.max(0,Math.min(vh-48,y));
+ pvPos={x:bx,y:by};m.style.transform=`translate(${bx}px,${by}px)`;
+}
+function pvResetPos(){pvPos={x:0,y:0};const m=pvDlg.querySelector('.modal');if(m)m.style.transform='';}
+/* 제목줄 드래그로 창 이동 — 버튼·× 는 제외, 전체화면에서는 비활성 */
+(function(){
+ const t=pvDlg.querySelector('.t'),m=pvDlg.querySelector('.modal');
+ let dg=null;
+ t.addEventListener('pointerdown',e=>{
+  if(e.target.closest('button,.x'))return;
+  if(m.classList.contains('full'))return;
+  dg={sx:e.clientX-pvPos.x,sy:e.clientY-pvPos.y};
+  m.classList.add('dragging');t.setPointerCapture(e.pointerId);e.preventDefault();
+ });
+ t.addEventListener('pointermove',e=>{if(!dg)return;pvMove(e.clientX-dg.sx,e.clientY-dg.sy)});
+ const end=e=>{if(!dg)return;dg=null;m.classList.remove('dragging');try{t.releasePointerCapture(e.pointerId)}catch(_){}}; 
+ t.addEventListener('pointerup',end);t.addEventListener('pointercancel',end);
+})();
 function pvFull(){
  const m=pvDlg.querySelector('.modal');m.classList.toggle('full');
  $('pv_full').textContent=m.classList.contains('full')?'▣ 창 크기':'⛶ 전체화면';
+ pvResetPos();
  pvApply();
 }
 function previewScreen(id,kind){
  const n=N(id||(sel&&sel.node));if(!n||n.type!=='screen')return;
  pvNode=n;const {html}=buildPreview(n,kind);
  $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':'기타'}`;
- pvScale=1;
+ pvScale=1;pvResetPos();
  $('pv_frame').srcdoc=html;$('pv_msg').textContent='';pvDlg.classList.add('on');
  pvApply();
  /* 열릴 때 폭이 모자라면 자동으로 한 단계씩 축소해 다 보이게 맞춘다 */
