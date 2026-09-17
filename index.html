@@ -1128,6 +1128,7 @@ const BUILTIN=[
   {type:'screen',name:'화상회의',meta:{file:'videomeeting.html',kind:'other'}}],
   edges:[]}},
  {cat:'철강 수입무역',name:'무역 기준정보',desc:'해외공급사(밀) · 국내고객 · 강종/규격 품목 · 환율 마스터',data:{nodes:[
+  {type:'section',name:'기준정보',meta:{icon:'⚙'}},
   {type:'screen',name:'거래처관리(해외/국내)',meta:{file:'trade_partner_management.html',kind:'input'}},
   {type:'screen',name:'철강품목관리',meta:{file:'steel_item_management.html',kind:'input'}},
   {type:'screen',name:'환율관리',meta:{file:'exchange_rate_input.html',kind:'input'}},
@@ -1135,7 +1136,7 @@ const BUILTIN=[
   {type:'table',name:'customers',meta:{cols:[COL('customer_code','고객코드','text',1),COL('customer_name','고객사명','text',0,1),COL('biz_no','사업자번호'),COL('ceo_name','대표자'),COL('address','주소'),COL('manager','담당자'),COL('phone','전화'),COL('credit_limit','여신한도','num'),COL('payment_days','결제기일(일)','num'),COL('is_active','사용','bool')]}},
   {type:'table',name:'steel_items',meta:{cols:[COL('item_code','품목코드','text',1),COL('steel_grade','강종(SS400/SPHC/SGCC 등)','text',0,1),COL('item_type','형태(코일/시트/형강/봉강)'),COL('thickness','두께(mm)','num'),COL('width','폭(mm)','num'),COL('length','길이(mm)','num'),COL('origin','원산지'),COL('hs_code','HS코드'),COL('unit','단위(톤/매)'),COL('remark','비고')]}},
   {type:'table',name:'exchange_rates',meta:{cols:[COL('rate_date','일자','date',1),COL('currency','통화','text',1),COL('rate','매매기준율','num'),COL('rate_buy','송금보낼때','num')]}}],
-  edges:[[0,3,'uses','해외공급사'],[0,4,'uses','국내고객·여신한도'],[1,5,'uses','강종/규격'],[2,6,'uses','일별 환율']]}},
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','해외공급사'],[1,5,'uses','국내고객·여신한도'],[2,6,'uses','강종/규격'],[3,7,'uses','일별 환율']]}},
  {cat:'철강 수입무역',name:'수입계약 · 오더',desc:'해외 밀 오더(수입계약) — LC/TT 결제, 인코텀즈, 오더 잔량',data:{nodes:[
   {type:'section',name:'수입계약',meta:{icon:'▣'}},
   {type:'screen',name:'수입계약등록',meta:{file:'import_contract_input.html',kind:'input'}},
