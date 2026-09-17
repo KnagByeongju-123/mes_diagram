@@ -116,6 +116,13 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
 /* modal */
 .mbg{position:fixed;inset:0;background:rgba(20,28,35,.45);display:none;align-items:center;justify-content:center;z-index:50}
 .mbg.on{display:flex}
+/* 화면 미리보기 — 기본을 크게, ⛶ 전체화면 토글, 배율 축소 지원 */
+#pvDlg .modal{width:min(1600px,97vw);height:min(960px,95vh)}
+#pvDlg .modal.full{width:100vw;height:100vh;max-height:100vh;border-radius:0}
+#pvDlg .bd{overflow:hidden}
+#pv_wrap{width:100%;height:100%;overflow:auto;background:#fff}
+#pv_frame{border:0;background:#fff;display:block;transform-origin:0 0}
+@media(max-width:680px){#pvDlg .modal{width:100vw;height:100vh;max-height:100vh;border-radius:0}}
 .modal{background:#fff;border-radius:8px;width:min(920px,94vw);max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .modal .t{padding:12px 16px;border-bottom:1px solid var(--line);font-weight:700;display:flex;align-items:center}
 .modal .t .x{margin-left:auto;font-size:20px;color:var(--ink-3)}
@@ -251,11 +258,17 @@ work_date, 일자, date"></textarea></div>
   </div>
   <div class="bt"><button class="btn primary" onclick="applyPaste()">항목 만들기</button><button class="btn" onclick="pasteDlg.classList.remove('on')">닫기</button><span class="msg" id="pst_msg"></span></div>
 </div></div>
-<div class="mbg" id="pvDlg"><div class="modal" style="width:min(1100px,96vw);height:min(760px,92vh)">
+<div class="mbg" id="pvDlg"><div class="modal">
   <div class="t">화면 미리보기 <span id="pv_name" style="font-weight:400;color:#8a94a6;margin-left:8px"></span>
-    <span class="x" onclick="pvDlg.classList.remove('on')">×</span></div>
+    <span style="margin-left:auto;display:flex;gap:4px;align-items:center;font-weight:400">
+      <button class="btn" style="height:26px;min-width:0;padding:0 8px;font-size:11.5px" onclick="pvZoom(-1)" title="축소 — 칸이 좁아 잘리면 축소하세요">−</button>
+      <span id="pv_zoom" style="font-size:11.5px;color:#4a5568;min-width:38px;text-align:center">100%</span>
+      <button class="btn" style="height:26px;min-width:0;padding:0 8px;font-size:11.5px" onclick="pvZoom(1)" title="확대">＋</button>
+      <button class="btn" style="height:26px;min-width:0;padding:0 8px;font-size:11.5px" id="pv_full" onclick="pvFull()" title="전체화면 전환">⛶ 전체화면</button>
+    </span>
+    <span class="x" onclick="pvDlg.classList.remove('on')" style="margin-left:10px">×</span></div>
   <div class="bd" style="grid-template-columns:1fr;padding:0;min-height:0">
-    <iframe id="pv_frame" style="width:100%;height:100%;border:0;background:#fff"></iframe>
+    <div id="pv_wrap"><iframe id="pv_frame"></iframe></div>
   </div>
   <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button>
     <button class="btn" onclick="pvCode()">코드 보기</button><span class="msg" id="pv_msg"></span></div>
@@ -268,7 +281,7 @@ work_date, 일자, date"></textarea></div>
       <div class="row2"><input id="lb_name" placeholder="모듈 이름 (예: 수주 · 출하 기본)"><label class="ck"><input id="lb_deep" type="checkbox" checked>연결된 블록까지 함께 저장</label></div>
       <div class="acts"><button class="btn primary" onclick="saveModule()">＋ 모듈로 저장</button><button class="btn" onclick="saveModule(true)">현재 설계 전체를 모듈로</button><span class="msg" id="lb_msg" style="font-size:11.5px;color:#8a94a6"></span></div>
     </section>
-    <div class="f"><label>기본 모듈 — 구분별 뼈대 (공통 · 금형제작 · ESG 스마트팩토리)</label><div class="links" id="lb_builtin"></div></div>
+    <div class="f"><label>기본 모듈 — 구분별 뼈대 (공통 · 금형제작 · ESG 스마트팩토리 · 철강 수입무역)</label><div class="links" id="lb_builtin"></div></div>
     <div class="f"><label>내 모듈 <span style="color:#8a94a6;font-size:11px">(이 브라우저 · ☁ 연결 시 Supabase 공유)</span></label><div class="links" id="lb_mine"></div></div>
   </div>
   <div class="bt"><button class="btn" onclick="libDlg.classList.remove('on')">닫기</button><span class="msg">모듈을 넣은 뒤 블록의 ○ 를 끌어 기존 블록과 연결하세요.</span></div>
@@ -1109,7 +1122,59 @@ const BUILTIN=[
   {type:'screen',name:'작업표준 검색',meta:{file:'gdrive_standard.html',kind:'other'}},
   {type:'screen',name:'설비 레이아웃 점검',meta:{file:'line_patrol.html',kind:'other'}},
   {type:'screen',name:'화상회의',meta:{file:'videomeeting.html',kind:'other'}}],
-  edges:[]}}
+  edges:[]}},
+ {cat:'철강 수입무역',name:'무역 기준정보',desc:'해외공급사(밀) · 국내고객 · 강종/규격 품목 · 환율 마스터',data:{nodes:[
+  {type:'screen',name:'거래처관리(해외/국내)',meta:{file:'trade_partner_management.html',kind:'input'}},
+  {type:'screen',name:'철강품목관리',meta:{file:'steel_item_management.html',kind:'input'}},
+  {type:'screen',name:'환율관리',meta:{file:'exchange_rate_input.html',kind:'input'}},
+  {type:'table',name:'suppliers',meta:{cols:[COL('supplier_code','공급사코드','text',1),COL('supplier_name','공급사명(밀/무역상)','text',0,1),COL('country','국가'),COL('mill_name','제강사'),COL('contact','담당자'),COL('payment_terms','결제조건(LC/TT)'),COL('currency','통화'),COL('is_active','사용','bool')]}},
+  {type:'table',name:'customers',meta:{cols:[COL('customer_code','고객코드','text',1),COL('customer_name','고객사명','text',0,1),COL('biz_no','사업자번호'),COL('ceo_name','대표자'),COL('address','주소'),COL('manager','담당자'),COL('phone','전화'),COL('credit_limit','여신한도','num'),COL('payment_days','결제기일(일)','num'),COL('is_active','사용','bool')]}},
+  {type:'table',name:'steel_items',meta:{cols:[COL('item_code','품목코드','text',1),COL('steel_grade','강종(SS400/SPHC/SGCC 등)','text',0,1),COL('item_type','형태(코일/시트/형강/봉강)'),COL('thickness','두께(mm)','num'),COL('width','폭(mm)','num'),COL('length','길이(mm)','num'),COL('origin','원산지'),COL('hs_code','HS코드'),COL('unit','단위(톤/매)'),COL('remark','비고')]}},
+  {type:'table',name:'exchange_rates',meta:{cols:[COL('rate_date','일자','date',1),COL('currency','통화','text',1),COL('rate','매매기준율','num'),COL('rate_buy','송금보낼때','num')]}}],
+  edges:[[0,3,'uses','해외공급사'],[0,4,'uses','국내고객·여신한도'],[1,5,'uses','강종/규격'],[2,6,'uses','일별 환율']]}},
+ {cat:'철강 수입무역',name:'수입계약 · 오더',desc:'해외 밀 오더(수입계약) — LC/TT 결제, 인코텀즈, 오더 잔량',data:{nodes:[
+  {type:'section',name:'수입계약',meta:{icon:'▣'}},
+  {type:'screen',name:'수입계약등록',meta:{file:'import_contract_input.html',kind:'input'}},
+  {type:'screen',name:'수입계약현황',meta:{file:'import_contract_status.html',kind:'status'}},
+  {type:'table',name:'import_contracts',meta:{cols:[COL('contract_no','계약번호','text',1),COL('contract_date','계약일','date',0,1),COL('supplier_code','공급사','text',0,1),COL('incoterms','인코텀즈(FOB/CFR/CIF)'),COL('payment_type','결제(LC/TT/DA/DP)'),COL('lc_no','LC번호'),COL('lc_open_date','LC개설일','date'),COL('currency','통화'),COL('total_amount','계약금액(외화)','num'),COL('shipment_due','선적기한','date'),COL('port_loading','선적항'),COL('port_discharge','도착항'),COL('status','상태(계약/선적중/완료)'),COL('remark','비고')]}},
+  {type:'table',name:'import_contract_lines',meta:{cols:[COL('line_id','라인ID','num',1),COL('contract_no','계약번호','text',0,1),COL('item_code','품목코드'),COL('steel_grade','강종'),COL('spec','규격(두께x폭)'),COL('qty_ton','계약수량(톤)','num'),COL('unit_price','단가(USD/톤)','num'),COL('amount','금액','num'),COL('shipped_ton','선적수량(톤)','num'),COL('remain_ton','잔량(톤)','num')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','계약 저장'],[1,4,'uses','품목 라인'],[2,3,'uses','조회·잔량'],[4,3,'ref','contract_no → import_contracts']]}},
+ {cat:'철강 수입무역',name:'선적 · 통관',desc:'B/L 선적관리와 수입신고 — 관세/부가세, 통관비용, 입항 스케줄',data:{nodes:[
+  {type:'section',name:'선적/통관',meta:{icon:'⚓'}},
+  {type:'screen',name:'선적등록(B/L)',meta:{file:'shipment_bl_input.html',kind:'input'}},
+  {type:'screen',name:'수입통관등록',meta:{file:'customs_clearance_input.html',kind:'input'}},
+  {type:'screen',name:'입항스케줄현황',meta:{file:'arrival_schedule_status.html',kind:'status'}},
+  {type:'table',name:'import_shipments',meta:{cols:[COL('bl_no','B/L번호','text',1),COL('contract_no','계약번호','text',0,1),COL('vessel_name','선명'),COL('etd','출항일(ETD)','date'),COL('eta','입항예정(ETA)','date'),COL('ata','입항일(ATA)','date'),COL('port_discharge','도착항'),COL('ship_ton','선적수량(톤)','num'),COL('invoice_no','인보이스번호'),COL('invoice_amount','인보이스금액','num'),COL('status','상태(선적/입항/통관/입고)')]}},
+  {type:'table',name:'customs_clearances',meta:{cols:[COL('clearance_no','수입신고번호','text',1),COL('bl_no','B/L번호','text',0,1),COL('declare_date','신고일','date'),COL('accept_date','수리일','date'),COL('rate_applied','적용환율','num'),COL('dutiable_value','과세가격(원)','num'),COL('duty','관세','num'),COL('vat','부가세','num'),COL('forwarder','관세사/포워더'),COL('clearance_fee','통관수수료','num'),COL('freight_inland','내륙운송비','num')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','B/L 저장'],[2,5,'uses','신고 저장'],[3,4,'uses','ETA/입항 조회'],[5,4,'ref','bl_no → import_shipments'],[1,2,'flow','선적 → 입항 → 통관']]}},
+ {cat:'철강 수입무역',name:'입고 · 재고 (코일/시트)',desc:'B/L별 입고와 코일 단위 재고 — HEAT NO · 밀시트, 창고별 현황',data:{nodes:[
+  {type:'section',name:'재고',meta:{icon:'▤'}},
+  {type:'screen',name:'수입입고등록',meta:{file:'import_receipt_input.html',kind:'input'}},
+  {type:'screen',name:'재고현황',meta:{file:'steel_stock_status.html',kind:'status'}},
+  {type:'screen',name:'밀시트관리',meta:{file:'mill_sheet_management.html',kind:'input'}},
+  {type:'table',name:'stock_coils',meta:{cols:[COL('coil_no','코일/번들번호','text',1),COL('bl_no','B/L번호','text',0,1),COL('item_code','품목코드'),COL('steel_grade','강종'),COL('spec','규격'),COL('heat_no','HEAT NO'),COL('weight_ton','중량(톤)','num'),COL('warehouse','창고'),COL('location','로케이션'),COL('receipt_date','입고일','date'),COL('status','상태(재고/예약/출고)'),COL('landed_cost','입고원가(원/톤)','num')]}},
+  {type:'table',name:'mill_sheets',meta:{cols:[COL('cert_no','성적서번호','text',1),COL('heat_no','HEAT NO','text',0,1),COL('mill_name','제강사'),COL('steel_grade','강종'),COL('c_pct','C(%)','num'),COL('si_pct','Si(%)','num'),COL('mn_pct','Mn(%)','num'),COL('yield_mpa','항복강도','num'),COL('tensile_mpa','인장강도','num'),COL('file_url','파일첨부')]}},
+  {type:'table',name:'stock_moves',meta:{cols:[COL('move_id','수불ID','num',1),COL('move_date','일자','date',0,1),COL('coil_no','코일번호','text',0,1),COL('move_type','구분(입고/출고/이동/조정)'),COL('qty_ton','수량(톤)','num'),COL('ref_no','참조번호(BL/출하)'),COL('worker','담당')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','코일 입고'],[1,6,'uses','입고 수불'],[2,4,'uses','창고/강종별 집계'],[3,5,'uses','성적서 등록'],[5,4,'ref','heat_no → stock_coils.heat_no'],[6,4,'ref','coil_no → stock_coils']]}},
+ {cat:'철강 수입무역',name:'국내판매 · 출하',desc:'견적 → 수주 → 코일 배정 출하 → 세금계산서, 판매현황',data:{nodes:[
+  {type:'section',name:'판매',meta:{icon:'▥'}},
+  {type:'screen',name:'견적등록',meta:{file:'quotation_input.html',kind:'input'}},
+  {type:'screen',name:'판매수주등록',meta:{file:'sales_order_input.html',kind:'input'}},
+  {type:'screen',name:'출하등록',meta:{file:'sales_shipment_input.html',kind:'input'}},
+  {type:'screen',name:'판매현황',meta:{file:'sales_status.html',kind:'status'}},
+  {type:'table',name:'quotations',meta:{cols:[COL('quote_no','견적번호','text',1),COL('quote_date','견적일','date',0,1),COL('customer_code','고객','text',0,1),COL('item_code','품목'),COL('qty_ton','수량(톤)','num'),COL('unit_price','단가(원/톤)','num'),COL('valid_until','유효기한','date'),COL('status','상태(견적/수주전환/실효)')]}},
+  {type:'table',name:'sales_orders',meta:{cols:[COL('so_no','수주번호','text',1),COL('order_date','수주일','date',0,1),COL('customer_code','고객','text',0,1),COL('item_code','품목'),COL('steel_grade','강종'),COL('spec','규격'),COL('qty_ton','수주수량(톤)','num'),COL('unit_price','단가(원/톤)','num'),COL('amount','금액','num'),COL('delivery_date','납기일','date'),COL('delivery_place','납품처'),COL('shipped_ton','출하수량(톤)','num'),COL('status','상태(수주/부분출하/완료)')]}},
+  {type:'table',name:'sales_shipments',meta:{cols:[COL('ship_no','출하번호','text',1),COL('ship_date','출하일','date',0,1),COL('so_no','수주번호','text',0,1),COL('coil_no','코일번호'),COL('weight_ton','출하중량(톤)','num'),COL('vehicle_no','차량번호'),COL('driver','기사'),COL('tax_invoice_no','세금계산서번호'),COL('invoice_date','발행일','date')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[1,5,'uses','견적 저장'],[2,6,'uses','수주 저장'],[3,7,'uses','출하·계산서'],[4,6,'uses','수주/출하 조회'],[7,6,'ref','so_no → sales_orders'],[6,5,'ref','견적 → 수주 전환'],[1,2,'flow','견적 → 수주'],[2,3,'flow','수주 → 출하']]}},
+ {cat:'철강 수입무역',name:'정산 · 원가 · 여신',desc:'수입원가(물대+관세+운임) 계산, 매입/매출 정산, 고객 여신·미수금',data:{nodes:[
+  {type:'section',name:'정산',meta:{icon:'◴'}},
+  {type:'screen',name:'수입원가계산',meta:{file:'landed_cost_calc.html',kind:'status'}},
+  {type:'screen',name:'매입매출정산',meta:{file:'trade_settlement_status.html',kind:'status'}},
+  {type:'screen',name:'여신·미수현황',meta:{file:'credit_receivable_status.html',kind:'status'}},
+  {type:'table',name:'landed_costs',meta:{cols:[COL('bl_no','B/L번호','text',1),COL('goods_amount','물품대(원)','num'),COL('duty','관세','num'),COL('clearance_fee','통관비','num'),COL('freight_ocean','해상운임','num'),COL('freight_inland','내륙운송비','num'),COL('etc_cost','기타비용','num'),COL('total_cost','총원가','num'),COL('total_ton','총중량(톤)','num'),COL('cost_per_ton','톤당원가','num')]}},
+  {type:'table',name:'receivables',meta:{cols:[COL('rc_id','ID','num',1),COL('customer_code','고객','text',0,1),COL('invoice_date','발행일','date'),COL('tax_invoice_no','세금계산서번호'),COL('amount','금액','num'),COL('collected','수금액','num'),COL('balance','미수잔액','num'),COL('due_date','결제기일','date'),COL('status','상태(미수/부분/완료)')]}},
+  {type:'table',name:'payables',meta:{cols:[COL('py_id','ID','num',1),COL('supplier_code','공급사','text',0,1),COL('contract_no','계약번호'),COL('pay_type','구분(LC결제/TT송금)'),COL('pay_date','결제일','date'),COL('currency','통화'),COL('amount_fx','외화금액','num'),COL('rate','적용환율','num'),COL('amount_krw','원화환산','num')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','B/L별 원가 집계'],[2,4,'uses','매입원가'],[2,5,'uses','매출'],[2,6,'uses','매입/결제'],[3,5,'uses','여신한도 대비 미수'],[1,2,'flow','원가 확정 후 마진 정산']]}}
 ];
 function myModules(){try{return JSON.parse(localStorage.getItem(LIB_LS)||'[]')}catch(e){return []}}
 function setMy(list){try{localStorage.setItem(LIB_LS,JSON.stringify(list))}catch(e){}}
@@ -1587,11 +1652,45 @@ try{const seed=${seed};${arr}.push(...seed);
 <\/script></body>`);
  return{html,code};
 }
+let pvScale=1;
+const PV_STEPS=[0.5,0.6,0.7,0.8,0.9,1,1.1,1.25];
+function pvApply(){
+ const w=$('pv_wrap'),f=$('pv_frame');if(!w||!f)return;
+ const s=pvScale;
+ /* 축소하면 iframe 을 배율의 역수만큼 키워 화면(폼·표)이 더 넓게 그려진 뒤 줄여 보인다 → 잘리던 칸이 다 보임 */
+ f.style.transform=`scale(${s})`;
+ f.style.width=(100/s)+'%';f.style.height=(100/s)+'%';
+ $('pv_zoom').textContent=Math.round(s*100)+'%';
+}
+function pvZoom(d){
+ let i=PV_STEPS.findIndex(x=>Math.abs(x-pvScale)<.01);if(i<0)i=5;
+ i=Math.max(0,Math.min(PV_STEPS.length-1,i+d));
+ pvScale=PV_STEPS[i];pvApply();
+}
+function pvFull(){
+ const m=pvDlg.querySelector('.modal');m.classList.toggle('full');
+ $('pv_full').textContent=m.classList.contains('full')?'▣ 창 크기':'⛶ 전체화면';
+ pvApply();
+}
 function previewScreen(id,kind){
  const n=N(id||(sel&&sel.node));if(!n||n.type!=='screen')return;
  pvNode=n;const {html}=buildPreview(n,kind);
  $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':'기타'}`;
+ pvScale=1;
  $('pv_frame').srcdoc=html;$('pv_msg').textContent='';pvDlg.classList.add('on');
+ pvApply();
+ /* 열릴 때 폭이 모자라면 자동으로 한 단계씩 축소해 다 보이게 맞춘다 */
+ const f=$('pv_frame');
+ f.onload=()=>{try{
+  const need=Math.max(f.contentDocument.documentElement.scrollWidth,f.contentDocument.body?f.contentDocument.body.scrollWidth:0);
+  const have=$('pv_wrap').clientWidth;
+  if(need>have+8){
+   let s=Math.max(0.5,Math.floor(have/need*20)/20);
+   pvScale=PV_STEPS.reduce((a,b)=>Math.abs(b-s)<Math.abs(a-s)&&b<=s+0.01?b:a,0.5);
+   pvApply();
+   $('pv_msg').textContent=`화면 폭이 넓어 ${Math.round(pvScale*100)}% 로 자동 축소했습니다. ＋/− 로 조절하거나 ⛶ 전체화면을 쓰세요.`;
+  }
+ }catch(e){}};
 }
 function pvMode(k){if(!pvNode)return;pvNode.meta.kind=k;render();renderPanel();previewScreen(pvNode.id,k)}
 function pvCode(){if(!pvNode)return;const {code}=buildPreview(pvNode);
