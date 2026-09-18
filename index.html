@@ -1101,7 +1101,7 @@ function renderPanel(){
    <div class="acts"><button class="btn" id="addCol">＋ 컬럼</button><button class="btn" id="addStd">＋ 기본 컬럼 (비고·수정일)</button><button class="btn" id="addCalcEx">ƒx 계산식 예제</button><button class="btn primary" id="autoColNames" title="중분류 → 화면 → 라벨의 영문 약자를 조합해 컬럼명을 자동으로 만듭니다">⚡ 자동칼럼명</button><button class="btn primary" id="autoKeyReq" title="라벨과 컬럼명을 보고 기본키(🔑)와 필수(✱) 항목을 자동으로 선택합니다. 자동선택 뒤에도 직접 수정할 수 있습니다.">⚡ 키·필수 자동선택</button><button class="btn" onclick="openPaste()">📋 항목 붙여넣기</button><button class="btn" onclick="sampleOne()">⇩ 실제 데이터 1건</button><span class="msg" id="smpMsg" style="font-size:11.5px;color:#8a94a6"></span></div>
    <div style="font-size:11px;color:#8a94a6;line-height:1.55">계산식은 같은 행의 <b>컬럼명</b>을 사용합니다. 예: <code>amount = qty * unit_price</code>, <code>defect_rate = IF(total_qty == 0, 0, defect_qty / total_qty * 100)</code>. 기본은 화면 계산이며, ƒx 행의 <b>DB</b>를 체크한 경우에만 계산값 컬럼을 DB에도 생성·저장합니다.</div></div>
    <section class="src" style="margin-top:2px"><h4>⚙ 운영 자동화</h4>
-    <div class="acts"><button class="btn primary" id="addOpsEx">전자결재적용</button><button class="btn danger" id="removeOpsEx" ${n.meta._electronicApprovalBackup?'':'disabled'}>전자결재적용해제</button><span style="font-size:11.5px;color:#8a94a6">작성→검토→확인→승인 전자결재와 자동번호·기한알림을 적용합니다. 해제하면 이 버튼으로 추가된 내용만 삭제·원상복구합니다.</span></div>
+    <div class="acts"><button class="btn primary" id="addOpsEx">전자결재적용</button><button class="btn danger" id="removeOpsEx" title="전자결재용 표준 컬럼과 결재 흐름을 제거합니다">전자결재적용해제</button><span style="font-size:11.5px;color:#8a94a6">작성→검토→확인→승인 전자결재와 자동번호·기한알림을 적용합니다. 해제하면 이 버튼으로 추가된 내용만 삭제·원상복구합니다.</span></div>
     <div style="display:grid;gap:7px">
      <div style="border-top:1px solid #e5e9ee;padding-top:7px"><label class="ck"><input id="f_auto_enable" type="checkbox" ${auto.enabled?'checked':''} ${pk0?.type!=='text'?'disabled':''}><b>자동번호</b> — 기본키가 비어 있으면 자동 채번</label>
       <div class="row3" style="margin-top:5px"><div class="f"><label>접두어</label><input id="f_auto_prefix" value="${esc(auto.prefix)}" placeholder="PO"></div><div class="f"><label>날짜형식</label><select id="f_auto_date"><option value="NONE" ${auto.date==='NONE'?'selected':''}>없음</option><option value="YYMM" ${auto.date==='YYMM'?'selected':''}>YYMM</option><option value="YYMMDD" ${auto.date==='YYMMDD'?'selected':''}>YYMMDD</option><option value="YYYYMMDD" ${auto.date==='YYYYMMDD'?'selected':''}>YYYYMMDD</option><option value="YYYY" ${auto.date==='YYYY'?'selected':''}>YYYY</option></select></div><div class="f"><label>일련번호 자리</label><input id="f_auto_digits" type="number" min="1" max="8" value="${auto.digits}"></div></div>
@@ -4055,16 +4055,40 @@ function addOperationsExamples(t){
 }
 function removeOperationsExamples(t){
  const b=t.meta._electronicApprovalBackup;
- if(!b){$('stat').textContent='전자결재적용 기록이 없습니다 — 사용자가 직접 만든 컬럼과 설정은 삭제하지 않았습니다.';return}
- const cols=t.meta.cols||(t.meta.cols=[]);let removed=0,restored=0;
- t.meta.cols=cols.filter(c=>{if(c&&c._electronicApprovalAdded){removed++;return false}return true});
+ const cols=t.meta.cols||(t.meta.cols=[]);
+ /* 전자결재 전용 표준 컬럼은 "적용" 표시가 남아 있지 않은 예전 설계/샘플에서도
+    해제 시 함께 정리한다. due_date/status 같은 일반 업무 컬럼은 자동 추가 표시가 있을 때만 삭제한다. */
+ const APPR_ONLY=new Set(['requested_by','written_at','reviewed_by','reviewed_at','confirmed_by','confirmed_at','approved_by','approved_at','reject_reason']);
+ const APPR_FLOW='작성 > 검토 > 확인 > 승인 > 완료 | 반려';
+ const norm=v=>String(v||'').replace(/\s+/g,'');
+ let removed=0,restored=0,clearedFlow=0;
+ t.meta.cols=cols.filter(c=>{
+  if(!c)return true;
+  if(c._electronicApprovalAdded||APPR_ONLY.has(c.name)){removed++;return false}
+  return true;
+ });
  for(const c of t.meta.cols){
-  if(c&&c._electronicApprovalPrevFlow){const p=c._electronicApprovalPrevFlow;if(p.exists)c.flow=p.value;else delete c.flow;delete c._electronicApprovalPrevFlow;restored++}
+  if(!c)continue;
+  if(c._electronicApprovalPrevFlow){
+   const p=c._electronicApprovalPrevFlow;
+   /* 적용 전부터 똑같은 전자결재 흐름이 들어 있던 샘플은 '해제' 의미에 맞게 흐름도 제거 */
+   if(p.exists&&norm(p.value)!==norm(APPR_FLOW)){c.flow=p.value;restored++}
+   else{delete c.flow;clearedFlow++}
+   delete c._electronicApprovalPrevFlow;
+  }else if(c.flow&&norm(c.flow)===norm(APPR_FLOW)){
+   delete c.flow;clearedFlow++;
+  }
  }
+ /* 자동번호/기한알림은 적용 전 값이 있으면 그대로 돌려놓고, 전자결재 설정은 확실히 해제한다. */
  const restore=(key,s)=>{if(s&&s.exists)t.meta[key]=cloneUndo(s.value);else delete t.meta[key]};
- restore('autoNo',b.autoNo);restore('alert',b.alert);restore('approval',b.approval);
+ if(b){restore('autoNo',b.autoNo);restore('alert',b.alert)}
+ delete t.meta.approval;
  delete t.meta._electronicApprovalBackup;
- $('stat').textContent=`전자결재적용해제 완료 — 자동 추가 컬럼 ${removed}개 삭제${restored?` · 기존 상태흐름 ${restored}개 원상복구`:''} · 적용 전 자동번호·기한알림·결재 설정으로 복원했습니다.`;
+ save();
+ const extra=[];
+ if(clearedFlow)extra.push(`결재 상태흐름 ${clearedFlow}개 제거`);
+ if(restored)extra.push(`기존 상태흐름 ${restored}개 복원`);
+ $('stat').textContent=`전자결재적용해제 완료 — 결재용 컬럼 ${removed}개 삭제${extra.length?' · '+extra.join(' · '):''}${b?' · 자동번호·기한알림은 적용 전 상태로 복원':''}.`;
 }
 
 function addCalcExamples(t){
