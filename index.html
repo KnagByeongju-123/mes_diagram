@@ -1098,7 +1098,7 @@ function renderPanel(){
     <td><button class="x" data-del="${i}">×</button></td></tr>
     ${(c.formula!==undefined||c.calc)?`<tr><td colspan="8" style="background:#f3f7fb;padding:5px 6px"><div style="display:grid;grid-template-columns:auto 1fr 52px 54px auto;gap:5px;align-items:center"><b style="color:#2f6fb5">ƒx</b><input data-i="${i}" data-k="formula" value="${esc(c.formula||'')}" placeholder="예: qty * unit_price  /  IF(plan_qty == 0, 0, result_qty / plan_qty * 100)" style="border:1px solid #b9cce2;background:#fff"><input data-i="${i}" data-k="unit" value="${esc(c.unit||'')}" placeholder="단위"><input data-i="${i}" data-k="decimals" type="number" min="0" max="8" value="${esc(c.decimals??'')}" placeholder="소수"><label class="ck" title="체크하면 계산 결과도 DB 컬럼에 저장"><input type="checkbox" data-i="${i}" data-k="calcStore" ${c.calcStore?'checked':''}>DB</label></div><div style="font-size:10.8px;color:#6b7686;margin-top:3px">사용: + − ×(*) ÷(/) %, 비교(>, &lt;, ==), IF(), ROUND(), MIN(), MAX(), ABS(), COALESCE(), TODAY(), DAYS(시작일,종료일)</div></td></tr>`:''}
     ${(FLOW_COL.test(c.name)||c.flow)?`<tr><td colspan="8" style="background:#f7f9fb;padding:2px 6px 5px"><span style="font-size:11px;color:#8a94a6">⇢ 상태흐름</span> <input data-i="${i}" data-k="flow" value="${esc(c.flow||'')}" placeholder="대기 > 승인 > 발주 > 입고완료 | 취소, 보류  (비우면 라벨 괄호 안 순서)" style="width:calc(100% - 70px);border:1px solid #dbe3ea;background:#fff">${parseFlow(c)?`<div style="font-size:11px;color:#2e7d5b;margin-top:2px">→ ${parseFlow(c).steps.join(' › ')}${parseFlow(c).ends.length?' · 종료: '+parseFlow(c).ends.join(', '):''}</div>`:''}</td></tr>`:''}`).join('')}</tbody></table></div>
-   <div class="acts"><button class="btn" id="addCol">＋ 컬럼</button><button class="btn" id="addStd">＋ 기본 컬럼 (비고·수정일)</button><button class="btn" id="addCalcEx">ƒx 계산식 예제</button><button class="btn primary" onclick="openPaste()">📋 항목 붙여넣기</button><button class="btn" onclick="sampleOne()">⇩ 실제 데이터 1건</button><span class="msg" id="smpMsg" style="font-size:11.5px;color:#8a94a6"></span></div>
+   <div class="acts"><button class="btn" id="addCol">＋ 컬럼</button><button class="btn" id="addStd">＋ 기본 컬럼 (비고·수정일)</button><button class="btn" id="addCalcEx">ƒx 계산식 예제</button><button class="btn" id="autoColNames" title="중분류 → 화면 → 라벨의 영문 약자를 조합해 컬럼명을 자동으로 만듭니다">⚡ 자동칼럼명</button><button class="btn primary" onclick="openPaste()">📋 항목 붙여넣기</button><button class="btn" onclick="sampleOne()">⇩ 실제 데이터 1건</button><span class="msg" id="smpMsg" style="font-size:11.5px;color:#8a94a6"></span></div>
    <div style="font-size:11px;color:#8a94a6;line-height:1.55">계산식은 같은 행의 <b>컬럼명</b>을 사용합니다. 예: <code>amount = qty * unit_price</code>, <code>defect_rate = IF(total_qty == 0, 0, defect_qty / total_qty * 100)</code>. 기본은 화면 계산이며, ƒx 행의 <b>DB</b>를 체크한 경우에만 계산값 컬럼을 DB에도 생성·저장합니다.</div></div>
    <section class="src" style="margin-top:2px"><h4>⚙ 운영 자동화</h4>
     <div class="acts"><button class="btn primary" id="addOpsEx">⚙ 운영기능 예제</button><span style="font-size:11.5px;color:#8a94a6">승인 Workflow · 자동번호 · 납기알림 기본 예제를 한 번에 추가합니다.</span></div>
@@ -1144,6 +1144,7 @@ function renderPanel(){
   if($('f_apikey'))$('f_apikey').oninput=e=>{n.meta.apikey=e.target.value.trim()};
   $('addStd').onclick=()=>{for(const c of [{name:'remark',label:'비고',type:'text'},{name:'updated_at',label:'수정일',type:'date'}])if(!n.meta.cols.some(x=>x.name===c.name))n.meta.cols.push(c);renderPanel();render()};
   $('addCalcEx').onclick=()=>{addCalcExamples(n);renderPanel();render()};
+  $('autoColNames').onclick=()=>{autoColumnNames(n);renderPanel();render()};
   $('addOpsEx').onclick=()=>{addOperationsExamples(n);renderPanel();render()};
   if($('f_auto_enable'))$('f_auto_enable').onchange=e=>{const a=n.meta.autoNo||(n.meta.autoNo={});a.enabled=e.target.checked;save();renderPanel()};
   if($('f_auto_prefix'))$('f_auto_prefix').oninput=e=>{const a=n.meta.autoNo||(n.meta.autoNo={});a.prefix=e.target.value.trim().toUpperCase();save()};
@@ -1161,6 +1162,77 @@ function renderPanel(){
 }
 function flipEdge(){const e=D.edges.find(x=>x.id===sel.edge);[e.from,e.to]=[e.to,e.from];render();renderPanel()}
 function cloneNode(){const n=N(sel.node);const c=JSON.parse(JSON.stringify(n));c.id=uid();c.name=n.name+' 복사';c.x+=24;c.y+=24;D.nodes.push(c);select({node:c.id})}
+
+
+/* ═══════════════ 자동 컬럼명 ═══════════════
+   테이블이 연결된 중분류 → 화면 → 라벨을 읽어 영문 약자를 조합한다.
+   예) 생산관리 → 생산실적등록 → 작업일자 = prod_perf_reg_work_dt
+   사전에 없는 한글은 초성 기반 영문 코드로 보완한다. */
+const AUTO_SEC_EXACT={
+ '생산관리':'prod','품질관리':'qa','금형관리':'die','자재관리':'mat','수주관리':'ord','출하관리':'ship','설비관리':'eqp','안전관리':'safe','구매관리':'pur','재고관리':'inv','인사관리':'hr','영업관리':'sales','기준정보':'master','공정관리':'proc','원가관리':'cost','물류관리':'logi','개발관리':'dev','프로젝트관리':'prj','환경관리':'env','ESG관리':'esg','위험성평가':'risk'
+};
+const AUTO_SCR_EXACT={
+ '생산실적등록':'perf_reg','생산실적':'perf','생산현황':'prod_sts','수주등록':'ord_reg','수주현황':'ord_sts','수주대시보드':'ord_dash','출하등록':'ship_reg','출하현황':'ship_sts','품질검사등록':'insp_reg','불량현황':'defect_sts','금형점검':'die_chk','금형점검등록':'die_chk_reg','자재입고':'mat_rcv','자재출고':'mat_iss','위험성평가':'risk_eval','개선조치':'imp_act','사용자정보':'user','권한관리':'perm'
+};
+const AUTO_LBL_EXACT={
+ '작업일자':'work_dt','작업자':'worker','작업자명':'worker','설비':'eqp','설비명':'eqp','품번':'item_no','품목':'item','품목명':'item','수량':'qty','계획수량':'plan_qty','실적수량':'result_qty','양품수량':'good_qty','불량수량':'defect_qty','불량률':'defect_rate','달성률':'ach_rate','단가':'price','금액':'amt','수주번호':'ord_no','발주번호':'po_no','출하번호':'ship_no','납기일':'due_dt','완료예정일':'due_dt','입고수량':'rcv_qty','출고수량':'iss_qty','발주수량':'po_qty','작성자':'writer','작성일':'write_dt','검토자':'reviewer','검토일':'review_dt','확인자':'confirmer','확인일':'confirm_dt','승인자':'approver','승인일':'approve_dt','승인상태':'appr_sts','반려사유':'reject_reason','비고':'rmk','수정일':'upd_dt','수정일시':'upd_at','등록일':'reg_dt','등록일시':'reg_at','코드':'cd','명칭':'name','이름':'name','상태':'sts','구분':'type','일자':'dt','날짜':'dt','일시':'at'
+};
+const AUTO_KO_TERMS=[
+ ['완료예정일','due_dt'],['반려사유','reject_reason'],['생산실적','perf'],['품질검사','insp'],['사용여부','active'],['계획수량','plan_qty'],['실적수량','result_qty'],['양품수량','good_qty'],['불량수량','defect_qty'],['발주수량','po_qty'],['입고수량','rcv_qty'],['출고수량','iss_qty'],['수주번호','ord_no'],['발주번호','po_no'],['출하번호','ship_no'],['작업일자','work_dt'],['전화번호','tel'],['휴대폰번호','mobile'],['프로젝트','prj'],['대시보드','dash'],['위험성','risk'],['거래처','vendor'],['고객사','customer'],['완료예정','due'],
+ ['생산','prod'],['실적','perf'],['등록','reg'],['현황','sts'],['품질','qa'],['검사','insp'],['불량','defect'],['금형','die'],['점검','chk'],['수주','ord'],['발주','po'],['출하','ship'],['출고','iss'],['입고','rcv'],['자재','mat'],['설비','eqp'],['공정','proc'],['안전','safe'],['위험','risk'],['평가','eval'],['개선','imp'],['조치','act'],['계획','plan'],['작업자','worker'],['담당자','owner'],['작업','work'],['지시','inst'],['고객','customer'],['품번','item_no'],['품목','item'],['제품','product'],['차종','model'],['일자','dt'],['날짜','dt'],['일시','at'],['시간','time'],['수량','qty'],['단가','price'],['금액','amt'],['번호','no'],['코드','cd'],['명칭','name'],['이름','name'],['구분','type'],['유형','type'],['상태','sts'],['단계','step'],['순번','seq'],['사번','emp_no'],['로트','lot'],['LOT','lot'],['비고','rmk'],['재질','matl'],['두께','thk'],['중량','wt'],['폭','wid'],['피치','pitch'],['길이','len'],['높이','hgt'],['외경','od'],['내경','id'],['온도','temp'],['습도','hum'],['압력','press'],['속도','speed'],['횟수','cnt'],['사유','reason'],['원인','cause'],['대책','counter'],['결과','result'],['판정','judg'],['기준','std'],['완료','done'],['예정','plan'],['납기','due'],['요청','req'],['작성자','writer'],['작성','write'],['검토자','reviewer'],['검토','review'],['확인자','confirmer'],['확인','confirm'],['승인자','approver'],['승인','approve'],['반려','reject'],['수정','upd'],['생성','crt'],['이메일','email'],['전화','tel'],['휴대폰','mobile'],['부서','dept'],['공장','plant'],['사업부','biz'],['사용','use'],['활성','active'],['주소','addr'],['제목','title'],['내용','content'],['설명','desc'],['첨부','attach'],['파일','file'],['사진','img'],['양품','good'],['불량률','defect_rate'],['관리','mgt']
+].sort((a,b)=>b[0].length-a[0].length);
+const AUTO_EN_ABBR={production:'prod',management:'mgt',manager:'mgr',registration:'reg',register:'reg',status:'sts',performance:'perf',quantity:'qty',number:'no',date:'dt',datetime:'at',equipment:'eqp',inspection:'insp',quality:'qa',material:'mat',shipping:'ship',shipment:'ship',customer:'cust',project:'prj',department:'dept',amount:'amt',price:'price',weight:'wt',width:'wid',height:'hgt',length:'len',remark:'rmk',remarks:'rmk',description:'desc'};
+function hangulInitialCode(s){
+ const onset=['g','gg','n','d','dd','r','m','b','bb','s','ss','','j','jj','c','k','t','p','h'];let out='';
+ for(const ch of String(s||'')){const cp=ch.charCodeAt(0);if(cp>=0xAC00&&cp<=0xD7A3){const i=Math.floor((cp-0xAC00)/588);out+=onset[i]||'x'}}
+ return out.slice(0,8);
+}
+function autoAbbrText(text,role){
+ let raw=String(text||'').trim();if(!raw)return '';
+ const exact=role==='section'?AUTO_SEC_EXACT[raw]:role==='screen'?AUTO_SCR_EXACT[raw]:AUTO_LBL_EXACT[raw];if(exact)return exact;
+ raw=raw.replace(/\([^)]*\)|\[[^\]]*\]/g,' ').trim();
+ const original=raw;let work=raw.replace(/([a-z0-9])([A-Z])/g,'$1_$2');
+ for(const [ko,en] of AUTO_KO_TERMS)work=work.split(ko).join(' '+en+' ');
+ work=work.replace(/[가-힣ㄱ-ㅎㅏ-ㅣ]+/g,' ').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'').toLowerCase();
+ let tok=work.split('_').filter(Boolean).map(x=>AUTO_EN_ABBR[x]||x);
+ if(role==='section'&&tok.length>1)tok=tok.filter(x=>x!=='mgt');
+ let code=tok.join('_').replace(/_+/g,'_');
+ if(!code&&/[가-힣]/.test(original))code=hangulInitialCode(original);
+ return code;
+}
+function autoColumnContext(t){
+ const screens=D.edges.filter(e=>e.kind==='uses'&&e.to===t.id).map(e=>N(e.from)).filter(x=>x&&x.type==='screen');
+ const scr=screens.find(x=>x.meta?.kind==='input')||screens[0]||null;
+ let sec=null,mod=null;
+ if(scr){sec=D.edges.filter(e=>e.kind==='contains'&&e.to===scr.id).map(e=>N(e.from)).find(x=>x?.type==='section')||null;
+  if(sec)mod=D.edges.filter(e=>e.kind==='contains'&&e.to===sec.id).map(e=>N(e.from)).find(x=>x?.type==='module')||null;
+  else mod=D.edges.filter(e=>e.kind==='contains'&&e.to===scr.id).map(e=>N(e.from)).find(x=>x?.type==='module')||null;}
+ return{scr,sec,mod};
+}
+function autoColumnNames(t){
+ const cols=t?.meta?.cols||[];if(!cols.length){$('stat').textContent='⚡ 자동칼럼명 — 컬럼이 없습니다.';return}
+ const ctx=autoColumnContext(t),secName=ctx.sec?.name||ctx.mod?.name||'공통',scrName=ctx.scr?.name||t.name||'화면';
+ let sec=autoAbbrText(secName,'section')||'com',scr=autoAbbrText(scrName,'screen')||'scr';
+ const secTok=new Set(sec.split('_').filter(Boolean));let scrTok=scr.split('_').filter(x=>x&&!secTok.has(x));if(!scrTok.length)scrTok=['scr'];scr=scrTok.join('_');
+ const used=new Set(),rename={};let changed=0,skipped=0;
+ for(let i=0;i<cols.length;i++){
+  const c=cols[i],old=String(c.name||'').trim(),lab=String(c.label||'').trim();let fld=autoAbbrText(lab,'label');
+  if(!fld){if(/^[a-z_][a-z0-9_]*$/i.test(old))fld=old.toLowerCase();else fld='fld'+String(i+1).padStart(2,'0');skipped++}
+  const seen=new Set(),parts=[...sec.split('_'),...scr.split('_'),...fld.split('_')].filter(x=>x&&!seen.has(x)&&(seen.add(x),true));
+  let base=parts.join('_').replace(/_+/g,'_').replace(/^_+|_+$/g,'').toLowerCase();if(!/^[a-z_]/.test(base))base='f_'+base;
+  base=base.slice(0,60).replace(/_+$/,'')||('field_'+(i+1));let name=base,n=2;while(used.has(name))name=(base.slice(0,57)+'_'+n++);used.add(name);
+  if(old!==name){rename[old]=name;c.name=name;changed++}
+ }
+ const rkeys=Object.keys(rename).filter(Boolean);
+ if(rkeys.length){
+  for(const c of cols)if(c.formula)c.formula=String(c.formula).replace(/[A-Za-z_][A-Za-z0-9_]*/g,m=>rename[m]||m);
+  if(t.meta?.alert?.dateCol&&rename[t.meta.alert.dateCol])t.meta.alert.dateCol=rename[t.meta.alert.dateCol];
+  if(t.meta?.approval?.statusCol&&rename[t.meta.approval.statusCol])t.meta.approval.statusCol=rename[t.meta.approval.statusCol];
+ }
+ save();
+ const path=`${ctx.sec?.name||ctx.mod?.name||'공통'} → ${ctx.scr?.name||'(연결 화면 없음)'}`;
+ $('stat').textContent=`⚡ 자동칼럼명 ${changed}개 적용 · 기준: ${path}${skipped?' · 약자 미등록 라벨 '+skipped+'개는 기존명/자동코드 사용':''}`;
+}
 
 /* ═══════════════ 자동정렬 (계층: 대메뉴 → 중분류 → 화면 → 테이블) ═══════════════ */
 function autoLayout(){
@@ -3630,14 +3702,15 @@ function alertConfig(t){
  return{enabled:a.enabled!==undefined?!!a.enabled:!!def,dateCol:a.dateCol||def?.name||'',days:Math.max(0,Math.min(365,Number(a.days??3)||0))};
 }
 function approvalConfig(t){
- const a=t?.meta?.approval||{},as=a.assignees||{},fl=flowOf(t),approvalFlow=!!fl&&['작성','검토','확인','승인'].some(x=>fl.steps.includes(x));
+ const a=t?.meta?.approval||{},as=a.assignees||{},fl=flowOf(t),approvalFlow=!!fl&&['작성','검토','확인','승인'].some(x=>fl.steps.includes(x)),cols=t?.meta?.cols||[];
+ const pick=(fixed,label)=>cols.find(c=>c.name===fixed)?.name||cols.find(c=>String(c.label||'').replace(/\s/g,'')===label)?.name||fixed;
  const roles=[
-  {key:'writer',step:'작성',label:'작성자',col:'requested_by',dateCol:'written_at',perm:''},
-  {key:'reviewer',step:'검토',label:'검토자',col:'reviewed_by',dateCol:'reviewed_at',perm:'can_review'},
-  {key:'confirmer',step:'확인',label:'확인자',col:'confirmed_by',dateCol:'confirmed_at',perm:'can_confirm'},
-  {key:'approver',step:'승인',label:'승인자',col:'approved_by',dateCol:'approved_at',perm:'can_approve'}
+  {key:'writer',step:'작성',label:'작성자',col:pick('requested_by','작성자'),dateCol:pick('written_at','작성일'),perm:''},
+  {key:'reviewer',step:'검토',label:'검토자',col:pick('reviewed_by','검토자'),dateCol:pick('reviewed_at','검토일'),perm:'can_review'},
+  {key:'confirmer',step:'확인',label:'확인자',col:pick('confirmed_by','확인자'),dateCol:pick('confirmed_at','확인일'),perm:'can_confirm'},
+  {key:'approver',step:'승인',label:'승인자',col:pick('approved_by','승인자'),dateCol:pick('approved_at','승인일'),perm:'can_approve'}
  ].map(r=>({...r,assignee:String(as[r.key]??a[r.key]??'').trim()}));
- return{enabled:a.enabled!==undefined?!!a.enabled:approvalFlow,lock:a.lock!==undefined?!!a.lock:false,routeTemplate:String(a.routeTemplate||'').trim(),statusCol:a.statusCol||fl?.col||'status',roles};
+ return{enabled:a.enabled!==undefined?!!a.enabled:approvalFlow,lock:a.lock!==undefined?!!a.lock:false,routeTemplate:String(a.routeTemplate||'').trim(),statusCol:a.statusCol||fl?.col||pick('status','승인상태'),roles};
 }
 function addOperationsExamples(t){
  const cols=t.meta.cols||(t.meta.cols=[]),by=new Map(cols.map(c=>[c.name,c]));let n=0;
