@@ -165,7 +165,7 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
     <button onclick="newDesign(true)">✧ 신규작성 (기본 뼈대 한 벌)</button>
     <button onclick="startWizard()">❓ 문답으로 만들기 (정방향 · 역방향)</button>
     <button onclick="openLib()">📦 모듈 보관함</button>
-    <button onclick="addApprovalMasterPack()">👥 사용자·권한·조직·결재 통합 기준정보 추가</button>
+    <button onclick="addApprovalMasterPack()">👥 통합 사용자·권한관리 모듈 추가</button>
     <button onclick="loadSample()">✦ 샘플 설계 불러오기</button>
     <hr>
     <button onclick="openMerge()">◈ 기준정보 통합 (중복 마스터 합치기)</button>
@@ -750,7 +750,7 @@ function renderPanel(){
       <div class="row2" style="margin-top:5px"><div class="f"><label>기준 날짜 컬럼</label><select id="f_alert_date"><option value="">선택 안 함</option>${dateCols.map(c=>`<option value="${esc(c.name)}" ${al.dateCol===c.name?'selected':''}>${esc(c.label||c.name)} (${esc(c.name)})</option>`).join('')}</select></div><div class="f"><label>몇 일 전부터 알림</label><input id="f_alert_days" type="number" min="0" max="365" value="${al.days}"></div></div></div>
      <div style="border-top:1px solid #e5e9ee;padding-top:7px"><label class="ck"><input id="f_appr_enable" type="checkbox" ${ap.enabled?'checked':''}><b>결재 담당자 지정</b> — <code>users.user_key</code> 기준으로 작성 · 검토 · 확인 · 승인자를 지정</label>
       <div class="row2" style="margin-top:5px">${ap.roles.map(r=>`<div class="f"><label>${esc(r.step)}자 사용자키</label><input data-appr="${r.key}" value="${esc(r.assignee||'')}" placeholder="예: U0001 · 비우면 사용자정보에서 선택"></div>`).join('')}</div>
-      <div class="row2" style="margin-top:5px"><div class="f"><label>결재선 템플릿 코드</label><input id="f_appr_template" value="${esc(ap.routeTemplate||'')}" placeholder="예: STD_APPROVAL"></div><div class="f"><label>기준정보</label><button class="btn" id="addApprMasters" type="button">👥 사용자·조직·결재선 기준정보 추가</button></div></div>
+      <div class="row2" style="margin-top:5px"><div class="f"><label>결재선 템플릿 코드</label><input id="f_appr_template" value="${esc(ap.routeTemplate||'')}" placeholder="예: STD_APPROVAL"></div><div class="f"><label>기준정보</label><button class="btn" id="addApprMasters" type="button">👥 사용자·권한관리 기준정보 추가</button></div></div>
       <label class="ck" style="margin-top:5px"><input id="f_appr_lock" type="checkbox" ${ap.lock?'checked':''}>설계에서 지정/템플릿으로 지정한 담당자를 생성 화면에서 변경하지 못하게 고정</label>
       <div style="font-size:11px;color:#6b7686;margin-top:3px">생성 화면의 결재자 선택은 <b>users</b>의 활성 사용자에서 가져옵니다. 검토·확인·승인은 사용자정보의 <code>can_review / can_confirm / can_approve</code> 권한으로 필터링합니다. 템플릿 코드를 지정하면 <b>approval_route_templates</b>의 결재선을 자동 적용합니다.</div></div>
     </div>
@@ -1053,7 +1053,7 @@ function wizNext(){
  }
  WZ.done.push(q);render();autoLayout();wizDlg.classList.add('on');wizShow();
 }
-/* ═══════════════ 사용자 · 조직 · 결재 기준정보 팩 ═══════════════ */
+/* ═══════════════ 통합 사용자 · 권한 · 조직 · 결재 기준정보 팩 ═══════════════ */
 function addApprovalMasterPack(){
  const packs={
   users:[
@@ -1080,9 +1080,15 @@ function addApprovalMasterPack(){
  };
  const ensureTable=(name,cs)=>{let t=D.nodes.find(n=>n.type==='table'&&n.name===name);if(!t)t=addNode('table',name,{cols:cloneUndo(cs)},0,0);else{t.meta.cols=t.meta.cols||[];for(const c of cs)if(!t.meta.cols.some(x=>x.name===c.name))t.meta.cols.push(cloneUndo(c))}return t};
  const ensureModule=name=>D.nodes.find(x=>x.type==='module'&&x.name===name)||addNode('module',name,{icon:'⚙',desc:'로그인·사용자·메뉴권한·조직·결재선 통합 관리'},0,0);
- const ensureSection=(m,name)=>{let n=D.nodes.find(x=>x.type==='section'&&x.name===name);if(!n)n=addNode('section',name,{icon:'👥'},0,0);addEdge(m.id,n.id,'contains','포함',{quiet:true,noSelect:true});return n};
+ const ensureSection=(m,name)=>{let n=D.nodes.find(x=>x.type==='section'&&x.name===name);
+  if(!n&&name==='사용자·권한관리'){
+   const legacy=['사용자·조직·결재','사용자 · 권한'];
+   n=D.nodes.find(x=>x.type==='section'&&legacy.includes(x.name)&&D.edges.some(e=>e.kind==='contains'&&e.from===m.id&&e.to===x.id));
+   if(n)n.name=name;
+  }
+  if(!n)n=addNode('section',name,{icon:'👥'},0,0);addEdge(m.id,n.id,'contains','포함',{quiet:true,noSelect:true});return n};
  const ensureScreen=(sec,name,file,kind='input')=>{let n=D.nodes.find(x=>x.type==='screen'&&x.name===name);if(!n)n=addNode('screen',name,{file,kind},0,0);else{n.meta.file=file;n.meta.kind=kind}addEdge(sec.id,n.id,'contains','포함',{quiet:true,noSelect:true});return n};
- const mod=ensureModule('시스템관리'),sec=ensureSection(mod,'사용자·조직·결재');
+ const mod=ensureModule('시스템관리'),sec=ensureSection(mod,'사용자·권한관리');
  const users=ensureTable('users',packs.users),perms=ensureTable('user_permissions',packs.user_permissions),pws=ensureTable('user_initial_passwords',packs.user_initial_passwords),deps=ensureTable('departments',packs.departments),pos=ensureTable('positions',packs.positions),routes=ensureTable('approval_route_templates',packs.approval_route_templates);
  const su=ensureScreen(sec,'사용자정보','user_information.html','perm'),so=ensureScreen(sec,'조직정보','organization_management.html'),sr=ensureScreen(sec,'결재선 템플릿','approval_route_template.html');
  addEdge(su.id,users.id,'uses','계정·역할·결재권한',{quiet:true,noSelect:true});addEdge(su.id,perms.id,'uses','메뉴별 조회·저장·수정·삭제',{quiet:true,noSelect:true});addEdge(su.id,pws.id,'uses','초기 비밀번호 발급·재설정',{quiet:true,noSelect:true});
@@ -1135,7 +1141,7 @@ function newDesign(withSkeleton){
  addEdge(sta.id,tbl.id,'uses','조회/수정');
  addApprovalMasterPack();
  select(null);autoLayout();
- $('stat').textContent='새 설계 — 기본 업무화면과 사용자·조직·결재 기준정보까지 준비되었습니다. 블록 이름과 컬럼을 고쳐 쓰세요.';
+ $('stat').textContent='새 설계 — 기본 업무화면과 통합 사용자·권한관리 기준정보까지 준비되었습니다. 블록 이름과 컬럼을 고쳐 쓰세요.';
 }
 /* ═══════════════ 샘플 (mes_template 의 SAMPLE MES) ═══════════════ */
 function loadSample(){
@@ -1148,23 +1154,19 @@ function loadSample(){
  mod('영업관리','▣','수주 · 출하');sec('영업관리','수주','▣');scr('수주','수주등록','sample_input.html','input');scr('수주','수주현황','sample_status.html','status');scr('수주','수주 대시보드','sample_dashboard.html','dash');
  sec('영업관리','출하','⇪');scr('출하','출하등록','shipment_input.html','input');scr('출하','출하현황','shipment_status.html','status');
  mod('생산관리','⚙','계획 · 실적');sec('생산관리','실적','⚙');scr('실적','생산실적등록','prod_result_input.html','input');scr('실적','생산실적현황','prod_result_status.html','status');
- mod('기준정보','▦','거래처 · 품목 · 사용자 · 조직 · 결재선');sec('기준정보','공통','⚙');scr('공통','거래처관리','vendor_management.html','input');scr('공통','품목관리','item_management.html','input');scr('공통','사용자정보','user_information.html','input');scr('공통','조직정보','organization_management.html','input');scr('공통','결재선 템플릿','approval_route_template.html','input');
+ mod('기준정보','▦','거래처 · 품목');sec('기준정보','공통','⚙');scr('공통','거래처관리','vendor_management.html','input');scr('공통','품목관리','item_management.html','input');
  tbl('sample_orders',[{name:'order_no',label:'수주번호',type:'text',pk:true,req:true},{name:'order_date',label:'수주일',type:'date',req:true},{name:'due_date',label:'납기일',type:'date'},{name:'customer_name',label:'거래처',type:'text',req:true},{name:'item_name',label:'품목',type:'text',req:true},{name:'status',label:'승인상태',type:'text',flow:'작성 > 검토 > 확인 > 승인 > 완료 | 반려'},{name:'requested_by',label:'작성자',type:'text'},{name:'written_at',label:'작성일',type:'date'},{name:'reviewed_by',label:'검토자',type:'text'},{name:'reviewed_at',label:'검토일',type:'date'},{name:'confirmed_by',label:'확인자',type:'text'},{name:'confirmed_at',label:'확인일',type:'date'},{name:'approved_by',label:'승인자',type:'text'},{name:'qty',label:'수량',type:'num',sample:'10'},{name:'unit_price',label:'단가',type:'num',sample:'2500'},{name:'amount',label:'금액',type:'num',formula:'qty * unit_price',unit:'원',decimals:0},{name:'approved_at',label:'승인일',type:'date'},{name:'reject_reason',label:'반려사유',type:'text'},{name:'remark',label:'비고',type:'text'}],{autoNo:{enabled:true,prefix:'ORD',date:'YYMMDD',digits:3,sep:'-'},alert:{enabled:true,dateCol:'due_date',days:3},approval:{enabled:true,lock:false,routeTemplate:'STD_APPROVAL',assignees:{writer:'',reviewer:'',confirmer:'',approver:''}}});
  tbl('shipments',[{name:'ship_no',label:'출하번호',type:'text',pk:true,req:true},{name:'ship_date',label:'출하일',type:'date',req:true},{name:'order_no',label:'수주번호',type:'text',req:true},{name:'customer_name',label:'거래처',type:'text'},{name:'item_name',label:'품목',type:'text'},{name:'qty',label:'출하수량',type:'num'},{name:'remark',label:'비고',type:'text'}]);
  tbl('prod_results',[{name:'result_no',label:'실적번호',type:'text',pk:true,req:true},{name:'work_date',label:'작업일',type:'date',req:true},{name:'order_no',label:'수주번호',type:'text'},{name:'item_name',label:'품목',type:'text'},{name:'worker',label:'작업자',type:'text'},{name:'good_qty',label:'양품',type:'num',sample:'980'},{name:'defect_qty',label:'불량',type:'num',sample:'20'},{name:'total_qty',label:'총생산수량',type:'num',formula:'good_qty + defect_qty',unit:'EA',decimals:0},{name:'defect_rate',label:'불량률',type:'num',formula:'IF(total_qty == 0, 0, defect_qty / total_qty * 100)',unit:'%',decimals:2},{name:'remark',label:'비고',type:'text'}]);
  tbl('vendors',[{name:'vendor_code',label:'거래처코드',type:'text',pk:true,req:true},{name:'vendor_name',label:'거래처명',type:'text',req:true},{name:'vendor_type',label:'구분',type:'text'},{name:'phone',label:'전화',type:'text'},{name:'is_active',label:'사용',type:'bool'}]);
  tbl('items',[{name:'item_code',label:'품목코드',type:'text',pk:true,req:true},{name:'item_name',label:'품목명',type:'text',req:true},{name:'spec',label:'규격',type:'text'},{name:'unit',label:'단위',type:'text'},{name:'unit_price',label:'단가',type:'num'}]);
- tbl('users',[{name:'user_key',label:'사용자키',type:'text',pk:true},{name:'user_id',label:'아이디',type:'text'},{name:'employee_no',label:'사번',type:'text'},{name:'name',label:'이름',type:'text'},{name:'department_code',label:'부서코드',type:'text'},{name:'department_name',label:'부서',type:'text'},{name:'position_name',label:'직급/직책',type:'text'},{name:'role',label:'권한',type:'text'},{name:'can_review',label:'검토권한',type:'bool'},{name:'can_confirm',label:'확인권한',type:'bool'},{name:'can_approve',label:'승인권한',type:'bool'},{name:'is_active',label:'사용',type:'bool'}]);
- tbl('departments',[{name:'department_code',label:'부서코드',type:'text',pk:true,req:true},{name:'department_name',label:'부서명',type:'text',req:true},{name:'parent_department_code',label:'상위부서',type:'text'},{name:'manager_key',label:'부서장 사용자키',type:'text'},{name:'is_active',label:'사용',type:'bool'}]);
- tbl('positions',[{name:'position_code',label:'직급코드',type:'text',pk:true,req:true},{name:'position_name',label:'직급/직책명',type:'text',req:true},{name:'grade_order',label:'직급순서',type:'num'},{name:'is_active',label:'사용',type:'bool'}]);
- tbl('approval_route_templates',[{name:'template_code',label:'결재선코드',type:'text',pk:true,req:true,sample:'STD_APPROVAL'},{name:'template_name',label:'결재선명',type:'text',req:true,sample:'기본 결재선'},{name:'document_type',label:'문서유형',type:'text'},{name:'department_code',label:'적용부서코드',type:'text'},{name:'writer_key',label:'작성자 사용자키',type:'text'},{name:'reviewer_key',label:'검토자 사용자키',type:'text'},{name:'confirmer_key',label:'확인자 사용자키',type:'text'},{name:'approver_key',label:'승인자 사용자키',type:'text'},{name:'is_active',label:'사용',type:'bool'}]);
  const use=(s,t,l)=>addEdge(SC[s].id,T[t].id,'uses',l);
  use('수주등록','sample_orders','저장/수정');use('수주현황','sample_orders','조회');use('수주 대시보드','sample_orders','KPI·기한알림');use('출하등록','shipments','저장');use('출하현황','shipments','조회');use('생산실적등록','prod_results','저장');use('생산실적현황','prod_results','조회');
- use('거래처관리','vendors','');use('품목관리','items','');use('사용자정보','users','');use('조직정보','departments','부서');use('조직정보','positions','직급');use('결재선 템플릿','approval_route_templates','결재선');use('결재선 템플릿','users','결재자 선택');use('수주등록','vendors','거래처 목록');use('수주등록','items','품목 목록');
+ use('거래처관리','vendors','');use('품목관리','items','');use('수주등록','vendors','거래처 목록');use('수주등록','items','품목 목록');
  addEdge(T.shipments.id,T.sample_orders.id,'ref','order_no → sample_orders.order_no');addEdge(T.prod_results.id,T.sample_orders.id,'ref','order_no');
  addEdge(T.sample_orders.id,T.vendors.id,'ref','customer_name → vendor_name');addEdge(T.sample_orders.id,T.items.id,'ref','item_name → item_name');
- addEdge(T.users.id,T.departments.id,'ref','department_code → departments.department_code');addEdge(T.approval_route_templates.id,T.departments.id,'ref','department_code → departments.department_code');addEdge(T.approval_route_templates.id,T.users.id,'ref','writer/reviewer/confirmer/approver_key → users.user_key');
  addEdge(SC['수주등록'].id,SC['출하등록'].id,'flow','수주 완료 후 출하');addEdge(SC['수주등록'].id,SC['생산실적등록'].id,'flow','수주 → 생산');
+ addApprovalMasterPack();
  select(null);autoLayout();
  LAST_IMPORT=D.nodes.map(n=>n.id);updateImpBtn();
 }
@@ -1175,15 +1177,21 @@ function loadSample(){
 const LIB_LS='sysdesign.modules';
 const COL=(name,label,type,pk,req,flow)=>({name,label,type:type||'text',pk:!!pk,req:!!req,...(flow?{flow}:{})});
 const BUILTIN=[
- {cat:'공통 기본',name:'사용자 · 권한',desc:'로그인 계정 + 메뉴별 4권한(조회/저장/수정/삭제) 트리 — 상위 체크 시 하위 일괄, 권한복사',data:{nodes:[
-  {type:'section',name:'사용자',meta:{icon:'👥'}},
+ {cat:'공통 기본',name:'통합 사용자 · 권한 · 조직 · 결재',desc:'최초 master 로그인 + 사용자 ID/비밀번호 + user/admin/master + 메뉴별 조회/저장/수정/삭제 + 검토/확인/승인 + 조직/직급 + 결재선 템플릿을 하나로 관리',data:{nodes:[
+  {type:'section',name:'사용자·권한관리',meta:{icon:'👥'}},
   {type:'screen',name:'사용자정보',meta:{file:'user_information.html',kind:'perm'}},
-  {type:'table',name:'users',meta:{cols:[COL('user_key','사용자키','text',1),COL('user_id','아이디'),COL('name','성명','text',0,1),COL('english_name','성명(영문)'),COL('department_code','부서코드'),COL('department_name','부서'),COL('business_division','사업부'),COL('position_code','직급코드'),COL('position_name','직급'),COL('user_group','사용자그룹'),COL('process_group','공정그룹'),COL('factory','공장'),COL('employee_no','사원번호'),COL('mobile_phone','휴대폰'),COL('phone','전화번호'),COL('email','이메일'),COL('auth_email','로그인메일'),COL('role','권한역할(user/admin/master)'),COL('registered_date','등록일','date'),COL('is_active','사용','bool'),COL('remark','비고')]}},
-  {type:'table',name:'user_permissions',meta:{cols:[COL('user_key','사용자키','text',1),COL('menu_name','메뉴경로(대메뉴/중분류/화면)','text',1),COL('menu_path','경로배열'),COL('can_view','조회','bool'),COL('can_save','저장','bool'),COL('can_edit','수정','bool'),COL('can_delete','삭제','bool')]}},
-  {type:'table',name:'user_initial_passwords',meta:{cols:[COL('user_id','아이디','text',1),COL('temp_password','발급 비밀번호'),COL('issued_by','발급자'),COL('issued_at','발급시각','date'),COL('changed_by_user','본인변경','bool')]}}],
-  edges:[[0,1,'contains',''],
-   [1,2,'uses','계정 등록·수정·삭제'],[1,3,'uses','메뉴별 권한 저장·복사'],[1,4,'uses','비밀번호 발급·재설정(마스터 조회)'],
-   [3,2,'ref','user_key → users.user_key'],[4,2,'ref','user_id → users.user_id']]}},
+  {type:'screen',name:'조직정보',meta:{file:'organization_management.html',kind:'input'}},
+  {type:'screen',name:'결재선 템플릿',meta:{file:'approval_route_template.html',kind:'input'}},
+  {type:'table',name:'users',meta:{cols:[COL('user_key','사용자키','text',1,1),COL('user_id','로그인ID','text',0,1),COL('employee_no','사번'),COL('name','이름','text',0,1),COL('english_name','성명(영문)'),COL('department_code','부서코드'),COL('department_name','부서명'),COL('position_code','직급코드'),COL('position_name','직급/직책'),COL('business_division','사업부'),COL('factory','공장'),COL('user_group','사용자그룹'),COL('process_group','공정그룹'),COL('mobile_phone','휴대폰'),COL('phone','전화번호'),COL('email','이메일'),COL('auth_email','로그인메일'),COL('auth_uid','Auth UID'),COL('role','시스템권한(user/admin/master)'),COL('can_review','검토권한','bool'),COL('can_confirm','확인권한','bool'),COL('can_approve','승인권한','bool'),COL('delegate_key','대결자 사용자키'),COL('registered_date','등록일','date'),COL('last_login_at','최종로그인','date'),COL('is_active','사용','bool'),COL('remark','비고')]}},
+  {type:'table',name:'user_permissions',meta:{cols:[COL('user_key','사용자키','text',1,1),COL('menu_name','메뉴경로','text',1,1),COL('menu_path','경로배열'),COL('can_view','조회','bool'),COL('can_save','저장','bool'),COL('can_edit','수정','bool'),COL('can_delete','삭제','bool')]}},
+  {type:'table',name:'user_initial_passwords',meta:{cols:[COL('user_id','아이디','text',1,1),COL('temp_password','발급 비밀번호'),COL('issued_by','발급자'),COL('issued_at','발급시각','date'),COL('changed_by_user','본인변경','bool')]}},
+  {type:'table',name:'departments',meta:{cols:[COL('department_code','부서코드','text',1,1),COL('department_name','부서명','text',0,1),COL('parent_department_code','상위부서코드'),COL('manager_key','부서장 사용자키'),COL('sort_order','정렬순서','num'),COL('is_active','사용','bool')]}},
+  {type:'table',name:'positions',meta:{cols:[COL('position_code','직급코드','text',1,1),COL('position_name','직급/직책명','text',0,1),COL('grade_order','직급순서','num'),COL('is_active','사용','bool')]}},
+  {type:'table',name:'approval_route_templates',meta:{cols:[COL('template_code','결재선코드','text',1,1),COL('template_name','결재선명','text',0,1),COL('document_type','문서유형'),COL('department_code','적용부서코드'),COL('writer_key','작성자 사용자키'),COL('reviewer_key','검토자 사용자키'),COL('confirmer_key','확인자 사용자키'),COL('approver_key','승인자 사용자키'),COL('is_active','사용','bool')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],
+   [1,4,'uses','계정·역할·결재권한'],[1,5,'uses','메뉴별 조회·저장·수정·삭제'],[1,6,'uses','초기 비밀번호 발급·재설정'],
+   [2,7,'uses','부서 관리'],[2,8,'uses','직급 관리'],[3,9,'uses','결재선 템플릿'],[3,4,'uses','결재자 선택'],
+   [5,4,'ref','user_key → users.user_key'],[6,4,'ref','user_id → users.user_id'],[4,7,'ref','department_code → departments.department_code'],[4,8,'ref','position_code → positions.position_code'],[9,7,'ref','department_code → departments.department_code'],[9,4,'ref','writer/reviewer/confirmer/approver_key → users.user_key']]}},
 {cat:'공통 기본',name:'공통 기준정보 (통합 마스터)',desc:'4개 저장소의 거래처·고객사·품목·설비·공정·금형·소재·사용자를 이름 기준 합집합으로 만든 공통 테이블 8종 — [설계 › ◈ 기준정보 통합]으로 기존 중복 테이블을 여기에 합칠 수 있음',data:{nodes:[
   {type:'section',name:'기준정보',meta:{icon:'▦'},dx:0,dy:0},
   {type:'screen',name:'거래처관리',meta:{file:'vendor_management.html',kind:'input'},dx:210,dy:0},
@@ -3819,7 +3827,7 @@ function validateDesign(show){
    if(!['text','num','date','bool'].includes(c.type))push('error',`테이블 '${tn}' 의 컬럼 '${cn}' 형 '${c.type}' 을 지원하지 않습니다.`,'node',t.id);
    if(c.formula!==undefined||c.calc){const fx=String(c.formula||'').trim();if(!fx)push('error',`테이블 '${tn}' 의 계산 컬럼 '${cn}' 에 계산식이 없습니다.`,'node',t.id,'ƒx 계산식에 예: qty * unit_price 처럼 입력하세요.');if(c.pk)push('error',`계산 컬럼 '${tn}.${cn}' 은 기본키(🔑)로 사용할 수 없습니다.`,'node',t.id);const names=new Set(cols.map(x=>x.name));for(const ref of calcFormulaRefs(fx))if(!names.has(ref))push('error',`계산식 '${tn}.${cn}' 이 존재하지 않는 컬럼 '${ref}' 을 참조합니다.`,'node',t.id);if(calcFormulaRefs(fx).includes(cn))push('error',`계산식 '${tn}.${cn}' 이 자기 자신을 참조합니다.`,'node',t.id);}
   }
-  const ap=approvalConfig(t);if(ap.enabled){const names=new Set(cols.map(c=>c.name));const fl=flowOf(t);if(!fl)push('error',`테이블 '${tn}' 의 결재 담당자 기능이 켜져 있지만 상태 Workflow가 없습니다.`,'node',t.id,'status 컬럼에 작성 > 검토 > 확인 > 승인 > 완료 순서를 지정하세요.');for(const r of ap.roles)if(!names.has(r.col))push('error',`결재 단계 '${r.step}'의 담당자 컬럼 '${r.col}' 이 없습니다.`,'node',t.id,'[⚙ 운영기능 예제]를 다시 적용하거나 해당 컬럼을 추가하세요.');const ut=D.nodes.find(n=>n.type==='table'&&n.name==='users');if(!ut)push('error',`테이블 '${tn}' 은 결재 기능을 사용하지만 사용자정보(users)가 없습니다.`,'node',t.id,'[설계 › 👥 사용자·권한·조직·결재 통합 기준정보 추가]를 실행하세요.');else{const un=new Set((ut.meta.cols||[]).map(c=>c.name));if(!un.has('user_key'))push('error',`사용자정보(users)에 user_key 컬럼이 없습니다.`,'node',ut.id);for(const p of ['can_review','can_confirm','can_approve'])if(!un.has(p))push('warning',`users.${p}가 없어 결재권한 필터가 적용되지 않습니다.`,'node',ut.id,'기준정보 팩을 적용하면 자동 추가됩니다.')}if(ap.routeTemplate&&!D.nodes.some(n=>n.type==='table'&&n.name==='approval_route_templates'))push('warning',`결재선 템플릿 '${ap.routeTemplate}' 을 사용하지만 approval_route_templates 테이블이 없습니다.`,'node',t.id,'기준정보 팩을 추가하거나 템플릿 코드를 비우세요.');}
+  const ap=approvalConfig(t);if(ap.enabled){const names=new Set(cols.map(c=>c.name));const fl=flowOf(t);if(!fl)push('error',`테이블 '${tn}' 의 결재 담당자 기능이 켜져 있지만 상태 Workflow가 없습니다.`,'node',t.id,'status 컬럼에 작성 > 검토 > 확인 > 승인 > 완료 순서를 지정하세요.');for(const r of ap.roles)if(!names.has(r.col))push('error',`결재 단계 '${r.step}'의 담당자 컬럼 '${r.col}' 이 없습니다.`,'node',t.id,'[⚙ 운영기능 예제]를 다시 적용하거나 해당 컬럼을 추가하세요.');const ut=D.nodes.find(n=>n.type==='table'&&n.name==='users');if(!ut)push('error',`테이블 '${tn}' 은 결재 기능을 사용하지만 사용자정보(users)가 없습니다.`,'node',t.id,'[설계 › 👥 사용자·권한관리 기준정보 추가]를 실행하세요.');else{const un=new Set((ut.meta.cols||[]).map(c=>c.name));if(!un.has('user_key'))push('error',`사용자정보(users)에 user_key 컬럼이 없습니다.`,'node',ut.id);for(const p of ['can_review','can_confirm','can_approve'])if(!un.has(p))push('warning',`users.${p}가 없어 결재권한 필터가 적용되지 않습니다.`,'node',ut.id,'기준정보 팩을 적용하면 자동 추가됩니다.')}if(ap.routeTemplate&&!D.nodes.some(n=>n.type==='table'&&n.name==='approval_route_templates'))push('warning',`결재선 템플릿 '${ap.routeTemplate}' 을 사용하지만 approval_route_templates 테이블이 없습니다.`,'node',t.id,'기준정보 팩을 추가하거나 템플릿 코드를 비우세요.');}
   const pkc=cols.find(c=>c.pk),an=autoNoConfig(t),ac=alertConfig(t);
   if(an.enabled&&pkc&&pkc.type!=='text')push('warning',`테이블 '${tn}' 자동번호는 text 기본키에서만 적용됩니다.`,'node',t.id,'기본키 형식을 text로 바꾸거나 자동번호를 끄세요.');
   if(ac.enabled){const dc=cols.find(c=>c.name===ac.dateCol);if(!ac.dateCol)push('warning',`테이블 '${tn}' 기한 알림의 기준 날짜 컬럼이 선택되지 않았습니다.`,'node',t.id);else if(!dc)push('error',`테이블 '${tn}' 기한 알림이 없는 컬럼 '${ac.dateCol}' 을 참조합니다.`,'node',t.id);else if(dc.type!=='date')push('warning',`기한 알림 기준 '${tn}.${ac.dateCol}' 은 date 형식을 권장합니다.`,'node',t.id);}
