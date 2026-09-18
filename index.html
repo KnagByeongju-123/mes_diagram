@@ -274,7 +274,7 @@ work_date, 일자, date"></textarea></div>
   <div class="bd" style="grid-template-columns:1fr;padding:0;min-height:0">
     <div id="pv_wrap"><iframe id="pv_frame"></iframe></div>
   </div>
-  <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button>
+  <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button><button class="btn" onclick="pvMode('check')">체크시트로</button>
     <button class="btn" onclick="pvCode()">코드 보기</button><span class="msg" id="pv_msg"></span></div>
 </div></div>
 <div class="mbg" id="libDlg"><div class="modal" style="width:min(720px,94vw)">
@@ -383,7 +383,7 @@ function render(){
   const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','node'+(sel&&sel.node===n.id?' sel':''));g.setAttribute('transform',`translate(${n.x},${n.y})`);g.dataset.id=n.id;
   let body='';
   if(n.type==='table'){const cols=n.meta.cols||[];body=cols.length?cols.map((c,i)=>`<text class="col${c.pk?' pk':''}" x="10" y="${44+i*17}">${c.pk?'🔑 ':''}${esc(c.name)}<tspan fill="#8a94a6"> ${esc(c.label||'')}</tspan><tspan fill="#b0b8c4" font-size="10"> ${c.type}</tspan>${c.sample?`<tspan fill="#2e7d5b" font-size="10.5"> ${esc(c.sample)}</tspan>`:''}</text>`).join(''):`<text class="sub" x="10" y="44">컬럼 없음 — 우측에서 추가</text>`}
-  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':'기타'}${detailOf(n)?' · 헤더+명세':''}</text>`;
+  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':'기타'}${detailOf(n)?' · 헤더+명세':''}</text>`;
   else body=`<text class="sub" x="10" y="38">${esc(n.meta.desc||n.meta.icon||'')}</text>`;
   g.innerHTML=`<rect class="box" width="${w}" height="${h}"/><rect class="head" width="${w}" height="26" fill="${t.color}"/><rect width="${w}" height="8" y="18" fill="${t.color}"/>
    <text class="title" x="10" y="18">${esc(n.name)}</text><text class="title" x="${w-8}" y="18" text-anchor="end" font-size="10" opacity=".7">${esc(n.type==='table'&&n.meta.host?String(n.meta.host).slice(0,14):t.name)}</text>${body}
@@ -503,7 +503,7 @@ function renderPanel(){
  if(n.type==='module'){h+=`<div class="row2"><div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div><div class="f"><label>설명 (홈 카드)</label><input id="f_desc" value="${esc(n.meta.desc||'')}"></div></div>`}
  if(n.type==='section'){h+=`<div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div>`}
  if(n.type==='screen'){h+=`<div class="row2"><div class="f"><label>파일명</label><input id="f_file" value="${esc(n.meta.file||'')}" placeholder="order_input.html"></div>
-   <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
+   <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
    <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewScreen()">▶ 화면 미리보기</button></div>
    <label class="ck" style="padding:4px 0"><input id="f_lock" type="checkbox" ${n.meta.locked?'checked':''}>이 화면은 직접 수정함 — 다시 생성해도 덮어쓰지 않기</label>
    <div class="f"><label>사용 테이블 (자동: "사용" 연결)</label><div style="color:#4a5568">${D.edges.filter(e=>e.from===n.id&&e.kind==='uses').map(e=>esc(N(e.to)?.name)).join(', ')||'<span style="color:#8a94a6">없음 — 오른쪽 ○ 를 테이블로 끌어 연결</span>'}</div></div>`}
@@ -901,7 +901,7 @@ const BUILTIN=[
  {cat:'공통 기본',name:'체크시트 공통 (템플릿형)',desc:'점검표를 데이터로 정의 — 종류가 늘어도 화면·테이블을 더 만들지 않음',data:{nodes:[
   {type:'section',name:'점검관리',meta:{icon:'☑'}},
   {type:'screen',name:'점검표 설계',meta:{file:'check_template_design.html',kind:'input'}},
-  {type:'screen',name:'체크시트 입력',meta:{file:'check_sheet_input.html',kind:'input'}},
+  {type:'screen',name:'체크시트 입력',meta:{file:'check_sheet_input.html',kind:'check'}},
   {type:'screen',name:'점검 종합현황',meta:{file:'check_dashboard.html',kind:'status'}},
   {type:'screen',name:'미점검 알림판',meta:{file:'check_alert_board.html',kind:'status'}},
   {type:'table',name:'check_templates',meta:{cols:[COL('template_code','점검표코드','text',1),COL('template_name','점검표명','text',0,1),COL('category','구분(설비/금형/검사기/소방/세척기/안전)'),COL('cycle','주기(일상/주간/월간/분기)'),COL('target_master','점검대상 마스터(설비/금형/계측기)'),COL('approval_yn','결재사용','bool'),COL('is_active','사용','bool')]}},
@@ -1027,20 +1027,20 @@ const BUILTIN=[
   edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','저장'],[2,6,'uses','대장 관리'],[2,7,'uses','교정이력'],[3,8,'uses','도면 관리'],[3,9,'uses','개정 저장'],[5,4,'ref','ncr_no → nonconformances.ncr_no'],[7,6,'ref','gauge_no → gauges.gauge_no'],[9,8,'ref','drawing_no → drawings.drawing_no']]}},
  {cat:'ESG 스마트팩토리',name:'설비 · 금형 일상점검',desc:'생산설비/금형 체크시트와 종합현황 (smtec)',data:{nodes:[
   {type:'section',name:'일상점검',meta:{icon:'☑'}},
-  {type:'screen',name:'생산설비 일상점검',meta:{file:'P_machine_check.html',kind:'input'}},
-  {type:'screen',name:'금형 일상점검',meta:{file:'P_mold_check.html',kind:'input'}},
+  {type:'screen',name:'생산설비 일상점검',meta:{file:'P_machine_check.html',kind:'check'}},
+  {type:'screen',name:'금형 일상점검',meta:{file:'P_mold_check.html',kind:'check'}},
   {type:'screen',name:'점검 종합현황',meta:{file:'check_dashboard.html',kind:'status'}},
-  {type:'table',name:'p_machine_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자','text',0,1),COL('machine','설비','text',0,1),COL('chk_overload','과부하'),COL('chk_motor','모터'),COL('chk_safety','안전장치'),COL('chk_oil','급유'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
-  {type:'table',name:'p_mold_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자'),COL('machine','설비'),COL('mold_no','금형번호'),COL('manager','담당'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
+  {type:'table',name:'p_machine_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자','text',0,1),COL('machine','설비','text',0,1),COL('qr_overload','QR(과부하)'),COL('qr_motor','QR(모터)'),COL('chk_overload','오버로드 프로텍트'),COL('chk_balance','발란스 실린더'),COL('chk_clutchbrake','클러치/브레이크'),COL('chk_motor','모터'),COL('chk_clutch','클러치'),COL('chk_safety','안전장치'),COL('chk_oil','오일러 급유'),COL('chk_pitch','피치세팅'),COL('chk_helmet','안전보호구'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
+  {type:'table',name:'p_mold_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자','text',0,1),COL('machine','설비','text',0,1),COL('mold_no','금형번호','text',0,1),COL('manager','담당(관리자)'),COL('chk_bolt','[작업자] 각종 볼트류 점검·교체'),COL('chk_appear','[작업자] 외관 — 이물질 없을 것'),COL('chk_scrap','[작업자] 스크랩 취출 상태'),COL('chk_guidepost','[작업자] 가이드포스트 상태'),COL('chk_pilot','[작업자] 파일럿 핀 상태'),COL('chk_lifter','[작업자] 리프터 핀 상태'),COL('chk_punch','[작업자] 펀치 상태'),COL('chk_bush','[작업자] 가이드 부쉬'),COL('chk_airblow','[작업자] 에어블로우 작동'),COL('chk_m_appear','[관리자] 외관 — 에어·보루'),COL('chk_m_spring','[관리자] 스프링 상태'),COL('chk_m_ejector','[관리자] 밀핀 상태'),COL('chk_m_shape','[관리자] 형상펀치 상태'),COL('chk_m_fit','[관리자] 금형 형합'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
   {type:'table',name:'machine_master_tj',meta:{cols:[COL('ho_code','호기코드','text',1),COL('machine_name','설비명'),COL('sort_order','순서','num')]}},
   {type:'table',name:'common_code',meta:{cols:[COL('code_group','코드그룹','text',1),COL('code','코드','text',1),COL('code_name','코드명'),COL('sort_order','순서','num')]}}],
   edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','체크 저장'],[2,5,'uses','체크 저장'],[1,6,'uses','설비 목록'],[1,7,'uses','점검항목'],[3,4,'uses','집계'],[3,5,'uses','집계']]}},
  {cat:'ESG 스마트팩토리',name:'검사기 · 측정기 점검',desc:'검사기 체크시트와 측정기(CMM/온습도) 점검로그 (smtec)',data:{nodes:[
   {type:'section',name:'측정기점검',meta:{icon:'⌗'}},
-  {type:'screen',name:'검사기 일상점검',meta:{file:'QC_machine_check.html',kind:'input'}},
+  {type:'screen',name:'검사기 일상점검',meta:{file:'QC_machine_check.html',kind:'check'}},
   {type:'screen',name:'측정기 점검(CMM)',meta:{file:'QC_measure_cmm_auto.html',kind:'input'}},
   {type:'screen',name:'측정기 점검(온습도)',meta:{file:'QC_measure_temp_humid.html',kind:'input'}},
-  {type:'table',name:'qc_machine_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자','text',0,1),COL('machine','검사기','text',0,1),COL('qr_code','QR'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
+  {type:'table',name:'qc_machine_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자','text',0,1),COL('machine','검사기','text',0,1),COL('qr_code','QR'),COL('chk_input','작업기종 표시'),COL('chk_chain','기종전환시 잔량없음'),COL('chk_height','높이검사 청소'),COL('chk_camera','카메라 청소/풀림'),COL('chk_belt','이송벨트 걸림'),COL('chk_plate','회전판 걸림'),COL('chk_eddy','에디 작동'),COL('chk_out','배출부 인식'),COL('chk_sample','불량샘플 검출'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
   {type:'table',name:'qc_measure_log',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자','text',0,1),COL('equipment','측정기','text',0,1),COL('items_json','점검항목(JSON)'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
   {type:'table',name:'common_code',meta:{cols:[COL('code_group','코드그룹','text',1),COL('code','코드','text',1),COL('code_name','코드명'),COL('sort_order','순서','num')]}}],
   edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','체크 저장'],[2,5,'uses','로그 저장'],[3,5,'uses','로그 저장'],[1,6,'uses','점검항목'],[2,6,'uses','점검항목']]}},
@@ -1130,10 +1130,10 @@ const BUILTIN=[
   {type:'table',name:'mm_out_route',meta:{cols:[COL('id','ID','num',1),COL('project_id','프로젝트ID','num',0,1),COL('part_no','부품번호'),COL('seq','공정순번','num'),COL('vendor','외주처'),COL('order_date','발주일','date'),COL('receipt_date','입고일','date'),COL('status','상태(미발주/발주/입고)')]}}],
   edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','PR 등록'],[1,4,'uses','발주 처리'],[2,5,'uses','공정 라우팅'],[4,3,'ref','pr_order_id → pr_orders.id'],[1,2,'flow','발주 → 외주가공 추적']]}},
  {cat:'ESG 스마트팩토리',name:'소방 · 세척기 점검',desc:'소방(텔레그램 알림)과 세척기 점검·수리이력 (smtec)',data:{nodes:[
-  {type:'screen',name:'소방점검',meta:{file:'fire_check.html',kind:'input'}},
-  {type:'screen',name:'세척기 일상점검',meta:{file:'wash_machine_check.html',kind:'input'}},
-  {type:'table',name:'fire_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자'),COL('zone','장소'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
-  {type:'table',name:'wash_machine_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자'),COL('machine','세척기'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
+  {type:'screen',name:'소방점검',meta:{file:'fire_check.html',kind:'check'}},
+  {type:'screen',name:'세척기 일상점검',meta:{file:'wash_machine_check.html',kind:'check'}},
+  {type:'table',name:'fire_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자','text',0,1),COL('zone','장소','text',0,1),COL('chk_hydrant','소화전'),COL('chk_extinguisher','주변 소화기'),COL('chk_exit','비상대피로'),COL('chk_exitlight','유도등 점검'),COL('chk_firedoor','방화문'),COL('chk_detector','감지기'),COL('chk_gauge','소화기 압력게이지'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
+  {type:'table',name:'wash_machine_check',meta:{cols:[COL('id','ID','num',1),COL('check_date','점검일','date',0,1),COL('check_time','시각'),COL('inspector','점검자','text',0,1),COL('machine','세척기','text',0,1),COL('chk_a1','[시작전] 환기/위험물 제거'),COL('chk_a2','[시작전] 밸브 열림/닫힘'),COL('chk_a3','[시작전] 세척액 수위/이물'),COL('chk_a4','[시작전] 세척탱크 이물질'),COL('chk_a5','[시작전] 펌프압력/동작'),COL('chk_a6','[시작전] 에어압력'),COL('chk_a7','[시작전] 안전보호구'),COL('chk_b1','[작업중] 정리정돈/선입선출'),COL('chk_b2','[작업중] 제품별 구분'),COL('chk_b3','[작업중] 낙하품 폐기'),COL('chk_b4','[작업중] 세척액 청결'),COL('chk_b5','[작업중] 세척온도'),COL('chk_b6','[작업중] 세척시간'),COL('chk_b7','[작업중] 안전보호구'),COL('ng_count','NG수','num'),COL('result','판정'),COL('memo','비고')]}},
   {type:'table',name:'wash_machine_repair',meta:{cols:[COL('id','ID','num',1),COL('repair_date','수리일','date'),COL('repair_time','시각'),COL('worker','작업자'),COL('machine','세척기'),COL('description','수리내용'),COL('parts','교체부품')]}},
   {type:'table',name:'common_code',meta:{cols:[COL('code_group','코드그룹','text',1),COL('code','코드','text',1),COL('code_name','코드명'),COL('sort_order','순서','num')]}}],
   edges:[[0,2,'uses','체크 저장 · 텔레그램 알림'],[1,3,'uses','체크 저장'],[1,4,'uses','수리이력'],[0,5,'uses','점검항목'],[1,5,'uses','점검항목']]}},
@@ -1666,8 +1666,12 @@ function sampleRows(t,cnt){
   for(const c of cols){
    const sv=c.sample;
    if(sv!==undefined&&sv!==''){r[c.name]=c.type==='num'?(Number(String(sv).replace(/[^0-9.-]/g,''))||0)+i:(c.type==='bool'?(String(sv)!=='false'):(i?String(sv)+(c.pk?'-'+(i+1):''):sv));continue}
+   if(/^chk_/i.test(c.name)){r[c.name]=(i===1&&cols.filter(x=>/^chk_/i.test(x.name)).indexOf(c)%3===1)?'NG':'OK';continue}
    r[c.name]=c.type==='num'?(i+1)*10:c.type==='date'?new Date(Date.now()-i*864e5).toISOString().slice(0,10):c.type==='bool'?(i%2===0):(c.label||c.name)+' '+(i+1);
   }
+  /* 체크시트: NG수·판정을 항목 결과에서 다시 계산 */
+  const chk=cols.filter(x=>/^chk_/i.test(x.name));
+  if(chk.length){const ng=chk.filter(x=>r[x.name]==='NG').length;if('ng_count' in r)r.ng_count=ng;if('result' in r)r.result=ng?'NG':'OK';if(/time/.test(cols.map(x=>x.name).join())){for(const x of cols)if(/time/.test(x.name)&&x.type!=='date')r[x.name]=String(8+i).padStart(2,'0')+':30'}}
   out.push(r)}
  return out;
 }
@@ -1676,15 +1680,17 @@ function buildPreview(n,kindOverride){
  const t=ts[0];
  const kind=kindOverride||n.meta.kind||'input';
  if(!t)return {html:`<!doctype html><meta charset="utf-8"><style>${PV_CSS}</style><div class="screen"><div class="title"><h1>${esc(n.name)}</h1></div><div class="body"><section class="panel"><div class="empty">이 화면에 "사용" 연결된 테이블이 없습니다.<br>블록 오른쪽 ○ 를 끌어 테이블에 연결하면 입력칸이 만들어집니다.</div></section></div></div>`,code:''};
- const md=kind==='status'?null:detailOf(n);
+ const isChk=kind==='check'||(kind==='input'&&isCheckTable(t));
+ const md=(kind==='status'||isChk)?null:detailOf(n);
  let html=md?masterDetailScreen(n,md.parent,md.child,md.edge,'미리보기',[])
+   :isChk?checkScreen(n,t,'미리보기')
    :kind==='status'?statusScreen(n,t,'미리보기'):inputScreen(n,t,'미리보기',ts.slice(1));
  const code=html;
  /* 외부 파일 의존을 떼고 샘플 자료를 넣는다 */
  html=html.replace(/<script src="app_config\.js"><\/script>/,'')
           .replace(/<link rel="stylesheet" href="mes_screen\.css"\s*\/?>/g,'<style>'+PV_CSS+'</style>')
           .replace(/<script src="mes_db\.js"><\/script>[\s\S]*?<\/script>/,'');
- const arr=kind==='status'?'data':'rows';
+ const arr=kind==='status'?'data':'rows';const isChkK=isChk;
  const pt=md?md.parent:t;
  const seed=JSON.stringify(sampleRows(pt,md?2:3));
  let extraSeed='';
@@ -1746,7 +1752,7 @@ function pvFull(){
 function previewScreen(id,kind){
  const n=N(id||(sel&&sel.node));if(!n||n.type!=='screen')return;
  pvNode=n;const {html}=buildPreview(n,kind);
- $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':'기타'}`;
+ $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':(kind||n.meta.kind)==='check'?'체크시트':'기타'}`;
  pvScale=1;pvResetPos();
  $('pv_frame').srcdoc=html;$('pv_msg').textContent='';pvDlg.classList.add('on');
  pvApply();
@@ -1936,6 +1942,7 @@ if(C.MODE==='json'){C.SUPABASE={url:'local://db',key:'local'};const v='?v='+C.AP
   const use=D.edges.filter(e=>e.from===s.id&&e.kind==='uses').map(e=>N(e.to)).filter(t=>t&&t.type==='table');
   const t=use[0];const loc=locate(s.name);
   if(s.meta.kind==='other'||!t){if(s.meta.kind!=='other')warn.push(`화면 '${s.name}' 에 "사용" 테이블이 없어 빈 화면으로 만듭니다.`);GEN[file]=blankScreen(s,loc);continue}
+  if(s.meta.kind==='check'||(s.meta.kind==='input'&&isCheckTable(t))){GEN[file]=checkScreen(s,t,loc);continue}
   const md=detailOf(s);
   if(md)GEN[file]=masterDetailScreen(s,md.parent,md.child,md.edge,loc,use.filter(x=>x!==md.parent&&x!==md.child));
   else GEN[file]=s.meta.kind==='status'?statusScreen(s,t,loc,use.slice(1)):inputScreen(s,t,loc,use.slice(1));
@@ -1950,6 +1957,103 @@ const esc1=s=>String(s).replace(/'/g,"\\'");
 function slug(s){return s.replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase()||'screen_'+uid()}
 const colsOf=t=>(t.meta.cols||[]).filter(c=>c.name);
 const mapOf=t=>'{'+colsOf(t).map(c=>`${c.name}:${c.type==='text'?`'${c.name}'`:`{col:'${c.name}',type:'${c.type}'}`}`).join(',')+'}';
+/* ═══ 체크시트 화면 ═══
+   테이블의 chk_* 컬럼 = 점검항목. 헤더(점검일·점검자·대상)는 위에, 항목은 OK/NG/N.A 토글로 세로 나열.
+   ng_count / result 는 자동 집계. 목록에는 헤더 + NG수 + 판정만 보인다. */
+const isCheckTable=t=>!!t&&colsOf(t).filter(c=>/^chk_/i.test(c.name)).length>=2;
+function checkScreen(s,t,loc){
+ const cols=colsOf(t),pk=cols.find(c=>c.pk)||cols[0];
+ const items=cols.filter(c=>/^chk_/i.test(c.name));
+ const AUTO=new Set(['ng_count','result','created_at','updated_at']);
+ const head=cols.filter(c=>!/^chk_/i.test(c.name)&&!AUTO.has(c.name));
+ const ngCol=cols.find(c=>c.name==='ng_count'),resCol=cols.find(c=>c.name==='result');
+ const field=c=>c.type==='bool'?`<div class="check"><input id="f_${c.name}" type="checkbox"></div>`
+  :`<input id="f_${c.name}" class="field${c.req?' req':''}" ${c.type==='num'?'type="number"':c.type==='date'?'type="date"':''}>`;
+ const listCols=[...head,...(ngCol?[ngCol]:[]),...(resCol?[resCol]:[])];
+ return `<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${s.name}</title>
+<script src="app_config.js"><\/script><link rel="stylesheet" href="mes_screen.css">
+<style>
+.body{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+.body .hdr{grid-column:1/-1}
+.items{overflow:auto}
+.item{display:grid;grid-template-columns:32px minmax(0,1fr) 168px;align-items:center;border-bottom:1px solid #e0e6eb;min-height:38px}
+.item .no{text-align:center;color:#8a94a6;font-size:11px}
+.item .nm{padding:4px 8px}
+.item .tg{display:flex;gap:3px;padding:3px 6px}
+.tg button{flex:1;height:28px;border:1px solid #b7c1ca;background:#fff;border-radius:4px;font-weight:700;color:#8a94a6}
+.tg button.ok.on{background:#2e7d32;color:#fff;border-color:#2e7d32}
+.tg button.ng.on{background:#c62828;color:#fff;border-color:#c62828}
+.tg button.na.on{background:#78909c;color:#fff;border-color:#78909c}
+.sum{display:flex;gap:12px;align-items:center;padding:6px 8px;border-top:1px solid var(--line);background:#f7f9fb;font-weight:700}
+.sum .ng{color:#c62828}.sum .res{margin-left:auto;padding:2px 10px;border-radius:10px;color:#fff;background:#2e7d32}.sum .res.bad{background:#c62828}
+@media(max-width:880px){.body{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr)}.item{grid-template-columns:28px minmax(0,1fr) 140px}}
+</style></head>
+<body><div class="screen">
+  <div class="title"><h1>${s.name}</h1><small>${loc}</small></div>
+  <div class="body">
+    <section class="panel hdr"><div class="cap">${s.name} 점검 <span class="right" id="modeTxt">신규</span></div>
+      <div class="formgrid" style="border-left:0;border-top:0">
+${head.map(c=>`        <div class="lab">${c.label||c.name}</div>${field(c)}`).join('\n')}
+      </div>
+      <div class="actions"><button class="btn primary" onclick="save()">▤ 저장</button><button class="btn" onclick="setAll('OK')">✓ 전체 OK</button><button class="btn" onclick="clearForm()">✕ 신규</button><button class="btn warn" onclick="remove()">✖ 삭제</button><button class="btn" onclick="exportCsv()">▤ EXCEL</button></div>
+    </section>
+    <section class="panel"><div class="cap">점검항목 <span class="right">${items.length}개 · OK / NG / N.A</span></div>
+      <div class="items" id="items">
+${items.map((c,i)=>`        <div class="item" data-k="${c.name}"><div class="no">${i+1}</div><div class="nm">${c.label||c.name.replace(/^chk_/,'')}</div><div class="tg"><button class="ok" onclick="setV('${c.name}','OK')">OK</button><button class="ng" onclick="setV('${c.name}','NG')">NG</button><button class="na" onclick="setV('${c.name}','N/A')">N.A</button></div></div>`).join('\n')}
+      </div>
+      <div class="sum">NG <span class="ng" id="ngTxt">0</span> 건 <span style="color:#8a94a6;font-weight:400">/ 미점검 <span id="naTxt">${items.length}</span></span><span class="res" id="resTxt">OK</span></div>
+    </section>
+    <section class="panel"><div class="cap">${s.name} 목록 <span class="right"><input id="q" class="field" style="width:140px;height:22px" placeholder="검색" oninput="render()"> &nbsp;<span id="countText"></span></span></div>
+      <div class="tablewrap"><table><thead><tr>${listCols.map(c=>`<th${c.type==='num'?' class="r"':''}>${c.label||c.name}</th>`).join('')}</tr></thead><tbody id="tbody"></tbody></table></div>
+    </section>
+  </div>
+  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">항목을 OK/NG 로 누르면 NG수와 판정이 자동 집계됩니다.</span></footer>
+</div>
+<script>
+const rows=[];window.rows=rows;let sel=null;const V={};
+const F=${JSON.stringify(cols.map(c=>c.name))},T=${JSON.stringify(Object.fromEntries(cols.map(c=>[c.name,c.type])))},PK='${pk.name}';
+const HEAD=${JSON.stringify(head.map(c=>c.name))},ITEMS=${JSON.stringify(items.map(c=>c.name))},LIST=${JSON.stringify(listCols.map(c=>c.name))};
+const REQ=${JSON.stringify(head.filter(c=>c.req&&!c.pk).map(c=>c.name))},NGC=${JSON.stringify(ngCol?ngCol.name:null)},RESC=${JSON.stringify(resCol?resCol.name:null)};
+const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('ko-KR');const today=()=>new Date().toISOString().slice(0,10);
+const nowT=()=>new Date().toTimeString().slice(0,5);
+function msg(t){message.textContent=t}
+function paint(){for(const k of ITEMS){const el=document.querySelector('.item[data-k="'+k+'"]');if(!el)continue;
+  el.querySelectorAll('.tg button').forEach(b=>b.classList.toggle('on',(b.classList.contains('ok')&&V[k]==='OK')||(b.classList.contains('ng')&&V[k]==='NG')||(b.classList.contains('na')&&V[k]==='N/A')))}
+ const ng=ITEMS.filter(k=>V[k]==='NG').length,na=ITEMS.filter(k=>!V[k]).length;
+ ngTxt.textContent=ng;naTxt.textContent=na;resTxt.textContent=ng?'NG':'OK';resTxt.classList.toggle('bad',!!ng)}
+function setV(k,v){V[k]=(V[k]===v)?'':v;paint()}
+function setAll(v){for(const k of ITEMS)V[k]=v;paint()}
+function cell(r,f){const v=r[f];return T[f]==='num'?fmt(v):T[f]==='bool'?(v?'✓':''):esc(v)}
+function render(){const q=($('q').value||'').trim().toLowerCase();
+ const view=rows.filter(r=>!q||F.some(f=>String(r[f]??'').toLowerCase().includes(q))).sort((a,b)=>String(b[PK]).localeCompare(String(a[PK])));
+ tbody.innerHTML=view.length?view.map(r=>'<tr class="'+(r[PK]===sel?'sel':'')+'" onclick="pick(\\''+esc(String(r[PK]))+'\\')">'+LIST.map(f=>'<td'+(T[f]==='num'?' class="r"':'')+(f===RESC&&r[f]==='NG'?' style="color:#c62828;font-weight:700"':'')+'>'+cell(r,f)+'</td>').join('')+'</tr>').join('')
+  :'<tr><td colspan="'+LIST.length+'" class="empty">등록된 점검이 없습니다.</td></tr>';countText.textContent=view.length+'건'}
+function pick(k){const r=rows.find(x=>String(x[PK])===k);if(!r)return;sel=r[PK];
+ HEAD.forEach(f=>{const el=$('f_'+f);if(!el)return;if(T[f]==='bool')el.checked=!!r[f];else el.value=r[f]??''});
+ for(const i of ITEMS)V[i]=r[i]||'';paint();modeTxt.textContent='수정: '+k;render();msg(k+' 점검을 불러왔습니다.')}
+function clearForm(){sel=null;HEAD.forEach(f=>{const el=$('f_'+f);if(!el)return;if(T[f]==='bool')el.checked=false;else el.value=T[f]==='date'?today():(/time/.test(f)?nowT():'')});
+ for(const i of ITEMS)V[i]='';paint();modeTxt.textContent='신규';render();msg('새 점검을 입력하세요.')}
+function save(){
+ for(const f of REQ){const el=$('f_'+f);if(el&&T[f]!=='bool'&&!String(el.value).trim())return msg((el.previousElementSibling?.textContent||f)+' 은(는) 필수입니다.')}
+ const miss=ITEMS.filter(k=>!V[k]);if(miss.length&&!confirm('미점검 항목이 '+miss.length+'개 있습니다. 그대로 저장할까요?'))return;
+ const o={};for(const f of HEAD){const el=$('f_'+f);if(!el)continue;o[f]=T[f]==='bool'?el.checked:T[f]==='num'?(el.value===''?'':Number(el.value)):el.value}
+ for(const i of ITEMS)o[i]=V[i]||'';
+ const ng=ITEMS.filter(k=>V[k]==='NG').length;if(NGC)o[NGC]=ng;if(RESC)o[RESC]=ng?'NG':'OK';
+ let no=o[PK];if(no===''||no==null){no=T[PK]==='num'?(rows.reduce((m,r)=>Math.max(m,Number(r[PK])||0),0)+1):'CK-'+today().slice(2).replaceAll('-','')+'-'+String(rows.length+1).padStart(3,'0')}
+ o[PK]=no;if(sel!=null&&sel!==no){const i=rows.findIndex(r=>r[PK]===sel);if(i>=0)rows.splice(i,1)}
+ const i=rows.findIndex(r=>r[PK]===no);if(i>=0)rows[i]=o;else rows.push(o);sel=no;const pe=$('f_'+PK);if(pe)pe.value=no;modeTxt.textContent='수정: '+no;render();
+ msg(no+' 저장했습니다. (NG '+ng+'건 · '+(ng?'NG':'OK')+')')}
+function remove(){if(sel==null)return msg('삭제할 점검을 목록에서 선택하세요.');if(!confirm(sel+' 을(를) 삭제할까요?'))return;const i=rows.findIndex(r=>r[PK]===sel);if(i>=0)rows.splice(i,1);const k=sel;clearForm();msg(k+' 삭제했습니다.')}
+function exportCsv(){const h=${JSON.stringify(cols.map(c=>c.label||c.name))};const csv='\\ufeff'+[h,...rows.map(r=>F.map(f=>r[f]))].map(a=>a.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='${slug(s.name)}.csv';a.click()}
+window.MES={search:render,save,setMessage:msg};clearForm();
+<\/script>
+<script src="mes_db.js"><\/script>
+<script>MESDB.master({page:'${slug(s.name)}:rows',table:'${t.name}',pk:'${pk.name}',map:${mapOf(t)},get:()=>rows,render:()=>{render();if(sel!=null&&!rows.some(r=>r[PK]===sel))clearForm()}});<\/script>
+<div id="toast"></div></body></html>
+`;
+}
 function inputScreen(s,t,loc,lookups){
  const cols=colsOf(t),pk=cols.find(c=>c.pk)||cols[0];
  const field=c=>c.type==='bool'?`<div class="check"><input id="f_${c.name}" type="checkbox"></div>`:`<input id="f_${c.name}" class="field${c.req?' req':''}" ${c.type==='num'?'type="number"':c.type==='date'?'type="date"':''}${lookups.length&&/name$/.test(c.name)?` list="dl_${c.name}" autocomplete="off"`:''}>`;
