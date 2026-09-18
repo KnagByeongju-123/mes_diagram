@@ -380,7 +380,7 @@ work_date, 일자, date"></textarea></div>
    module : {icon,desc,homeType:'auto'|'cards'|'erp'|'dashboard'}
    section: {icon}
    screen : {file,kind:'input'|'status'|'other'}
-   table  : {cols:[{name,label,type:'text'|'num'|'date'|'bool',pk,req}]}
+   table  : {cols:[{name,label,type:'text'|'num'|'date'|'bool',pk,req,sample,formula,unit,decimals,calcStore}]} // formula가 있으면 자동 계산
  edges: {id,from,to,kind:'contains'|'uses'|'ref'|'flow',label}
 */
 const TYPE={module:{name:'대메뉴',color:'#3f5f7d',w:170},section:{name:'중분류',color:'#6b8bb5',w:160},screen:{name:'화면',color:'#2e7d5b',w:190},table:{name:'테이블',color:'#7a4fb8',w:210}};
@@ -420,7 +420,7 @@ function save(){try{localStorage.setItem(LS,JSON.stringify({D,view}))}catch(e){}
 /* ═══════════════ 노드 크기 ═══════════════ */
 function size(n){let w=TYPE[n.type].w;let h=46;
  if(n.type==='table'){const cols=n.meta.cols||[];h=46+Math.max(1,cols.length)*17+8;
-  const wide=Math.max(...cols.map(c=>(c.name.length+String(c.label||'').length+String(c.sample||'').length)*6.6+40),0);
+  const wide=Math.max(...cols.map(c=>(c.name.length+String(c.label||'').length+String(c.sample||'').length+String(c.formula||'').length*.35)*6.6+54),0);
   w=Math.min(420,Math.max(w,wide))}
  else if(n.type==='screen')h=58;
  return{w,h}}
@@ -434,7 +434,7 @@ function render(){
   const{w,h}=size(n),t=TYPE[n.type];
   const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','node'+(sel&&sel.node===n.id?' sel':''));g.setAttribute('transform',`translate(${n.x},${n.y})`);g.dataset.id=n.id;
   let body='';
-  if(n.type==='table'){const cols=n.meta.cols||[];body=cols.length?cols.map((c,i)=>`<text class="col${c.pk?' pk':''}" x="10" y="${44+i*17}">${c.pk?'🔑 ':''}${esc(c.name)}<tspan fill="#8a94a6"> ${esc(c.label||'')}</tspan><tspan fill="#b0b8c4" font-size="10"> ${c.type}</tspan>${c.sample?`<tspan fill="#2e7d5b" font-size="10.5"> ${esc(c.sample)}</tspan>`:''}${typeof parseFlow==='function'&&parseFlow(c)?`<tspan fill="#2f6fb5" font-size="10"> ⇢${parseFlow(c).steps.length}단계</tspan>`:''}</text>`).join(''):`<text class="sub" x="10" y="44">컬럼 없음 — 우측에서 추가</text>`}
+  if(n.type==='table'){const cols=n.meta.cols||[];body=cols.length?cols.map((c,i)=>`<text class="col${c.pk?' pk':''}" x="10" y="${44+i*17}">${c.pk?'🔑 ':''}${esc(c.name)}<tspan fill="#8a94a6"> ${esc(c.label||'')}</tspan><tspan fill="#b0b8c4" font-size="10"> ${c.type}${c.formula?' ƒx':''}</tspan>${c.sample?`<tspan fill="#2e7d5b" font-size="10.5"> ${esc(c.sample)}</tspan>`:''}${typeof parseFlow==='function'&&parseFlow(c)?`<tspan fill="#2f6fb5" font-size="10"> ⇢${parseFlow(c).steps.length}단계</tspan>`:''}</text>`).join(''):`<text class="sub" x="10" y="44">컬럼 없음 — 우측에서 추가</text>`}
   else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':n.meta.kind==='board'?'보드':n.meta.kind==='perm'?'권한관리':n.meta.kind==='paste'?'붙여넣기':n.meta.kind==='dash'?'대시보드':'기타'}${detailOf(n)?' · 헤더+명세':''}${n.meta.skin&&typeof SKIN!=='undefined'&&SKIN[n.meta.skin]?' · 🎨'+SKIN[n.meta.skin].name.replace(/^mm /,''):''}${n.meta.origin&&typeof originUrl==='function'&&originUrl(n)?' · 📎원본':''}</text>`;
   else body=`<text class="sub" x="10" y="38">${esc(n.meta.desc||n.meta.icon||'')}</text>`;
   g.innerHTML=`<rect class="box" width="${w}" height="${h}"/><rect class="head" width="${w}" height="26" fill="${t.color}"/><rect width="${w}" height="8" y="18" fill="${t.color}"/>
@@ -728,13 +728,17 @@ function renderPanel(){
    <div class="f"><label>사용 테이블 (자동: "사용" 연결)</label><div style="color:#4a5568">${D.edges.filter(e=>e.from===n.id&&e.kind==='uses').map(e=>esc(N(e.to)?.name)).join(', ')||'<span style="color:#8a94a6">없음 — 오른쪽 ○ 를 테이블로 끌어 연결</span>'}</div></div>
    ${originPanelHtml(n)}`}
  if(n.type==='table'){const cols=n.meta.cols||(n.meta.cols=[]);
-  h+=`<div class="f"><label>컬럼 (🔑 = 기본키, ✱ = 필수)</label><div class="cols"><table><thead><tr><th>컬럼명</th><th>라벨</th><th>예시</th><th>형</th><th>🔑</th><th>✱</th><th></th></tr></thead><tbody>
+  h+=`<div class="f"><label>컬럼 (🔑 = 기본키, ✱ = 필수, ƒx = 자동 계산)</label><div class="cols"><table><thead><tr><th>컬럼명</th><th>라벨</th><th>예시</th><th>형</th><th title="계산식">ƒx</th><th>🔑</th><th>✱</th><th></th></tr></thead><tbody>
    ${cols.map((c,i)=>`<tr><td><input data-i="${i}" data-k="name" value="${esc(c.name)}"></td><td><input data-i="${i}" data-k="label" value="${esc(c.label||'')}"></td>
-    <td><input data-i="${i}" data-k="sample" value="${esc(c.sample||'')}" placeholder="예시값" style="color:#2e7d5b"></td>
+    <td><input data-i="${i}" data-k="sample" value="${esc(c.sample||'')}" placeholder="예시값" style="color:#2e7d5b" ${c.formula!==undefined||c.calc?'disabled title="계산값은 수식으로 자동 생성"':''}></td>
     <td><select data-i="${i}" data-k="type">${['text','num','date','bool'].map(x=>`<option ${c.type===x?'selected':''}>${x}</option>`).join('')}</select></td>
-    <td><input type="checkbox" data-i="${i}" data-k="pk" ${c.pk?'checked':''}></td><td><input type="checkbox" data-i="${i}" data-k="req" ${c.req?'checked':''}></td>
-    <td><button class="x" data-del="${i}">×</button></td></tr>${(FLOW_COL.test(c.name)||c.flow)?`<tr><td colspan="7" style="background:#f7f9fb;padding:2px 6px 5px"><span style="font-size:11px;color:#8a94a6">⇢ 상태흐름</span> <input data-i="${i}" data-k="flow" value="${esc(c.flow||'')}" placeholder="대기 > 승인 > 발주 > 입고완료 | 취소, 보류  (비우면 라벨 괄호 안 순서)" style="width:calc(100% - 70px);border:1px solid #dbe3ea;background:#fff">${parseFlow(c)?`<div style="font-size:11px;color:#2e7d5b;margin-top:2px">→ ${parseFlow(c).steps.join(' › ')}${parseFlow(c).ends.length?' · 종료: '+parseFlow(c).ends.join(', '):''}</div>`:''}</td></tr>`:''}`).join('')}</tbody></table></div>
-   <div class="acts"><button class="btn" id="addCol">＋ 컬럼</button><button class="btn" id="addStd">＋ 기본 컬럼 (비고·수정일)</button><button class="btn primary" onclick="openPaste()">📋 항목 붙여넣기</button><button class="btn" onclick="sampleOne()">⇩ 실제 데이터 1건</button><span class="msg" id="smpMsg" style="font-size:11.5px;color:#8a94a6"></span></div></div>
+    <td style="text-align:center"><input type="checkbox" data-calc-toggle="${i}" ${c.formula!==undefined||c.calc?'checked':''} title="계산식 사용"></td>
+    <td><input type="checkbox" data-i="${i}" data-k="pk" ${c.pk?'checked':''} ${c.formula!==undefined||c.calc?'disabled':''}></td><td><input type="checkbox" data-i="${i}" data-k="req" ${c.req?'checked':''}></td>
+    <td><button class="x" data-del="${i}">×</button></td></tr>
+    ${(c.formula!==undefined||c.calc)?`<tr><td colspan="8" style="background:#f3f7fb;padding:5px 6px"><div style="display:grid;grid-template-columns:auto 1fr 52px 54px auto;gap:5px;align-items:center"><b style="color:#2f6fb5">ƒx</b><input data-i="${i}" data-k="formula" value="${esc(c.formula||'')}" placeholder="예: qty * unit_price  /  IF(plan_qty == 0, 0, result_qty / plan_qty * 100)" style="border:1px solid #b9cce2;background:#fff"><input data-i="${i}" data-k="unit" value="${esc(c.unit||'')}" placeholder="단위"><input data-i="${i}" data-k="decimals" type="number" min="0" max="8" value="${esc(c.decimals??'')}" placeholder="소수"><label class="ck" title="체크하면 계산 결과도 DB 컬럼에 저장"><input type="checkbox" data-i="${i}" data-k="calcStore" ${c.calcStore?'checked':''}>DB</label></div><div style="font-size:10.8px;color:#6b7686;margin-top:3px">사용: + − ×(*) ÷(/) %, 비교(>, &lt;, ==), IF(), ROUND(), MIN(), MAX(), ABS(), COALESCE(), TODAY(), DAYS(시작일,종료일)</div></td></tr>`:''}
+    ${(FLOW_COL.test(c.name)||c.flow)?`<tr><td colspan="8" style="background:#f7f9fb;padding:2px 6px 5px"><span style="font-size:11px;color:#8a94a6">⇢ 상태흐름</span> <input data-i="${i}" data-k="flow" value="${esc(c.flow||'')}" placeholder="대기 > 승인 > 발주 > 입고완료 | 취소, 보류  (비우면 라벨 괄호 안 순서)" style="width:calc(100% - 70px);border:1px solid #dbe3ea;background:#fff">${parseFlow(c)?`<div style="font-size:11px;color:#2e7d5b;margin-top:2px">→ ${parseFlow(c).steps.join(' › ')}${parseFlow(c).ends.length?' · 종료: '+parseFlow(c).ends.join(', '):''}</div>`:''}</td></tr>`:''}`).join('')}</tbody></table></div>
+   <div class="acts"><button class="btn" id="addCol">＋ 컬럼</button><button class="btn" id="addStd">＋ 기본 컬럼 (비고·수정일)</button><button class="btn" id="addCalcEx">ƒx 계산식 예제</button><button class="btn primary" onclick="openPaste()">📋 항목 붙여넣기</button><button class="btn" onclick="sampleOne()">⇩ 실제 데이터 1건</button><span class="msg" id="smpMsg" style="font-size:11.5px;color:#8a94a6"></span></div>
+   <div style="font-size:11px;color:#8a94a6;line-height:1.55">계산식은 같은 행의 <b>컬럼명</b>을 사용합니다. 예: <code>amount = qty * unit_price</code>, <code>defect_rate = IF(total_qty == 0, 0, defect_qty / total_qty * 100)</code>. 기본은 화면 계산이며, ƒx 행의 <b>DB</b>를 체크한 경우에만 계산값 컬럼을 DB에도 생성·저장합니다.</div></div>
    <div class="row2"><div class="f"><label>Supabase 주소 (프로젝트 ref 또는 URL)</label><input id="f_host" value="${esc(n.meta.host||'')}" placeholder="abcd1234 또는 https://abcd1234.supabase.co"></div>
     <div class="f"><label>anon / publishable 키</label><input id="f_apikey" value="${esc(n.meta.apikey||'')}" placeholder="sb_publishable_..."></div></div>`}
  const outs=D.edges.filter(e=>e.from===n.id),ins=D.edges.filter(e=>e.to===n.id);
@@ -756,12 +760,14 @@ function renderPanel(){
   if(pvDlg.classList.contains('on')&&pvNode===n)previewNode(n.id)};
  if(n.type==='table'){
   P.querySelectorAll('.cols [data-k]').forEach(el=>{const ev=el.type==='checkbox'||el.tagName==='SELECT'?'change':'input';
-   el.addEventListener(ev,()=>{const c=n.meta.cols[+el.dataset.i];c[el.dataset.k]=el.type==='checkbox'?el.checked:el.value.trim();render()})});
+   el.addEventListener(ev,()=>{const c=n.meta.cols[+el.dataset.i];let v=el.type==='checkbox'?el.checked:el.value.trim();if(el.dataset.k==='decimals')v=v===''?'':Math.max(0,Math.min(8,Number(v)||0));c[el.dataset.k]=v;render()})});
+  P.querySelectorAll('[data-calc-toggle]').forEach(el=>el.onchange=()=>{const c=n.meta.cols[+el.dataset.calcToggle];if(el.checked){if(c.formula===undefined)c.formula='';c.calc=true;c.pk=false}else{delete c.formula;delete c.calc;delete c.unit;delete c.decimals;delete c.calcStore}renderPanel();render()});
   P.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{n.meta.cols.splice(+b.dataset.del,1);renderPanel();render()});
   $('addCol').onclick=()=>{n.meta.cols.push({name:'col'+(n.meta.cols.length+1),label:'',type:'text'});renderPanel();render();const last=P.querySelectorAll('.cols input[data-k=name]');last[last.length-1].focus()};
   if($('f_host'))$('f_host').oninput=e=>{n.meta.host=e.target.value.trim();render()};
   if($('f_apikey'))$('f_apikey').oninput=e=>{n.meta.apikey=e.target.value.trim()};
   $('addStd').onclick=()=>{for(const c of [{name:'remark',label:'비고',type:'text'},{name:'updated_at',label:'수정일',type:'date'}])if(!n.meta.cols.some(x=>x.name===c.name))n.meta.cols.push(c);renderPanel();render()};
+  $('addCalcEx').onclick=()=>{addCalcExamples(n);renderPanel();render()};
  }
 }
 function flipEdge(){const e=D.edges.find(x=>x.id===sel.edge);[e.from,e.to]=[e.to,e.from];render();renderPanel()}
@@ -1062,9 +1068,9 @@ function loadSample(){
  sec('영업관리','출하','⇪');scr('출하','출하등록','shipment_input.html','input');scr('출하','출하현황','shipment_status.html','status');
  mod('생산관리','⚙','계획 · 실적');sec('생산관리','실적','⚙');scr('실적','생산실적등록','prod_result_input.html','input');scr('실적','생산실적현황','prod_result_status.html','status');
  mod('기준정보','▦','거래처 · 품목 · 사용자');sec('기준정보','공통','⚙');scr('공통','거래처관리','vendor_management.html','input');scr('공통','품목관리','item_management.html','input');scr('공통','사용자정보','user_information.html','other');
- tbl('sample_orders',[{name:'order_no',label:'수주번호',type:'text',pk:true,req:true},{name:'order_date',label:'수주일',type:'date',req:true},{name:'due_date',label:'납기일',type:'date'},{name:'customer_name',label:'거래처',type:'text',req:true},{name:'item_name',label:'품목',type:'text',req:true},{name:'status',label:'상태',type:'text'},{name:'qty',label:'수량',type:'num'},{name:'unit_price',label:'단가',type:'num'},{name:'amount',label:'금액',type:'num'},{name:'remark',label:'비고',type:'text'}]);
+ tbl('sample_orders',[{name:'order_no',label:'수주번호',type:'text',pk:true,req:true},{name:'order_date',label:'수주일',type:'date',req:true},{name:'due_date',label:'납기일',type:'date'},{name:'customer_name',label:'거래처',type:'text',req:true},{name:'item_name',label:'품목',type:'text',req:true},{name:'status',label:'상태',type:'text'},{name:'qty',label:'수량',type:'num',sample:'10'},{name:'unit_price',label:'단가',type:'num',sample:'2500'},{name:'amount',label:'금액',type:'num',formula:'qty * unit_price',unit:'원',decimals:0},{name:'remark',label:'비고',type:'text'}]);
  tbl('shipments',[{name:'ship_no',label:'출하번호',type:'text',pk:true,req:true},{name:'ship_date',label:'출하일',type:'date',req:true},{name:'order_no',label:'수주번호',type:'text',req:true},{name:'customer_name',label:'거래처',type:'text'},{name:'item_name',label:'품목',type:'text'},{name:'qty',label:'출하수량',type:'num'},{name:'remark',label:'비고',type:'text'}]);
- tbl('prod_results',[{name:'result_no',label:'실적번호',type:'text',pk:true,req:true},{name:'work_date',label:'작업일',type:'date',req:true},{name:'order_no',label:'수주번호',type:'text'},{name:'item_name',label:'품목',type:'text'},{name:'worker',label:'작업자',type:'text'},{name:'good_qty',label:'양품',type:'num'},{name:'defect_qty',label:'불량',type:'num'},{name:'remark',label:'비고',type:'text'}]);
+ tbl('prod_results',[{name:'result_no',label:'실적번호',type:'text',pk:true,req:true},{name:'work_date',label:'작업일',type:'date',req:true},{name:'order_no',label:'수주번호',type:'text'},{name:'item_name',label:'품목',type:'text'},{name:'worker',label:'작업자',type:'text'},{name:'good_qty',label:'양품',type:'num',sample:'980'},{name:'defect_qty',label:'불량',type:'num',sample:'20'},{name:'total_qty',label:'총생산수량',type:'num',formula:'good_qty + defect_qty',unit:'EA',decimals:0},{name:'defect_rate',label:'불량률',type:'num',formula:'IF(total_qty == 0, 0, defect_qty / total_qty * 100)',unit:'%',decimals:2},{name:'remark',label:'비고',type:'text'}]);
  tbl('vendors',[{name:'vendor_code',label:'거래처코드',type:'text',pk:true,req:true},{name:'vendor_name',label:'거래처명',type:'text',req:true},{name:'vendor_type',label:'구분',type:'text'},{name:'phone',label:'전화',type:'text'},{name:'is_active',label:'사용',type:'bool'}]);
  tbl('items',[{name:'item_code',label:'품목코드',type:'text',pk:true,req:true},{name:'item_name',label:'품목명',type:'text',req:true},{name:'spec',label:'규격',type:'text'},{name:'unit',label:'단위',type:'text'},{name:'unit_price',label:'단가',type:'num'}]);
  tbl('users',[{name:'user_key',label:'사용자키',type:'text',pk:true},{name:'user_id',label:'아이디',type:'text'},{name:'name',label:'이름',type:'text'},{name:'role',label:'권한',type:'text'}]);
@@ -3109,6 +3115,75 @@ function parseFlow(c){
  return steps.length>=2?{col:c.name,label:c.label||c.name,steps,ends}:null;
 }
 const flowOf=t=>{for(const c of colsOf(t)){const f=parseFlow(c);if(f)return f}return null};
+
+/* ═══════════════ 계산식 (formula) ═══════════════
+   컬럼 formula 예: qty * unit_price, IF(total_qty == 0, 0, defect_qty / total_qty * 100)
+   안전한 소형 파서를 사용하며 eval/Function 은 쓰지 않는다. */
+function calcEvalFormula(src,row){
+ try{
+  const s=String(src||'').trim();if(!s)return '';
+  let i=0,t={k:'eof',v:''};
+  const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0};
+  const blank=v=>v===null||v===undefined||v==='';
+  function next(){while(/\s/.test(s[i]||''))i++;if(i>=s.length)return t={k:'eof',v:''};const ch=s[i];
+   if(/[0-9.]/.test(ch)){let j=i+1;while(/[0-9.eE+-]/.test(s[j]||'')){if((s[j]=='+'||s[j]=='-')&&!/[eE]/.test(s[j-1]||''))break;j++}const v=s.slice(i,j);i=j;return t={k:'num',v:Number(v)}}
+   if(ch==='"'||ch==="'"){const q=ch;let j=++i,v='';while(i<s.length&&s[i]!==q){if(s[i]==='\\'&&i+1<s.length){v+=s[i+1];i+=2}else v+=s[i++]}i++;return t={k:'str',v}}
+   if(/[A-Za-z_가-힣]/.test(ch)){let j=i+1;while(/[A-Za-z0-9_가-힣]/.test(s[j]||''))j++;const v=s.slice(i,j);i=j;return t={k:'id',v}}
+   const two=s.slice(i,i+2);if(['>=','<=','==','!=','&&','||'].includes(two)){i+=2;return t={k:'op',v:two}}
+   i++;return t={k:'op',v:ch};}
+  const eat=v=>{if(t.v===v){next();return true}return false};
+  function primary(){if(t.k==='num'||t.k==='str'){const v=t.v;next();return v}
+   if(t.k==='id'){const id=t.v,u=id.toUpperCase();next();if(eat('(')){const a=[];if(!eat(')')){do{a.push(expr())}while(eat(','));if(!eat(')'))throw Error(')')}
+      if(u==='IF')return a[0]?a[1]:a[2];if(u==='ROUND'){const d=Math.max(0,Math.min(8,num(a[1]||0))),p=10**d;return Math.round(num(a[0])*p)/p}
+      if(u==='MIN')return Math.min(...a.map(num));if(u==='MAX')return Math.max(...a.map(num));if(u==='ABS')return Math.abs(num(a[0]));
+      if(u==='COALESCE')return a.find(v=>!blank(v))??'';if(u==='TODAY'){const d=new Date(),z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10);}
+      if(u==='DAYS'){const a0=new Date(a[0]),a1=new Date(a[1]);return Number.isFinite(+a0)&&Number.isFinite(+a1)?Math.round((a1-a0)/86400000):0}
+      if(u==='YEAR'||u==='MONTH'||u==='DAY'){const d=new Date(a[0]);if(!Number.isFinite(+d))return 0;return u==='YEAR'?d.getFullYear():u==='MONTH'?d.getMonth()+1:d.getDate()}
+      return ''}
+    if(u==='TRUE')return true;if(u==='FALSE')return false;if(u==='NULL')return '';return Object.prototype.hasOwnProperty.call(row,id)?row[id]:''}
+   if(eat('(')){const v=expr();if(!eat(')'))throw Error(')');return v}throw Error('값')}
+  function unary(){if(eat('-'))return-num(unary());if(eat('+'))return num(unary());if(eat('!'))return!unary();return primary()}
+  function pow(){let v=unary();while(eat('^'))v=Math.pow(num(v),num(unary()));return v}
+  function mul(){let v=pow();for(;;){if(eat('*'))v=num(v)*num(pow());else if(eat('/')){const d=num(pow());v=d===0?0:num(v)/d}else if(eat('%')){const d=num(pow());v=d===0?0:num(v)%d}else break}return v}
+  function add(){let v=mul();for(;;){if(eat('+'))v=num(v)+num(mul());else if(eat('-'))v=num(v)-num(mul());else break}return v}
+  function cmp(){let v=add();for(;;){const op=t.v;if(!['>','<','>=','<='].includes(op))break;next();const b=add(),an=Number(v),bn=Number(b),numeric=Number.isFinite(an)&&Number.isFinite(bn)&&v!==''&&b!=='';const a0=numeric?an:String(v),b0=numeric?bn:String(b);v=op==='>'?a0>b0:op==='<'?a0<b0:op==='>='?a0>=b0:a0<=b0}return v}
+  function eq(){let v=cmp();while(t.v==='=='||t.v==='!='){const op=t.v;next();const b=cmp();v=op==='=='?String(v)==String(b):String(v)!=String(b)}return v}
+  function and(){let v=eq();while(eat('&&'))v=!!v&&!!eq();return v}
+  function expr(){let v=and();while(eat('||'))v=!!v||!!and();return v}
+  next();const out=expr();if(t.k!=='eof')throw Error('끝');return out;
+ }catch(e){return ''}
+}
+function calcApplyRow(row,cols){
+ row=row||{};const cs=(cols||[]).filter(c=>c&&String(c.formula||'').trim());
+ for(let pass=0;pass<Math.max(1,cs.length);pass++)for(const c of cs){let v=calcEvalFormula(c.formula,row);
+  if(c.type==='num'&&v!==''){v=Number(v);if(!Number.isFinite(v))v=0;if(c.decimals!==''&&c.decimals!==undefined&&c.decimals!==null){const d=Math.max(0,Math.min(8,Number(c.decimals)||0)),p=10**d;v=Math.round(v*p)/p}}
+  else if(c.type==='bool')v=!!v;else if(c.type==='text'&&v!==''&&v!=null)v=String(v);
+  row[c.name]=v}
+ return row;
+}
+function calcFormat(v,c,withUnit=true){if(v===null||v===undefined||v==='')return '';let s='';if(c?.type==='num'){const d=c.decimals===''||c.decimals===undefined?null:Math.max(0,Math.min(8,Number(c.decimals)||0));s=Number(v).toLocaleString('ko-KR',d==null?{}:{minimumFractionDigits:d,maximumFractionDigits:d})}else if(c?.type==='bool')s=v?'✓':'';else s=String(v);if(withUnit&&c?.unit&&s!=='')s+=c.unit==='%'?'%':' '+c.unit;return s}
+function calcFormulaRefs(src){const z=String(src||'').replace(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g,' '),out=[];for(const m of z.matchAll(/[A-Za-z_][A-Za-z0-9_]*/g)){const id=m[0],rest=z.slice(m.index+id.length);if(/^\s*\(/.test(rest))continue;if(!['TRUE','FALSE','NULL'].includes(id.toUpperCase())&&!out.includes(id))out.push(id)}return out}
+function calcRuntimeJs(){return [calcEvalFormula,calcApplyRow,calcFormat].map(f=>f.toString()).join('\n')}
+function addCalcExamples(t){
+ const cols=t.meta.cols||(t.meta.cols=[]),by=new Map(cols.map(c=>[c.name,c]));
+ const need=[
+  {name:'qty',label:'수량',type:'num',sample:'10'},{name:'unit_price',label:'단가',type:'num',sample:'2500'},
+  {name:'good_qty',label:'양품수량',type:'num',sample:'980'},{name:'defect_qty',label:'불량수량',type:'num',sample:'20'},
+  {name:'plan_qty',label:'계획수량',type:'num',sample:'1200'},{name:'result_qty',label:'실적수량',type:'num',sample:'1080'},
+  {name:'order_qty',label:'발주수량',type:'num',sample:'100'},{name:'receipt_qty',label:'입고수량',type:'num',sample:'72'},
+  {name:'due_date',label:'납기일',type:'date',sample:new Date(Date.now()+5*864e5).toISOString().slice(0,10)}];
+ for(const c of need)if(!by.has(c.name)){cols.push({...c});by.set(c.name,c)}
+ const ex=[
+  {name:'amount',label:'금액',type:'num',formula:'qty * unit_price',unit:'원',decimals:0},
+  {name:'total_qty',label:'총생산수량',type:'num',formula:'good_qty + defect_qty',unit:'EA',decimals:0},
+  {name:'defect_rate',label:'불량률',type:'num',formula:'IF(total_qty == 0, 0, defect_qty / total_qty * 100)',unit:'%',decimals:2},
+  {name:'achievement_rate',label:'달성률',type:'num',formula:'IF(plan_qty == 0, 0, result_qty / plan_qty * 100)',unit:'%',decimals:1},
+  {name:'balance_qty',label:'미입고수량',type:'num',formula:'order_qty - receipt_qty',unit:'EA',decimals:0},
+  {name:'remaining_days',label:'납기잔여일',type:'num',formula:'DAYS(TODAY(), due_date)',unit:'일',decimals:0},
+  {name:'judge',label:'불량률판정',type:'text',formula:'IF(defect_rate > 3, "주의", "정상")'}];
+ let n=0;for(const c of ex){const old=by.get(c.name);if(old){if(!old.formula){Object.assign(old,c);n++}}else{cols.push({...c,calc:true});by.set(c.name,c);n++}}
+ $('stat').textContent=`ƒx 계산식 예제 ${n}개를 추가/설정했습니다. 수식과 원본 컬럼의 예시값을 바꿔 미리보기에서 확인하세요.`;
+}
 /* 생성된 등록 화면 HTML 에 상태전이 UI 를 덧붙인다 */
 function applyFlow(html,t){
  const fl=flowOf(t);if(!fl)return html;
@@ -3317,6 +3392,7 @@ function sampleRows(t,cnt){
  const cols=colsOf(t);const out=[];
  for(let i=0;i<cnt;i++){const r={};
   for(const c of cols){
+   if(c.formula)continue;
    const sv=c.sample;
    if(sv!==undefined&&sv!==''){r[c.name]=c.type==='num'?(Number(String(sv).replace(/[^0-9.-]/g,''))||0)+i:(c.type==='bool'?(String(sv)!=='false'):(i?String(sv)+(c.pk?'-'+(i+1):''):sv));continue}
    if(/^chk_/i.test(c.name)){r[c.name]=(i===1&&cols.filter(x=>/^chk_/i.test(x.name)).indexOf(c)%3===1)?'NG':'OK';continue}
@@ -3326,7 +3402,7 @@ function sampleRows(t,cnt){
   /* 체크시트: NG수·판정을 항목 결과에서 다시 계산 */
   const chk=cols.filter(x=>/^chk_/i.test(x.name));
   if(chk.length){const ng=chk.filter(x=>r[x.name]==='NG').length;if('ng_count' in r)r.ng_count=ng;if('result' in r)r.result=ng?'NG':'OK';if(/time/.test(cols.map(x=>x.name).join())){for(const x of cols)if(/time/.test(x.name)&&x.type!=='date')r[x.name]=String(8+i).padStart(2,'0')+':30'}}
-  out.push(r)}
+  calcApplyRow(r,cols);out.push(r)}
  return out;
 }
 function buildPreview(n,kindOverride){
@@ -3610,6 +3686,7 @@ function validateDesign(show){
    if(!cn)push('error',`테이블 '${tn}' 에 이름이 비어 있는 컬럼이 있습니다.`,'node',t.id);
    else if(!dbName.test(cn))push('error',`테이블 '${tn}' 의 컬럼명 '${cn}' 형식이 올바르지 않습니다.`,'node',t.id,'소문자 영문/숫자/_ 형식을 권장합니다.');
    if(!['text','num','date','bool'].includes(c.type))push('error',`테이블 '${tn}' 의 컬럼 '${cn}' 형 '${c.type}' 을 지원하지 않습니다.`,'node',t.id);
+   if(c.formula!==undefined||c.calc){const fx=String(c.formula||'').trim();if(!fx)push('error',`테이블 '${tn}' 의 계산 컬럼 '${cn}' 에 계산식이 없습니다.`,'node',t.id,'ƒx 계산식에 예: qty * unit_price 처럼 입력하세요.');if(c.pk)push('error',`계산 컬럼 '${tn}.${cn}' 은 기본키(🔑)로 사용할 수 없습니다.`,'node',t.id);const names=new Set(cols.map(x=>x.name));for(const ref of calcFormulaRefs(fx))if(!names.has(ref))push('error',`계산식 '${tn}.${cn}' 이 존재하지 않는 컬럼 '${ref}' 을 참조합니다.`,'node',t.id);if(calcFormulaRefs(fx).includes(cn))push('error',`계산식 '${tn}.${cn}' 이 자기 자신을 참조합니다.`,'node',t.id);}
   }
   const used=D.edges.some(e=>(e.to===t.id&&e.kind==='uses')||(e.from===t.id&&e.kind==='ref')||(e.to===t.id&&e.kind==='ref'));
   if(!used)push('warning',`테이블 '${tn}' 이(가) 어떤 화면/테이블과도 연결되어 있지 않습니다.`,'node',t.id);
@@ -3707,7 +3784,7 @@ if(C.MODE==='json'){C.SUPABASE={url:'local://db',key:'local'};const v='?v='+C.AP
  const sqlType={text:'text',num:'numeric',date:'date',bool:'boolean'};
  const qid=n=>/[A-Z]/.test(n)?'"'+n+'"':n;
  let sql=`-- schema.sql — 시스템 설계도에서 생성. mes_template 의 schema.sql(공통 테이블·함수) 을 먼저 실행한 뒤 이 파일을 실행한다.\n`;
- for(const t of tables){if(['users','user_permissions'].includes(t.name))continue;const cols=t.meta.cols||[];const p=cols.filter(c=>c.pk).map(c=>c.name);
+ for(const t of tables){if(['users','user_permissions'].includes(t.name))continue;const cols=dbColsOf(t);const p=cols.filter(c=>c.pk).map(c=>c.name);
   sql+=`\ncreate table if not exists public.${t.name}(\n${cols.map(c=>{const fl=parseFlow(c);return `  ${qid(c.name)} ${sqlType[c.type]||'text'}${c.req||c.pk?' not null':''}${fl?` default '${fl.steps[0].replace(/'/g,"''")}' check (${qid(c.name)} in (${[...fl.steps,...fl.ends].map(v=>`'${v.replace(/'/g,"''")}'`).join(',')}))`:''}`}).join(',\n')}${p.length?`,\n  primary key(${p.map(qid).join(',')})`:''}\n);\nalter table public.${t.name} enable row level security;\ndrop policy if exists auth_all on public.${t.name};\ncreate policy auth_all on public.${t.name} for all to authenticated using(true) with check(true);\n`;
   for(const e of D.edges.filter(e=>e.from===t.id&&e.kind==='ref'))sql+=`-- 참조: ${t.name} → ${N(e.to)?.name}  ${e.label||''}\n`}
  GEN['schema.sql']=sql;
@@ -3749,7 +3826,8 @@ if(C.MODE==='json'){C.SUPABASE={url:'local://db',key:'local'};const v='?v='+C.AP
 const esc1=s=>String(s).replace(/'/g,"\\'");
 function slug(s){return s.replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase()||'screen_'+uid()}
 const colsOf=t=>(t.meta.cols||[]).filter(c=>c.name);
-const mapOf=t=>'{'+colsOf(t).map(c=>`${c.name}:${c.type==='text'?`'${c.name}'`:`{col:'${c.name}',type:'${c.type}'}`}`).join(',')+'}';
+const dbColsOf=t=>colsOf(t).filter(c=>!c.formula||c.calcStore);
+const mapOf=t=>'{'+dbColsOf(t).map(c=>`${c.name}:${c.type==='text'?`'${c.name}'`:`{col:'${c.name}',type:'${c.type}'}`}`).join(',')+'}';
 /* ═══ 대시보드 화면 ═══ (mes_work.html 가동설비 모니터링 틀)
    KPI 타일(전체·상태별 건수·합계) → 알림박스(불량 상태·기한 임박) → 그룹 필터칩 → 그룹별 헤더통계 + 상태표(뱃지·달성률·정지행 흐림)
    → 행 클릭 시 상세 + 최근 이벤트(연결된 로그 테이블) 모달. 자동갱신 주기 선택. */
@@ -4613,60 +4691,63 @@ window.MES={search:render,save,setMessage:msg};clearForm();
 }
 function inputScreen(s,t,loc,lookups){
  const cols=colsOf(t),pk=cols.find(c=>c.pk)||cols[0];
- const field=c=>c.type==='bool'?`<div class="check"><input id="f_${c.name}" type="checkbox"></div>`:`<input id="f_${c.name}" class="field${c.req?' req':''}" ${c.type==='num'?'type="number"':c.type==='date'?'type="date"':''}${lookups.length&&/name$/.test(c.name)?` list="dl_${c.name}" autocomplete="off"`:''}>`;
- const dls=cols.filter(c=>lookups.length&&/name$/.test(c.name)).map(c=>`<datalist id="dl_${c.name}"></datalist>`).join('');
+ const field=c=>c.formula?`<input id="f_${c.name}" class="field" readonly data-calc="1" title="계산식: ${esc(c.formula)}" style="background:#f3f7fb;color:#2f6fb5;font-weight:600">`:c.type==='bool'?`<div class="check"><input id="f_${c.name}" type="checkbox"></div>`:`<input id="f_${c.name}" class="field${c.req?' req':''}" ${c.type==='num'?'type="number"':c.type==='date'?'type="date"':''}${lookups.length&&/name$/.test(c.name)?` list="dl_${c.name}" autocomplete="off"`:''}>`;
+ const dls=cols.filter(c=>!c.formula&&lookups.length&&/name$/.test(c.name)).map(c=>`<datalist id="dl_${c.name}"></datalist>`).join('');
  return `<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${s.name}</title>
-<script src="app_config.js"><\/script><link rel="stylesheet" href="mes_screen.css"><style>.body{grid-template-rows:auto minmax(0,1fr)}</style></head>
+<script src="app_config.js"><\/script><link rel="stylesheet" href="mes_screen.css"><style>.body{grid-template-rows:auto minmax(0,1fr)}input[data-calc]{border-color:#b9cce2}</style></head>
 <body><div class="screen">
   <div class="title"><h1>${s.name}</h1><small>${loc}</small></div>
   <div class="body">
     <section class="panel"><div class="cap">${s.name} 입력 <span class="right" id="modeTxt">신규</span></div>
       <div class="formgrid" style="border-left:0;border-top:0">
-${cols.map(c=>`        <div class="lab">${c.label||c.name}</div>${field(c)}`).join('\n')}
+${cols.map(c=>`        <div class="lab">${c.label||c.name}${c.formula?' <span title="자동 계산" style="color:#2f6fb5">ƒx</span>':''}</div>${field(c)}`).join('\n')}
       </div>${dls}
       <div class="actions"><button class="btn primary" onclick="save()">▤ 저장</button><button class="btn" onclick="clearForm()">✕ 신규</button><button class="btn warn" onclick="remove()">✖ 삭제</button><button class="btn" onclick="exportCsv()">▤ EXCEL</button></div>
     </section>
     <section class="panel"><div class="cap">${s.name} 목록 <span class="right"><input id="q" class="field" style="width:160px;height:22px" placeholder="검색" oninput="render()"> &nbsp;<span id="countText"></span></span></div>
-      <div class="tablewrap"><table><thead><tr>${cols.map(c=>`<th${c.type==='num'?' class="r"':''}>${c.label||c.name}</th>`).join('')}</tr></thead><tbody id="tbody"></tbody></table></div>
+      <div class="tablewrap"><table><thead><tr>${cols.map(c=>`<th${c.type==='num'?' class="r"':''}>${c.label||c.name}${c.unit?` (${c.unit})`:''}</th>`).join('')}</tr></thead><tbody id="tbody"></tbody></table></div>
     </section>
   </div>
-  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">${pk.label||pk.name}를 비우고 저장하면 자동 채번됩니다.</span></footer>
+  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">${pk.label||pk.name}를 비우고 저장하면 자동 채번됩니다.${cols.some(c=>c.formula)?' · ƒx 항목은 입력값에 따라 자동 계산됩니다.':''}</span></footer>
 </div>
 <script>
 const rows=[];window.rows=rows;let sel=null;
-const F=${JSON.stringify(cols.map(c=>c.name))},T=${JSON.stringify(Object.fromEntries(cols.map(c=>[c.name,c.type])))},PK='${pk.name}',REQ=${JSON.stringify(cols.filter(c=>c.req&&!c.pk).map(c=>c.name))};
+const CM=${JSON.stringify(cols)},CMAP=Object.fromEntries(CM.map(c=>[c.name,c])),F=CM.map(c=>c.name),CALC=CM.filter(c=>c.formula).map(c=>c.name),T=Object.fromEntries(CM.map(c=>[c.name,c.type])),PK='${pk.name}',REQ=CM.filter(c=>c.req&&!c.pk&&!c.formula).map(c=>c.name);
+${calcRuntimeJs()}
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('ko-KR');const today=()=>new Date().toISOString().slice(0,10);
 function msg(t){message.textContent=t}
-function cell(r,f){const v=r[f];return T[f]==='num'?fmt(v):T[f]==='bool'?(v?'✓':''):esc(v)}
-function render(){const q=($('q').value||'').trim().toLowerCase();
+function cell(r,f){calcApplyRow(r,CM);const c=CMAP[f],v=r[f];return c.formula?esc(calcFormat(v,c,true)):T[f]==='num'?fmt(v):T[f]==='bool'?(v?'✓':''):esc(v)}
+function readForm(base){const o={...(base||{})};for(const f of F){const c=CMAP[f];if(c.formula)continue;const el=$('f_'+f);if(!el)continue;o[f]=T[f]==='bool'?el.checked:T[f]==='num'?(el.value===''?'':Number(el.value)):el.value}return calcApplyRow(o,CM)}
+function syncCalc(o){o=o?calcApplyRow(o,CM):readForm();for(const f of CALC){const el=$('f_'+f);if(el)el.value=calcFormat(o[f],CMAP[f],true)}return o}
+function render(){rows.forEach(r=>calcApplyRow(r,CM));const q=($('q').value||'').trim().toLowerCase();
  const view=rows.filter(r=>!q||F.some(f=>String(r[f]??'').toLowerCase().includes(q))).sort((a,b)=>String(b[PK]).localeCompare(String(a[PK])));
  tbody.innerHTML=view.length?view.map(r=>'<tr class="'+(r[PK]===sel?'sel':'')+'" onclick="pick(\\''+esc(String(r[PK]))+'\\')">'+F.map(f=>'<td'+(T[f]==='num'?' class="r"':'')+'>'+cell(r,f)+'</td>').join('')+'</tr>').join('')
   :'<tr><td colspan="'+F.length+'" class="empty">등록된 자료가 없습니다.</td></tr>';countText.textContent=view.length+'건'}
-function pick(k){const r=rows.find(x=>String(x[PK])===k);if(!r)return;sel=r[PK];F.forEach(f=>{const el=$('f_'+f);if(!el)return;if(T[f]==='bool')el.checked=!!r[f];else el.value=r[f]??''});modeTxt.textContent='수정: '+k;render();msg(k+' 을(를) 불러왔습니다.')}
-function clearForm(){sel=null;F.forEach(f=>{const el=$('f_'+f);if(!el)return;if(T[f]==='bool')el.checked=false;else el.value=T[f]==='date'?today():''});modeTxt.textContent='신규';render();msg('새 자료를 입력하세요.');$('f_'+PK).focus()}
+function pick(k){const r=rows.find(x=>String(x[PK])===k);if(!r)return;calcApplyRow(r,CM);sel=r[PK];F.forEach(f=>{const el=$('f_'+f);if(!el)return;const c=CMAP[f];if(c.formula)el.value=calcFormat(r[f],c,true);else if(T[f]==='bool')el.checked=!!r[f];else el.value=r[f]??''});modeTxt.textContent='수정: '+k;render();msg(k+' 을(를) 불러왔습니다.')}
+function clearForm(){sel=null;F.forEach(f=>{const el=$('f_'+f),c=CMAP[f];if(!el||c.formula)return;if(T[f]==='bool')el.checked=false;else el.value=T[f]==='date'?today():''});syncCalc();modeTxt.textContent='신규';render();msg('새 자료를 입력하세요.');$('f_'+PK)?.focus()}
 function nextNo(){const p='${(pk.name.split('_')[0]||'no').slice(0,2).toUpperCase()}-'+today().slice(2).replaceAll('-','')+'-';const n=rows.filter(r=>String(r[PK]).startsWith(p)).map(r=>Number(String(r[PK]).slice(p.length))||0);return p+String((n.length?Math.max(...n):0)+1).padStart(3,'0')}
 function save(){
  for(const f of REQ){const el=$('f_'+f);if(el&&T[f]!=='bool'&&!String(el.value).trim())return msg((el.previousElementSibling?.textContent||f)+' 은(는) 필수입니다.')}
- const no=String($('f_'+PK).value||'').trim()||nextNo();const o={};
- for(const f of F){const el=$('f_'+f);if(!el)continue;o[f]=T[f]==='bool'?el.checked:T[f]==='num'?(el.value===''?'':Number(el.value)):el.value}
- o[PK]=no;if(sel&&sel!==no){const i=rows.findIndex(r=>r[PK]===sel);if(i>=0)rows.splice(i,1)}
- const i=rows.findIndex(r=>r[PK]===no);if(i>=0)rows[i]=o;else rows.push(o);sel=no;$('f_'+PK).value=no;modeTxt.textContent='수정: '+no;render();msg(no+' 저장했습니다.')}
+ const no=String($('f_'+PK).value||'').trim()||nextNo();const o=readForm();o[PK]=no;calcApplyRow(o,CM);
+ if(sel&&sel!==no){const i=rows.findIndex(r=>r[PK]===sel);if(i>=0)rows.splice(i,1)}
+ const i=rows.findIndex(r=>r[PK]===no);if(i>=0)rows[i]=o;else rows.push(o);sel=no;$('f_'+PK).value=no;syncCalc(o);modeTxt.textContent='수정: '+no;render();msg(no+' 저장했습니다.')}
 function remove(){if(!sel)return msg('삭제할 행을 목록에서 선택하세요.');if(!confirm(sel+' 을(를) 삭제할까요?'))return;const i=rows.findIndex(r=>r[PK]===sel);if(i>=0)rows.splice(i,1);const k=sel;clearForm();msg(k+' 삭제했습니다.')}
-function exportCsv(){const h=${JSON.stringify(cols.map(c=>c.label||c.name))};const csv='\\ufeff'+[h,...rows.map(r=>F.map(f=>r[f]))].map(a=>a.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='${slug(s.name)}.csv';a.click()}
+function exportCsv(){rows.forEach(r=>calcApplyRow(r,CM));const h=${JSON.stringify(cols.map(c=>c.label||c.name))};const csv='\\ufeff'+[h,...rows.map(r=>F.map(f=>r[f]))].map(a=>a.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='${slug(s.name)}.csv';a.click()}
 async function loadMasters(){if(!window.MESDB)return;try{await MESDB.ready}catch(e){}if(!MESDB.online)return;
-${cols.filter(c=>lookups.length&&/name$/.test(c.name)).map(c=>{const lk=lookups.find(l=>colsOf(l).some(x=>x.name===c.name))||lookups[0];const lc=colsOf(lk).find(x=>x.name===c.name)||colsOf(lk).find(x=>/name$/.test(x.name))||colsOf(lk)[0];return ` try{const rs=await MESDB.table('${lk.name}').select('select=${lc.name}&order=${lc.name}');$('dl_${c.name}').innerHTML=rs.map(r=>'<option value="'+esc(r['${lc.name}'])+'">').join('')}catch(e){}`}).join('\n')}
+${cols.filter(c=>!c.formula&&lookups.length&&/name$/.test(c.name)).map(c=>{const lk=lookups.find(l=>colsOf(l).some(x=>x.name===c.name))||lookups[0];const lc=colsOf(lk).find(x=>x.name===c.name)||colsOf(lk).find(x=>/name$/.test(x.name))||colsOf(lk)[0];return ` try{const rs=await MESDB.table('${lk.name}').select('select=${lc.name}&order=${lc.name}');$('dl_${c.name}').innerHTML=rs.map(r=>'<option value="'+esc(r['${lc.name}'])+'">').join('')}catch(e){}`}).join('\n')}
 }
+F.filter(f=>!CMAP[f].formula).forEach(f=>{const el=$('f_'+f);if(el)el.addEventListener(T[f]==='bool'?'change':'input',()=>syncCalc())});
 window.MES={search:render,save,setMessage:msg};clearForm();
 <\/script>
 <script src="mes_db.js"><\/script>
-<script>MESDB.master({page:'${slug(s.name)}:rows',table:'${t.name}',pk:'${pk.name}',map:${mapOf(t)},get:()=>rows,render:()=>{render();if(sel&&!rows.some(r=>r[PK]===sel))clearForm()}});loadMasters();<\/script>
+<script>MESDB.master({page:'${slug(s.name)}:rows',table:'${t.name}',pk:'${pk.name}',map:${mapOf(t)},get:()=>rows,render:()=>{rows.forEach(r=>calcApplyRow(r,CM));render();if(sel&&!rows.some(r=>r[PK]===sel))clearForm()}});loadMasters();<\/script>
 <div id="toast"></div></body></html>
 `;
 }
 function statusScreen(s,t,loc){
- const cols=colsOf(t),pk=cols.find(c=>c.pk)||cols[0],dateCol=cols.find(c=>c.type==='date'),textCols=cols.filter(c=>c.type==='text'&&!c.pk).slice(0,3),numCols=cols.filter(c=>c.type==='num');
+ const cols=colsOf(t),pk=cols.find(c=>c.pk)||cols[0],dateCol=cols.find(c=>c.type==='date'&&!c.formula),textCols=cols.filter(c=>c.type==='text'&&!c.pk&&!c.formula).slice(0,3),numCols=cols.filter(c=>c.type==='num');
  return `<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${s.name}</title>
 <script src="app_config.js"><\/script><link rel="stylesheet" href="mes_screen.css"><style>.body{grid-template-rows:auto minmax(0,1fr)}tfoot td{position:sticky;bottom:0;background:#eef2f5;font-weight:700;border-top:1px solid var(--line)}
@@ -4680,28 +4761,29 @@ function statusScreen(s,t,loc){
       <div class="lab">${pk.label||pk.name}</div><input id="q_pk" class="field">
       <button class="btn primary" onclick="search()">⌕ 검색</button><button class="btn" onclick="resetQ()">지우기</button></div></section>
     <section class="panel"><div class="cap">조회 결과 <span class="right" id="countText"></span></div>
-      <div class="tablewrap"><table><thead><tr><th class="c" style="width:40px">No</th>${cols.map(c=>`<th${c.type==='num'?' class="r"':''}>${c.label||c.name}</th>`).join('')}</tr></thead><tbody id="tbody"></tbody>
+      <div class="tablewrap"><table><thead><tr><th class="c" style="width:40px">No</th>${cols.map(c=>`<th${c.type==='num'?' class="r"':''}>${c.label||c.name}${c.formula?' ƒx':''}${c.unit?` (${c.unit})`:''}</th>`).join('')}</tr></thead><tbody id="tbody"></tbody>
       <tfoot><tr><td class="c">합계</td>${cols.map(c=>c.type==='num'?`<td class="r" id="t_${c.name}"></td>`:'<td></td>').join('')}</tr></tfoot></table></div></section>
   </div>
-  <footer class="foot"><button class="btn" onclick="search()">⌕ 검색</button><button class="btn warn" onclick="delRow()">✖ 삭제</button><button class="btn" onclick="exportCsv()">▤ EXCEL</button><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">조건을 넣고 [검색]. 행 클릭 = 상세.</span></footer>
+  <footer class="foot"><button class="btn" onclick="search()">⌕ 검색</button><button class="btn warn" onclick="delRow()">✖ 삭제</button><button class="btn" onclick="exportCsv()">▤ EXCEL</button><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">조건을 넣고 [검색]. 행 클릭 = 상세.${cols.some(c=>c.formula)?' · ƒx 항목은 조회 시 자동 계산됩니다.':''}</span></footer>
 </div>
 <div class="modal-bg" id="dlg"><div class="modal"><div class="t">상세 <span class="x" onclick="dlg.classList.remove('on')">×</span></div><div class="bd"><div class="dl" id="dlBody"></div></div><div class="bt"><button class="btn" onclick="dlg.classList.remove('on')">닫기</button></div></div></div>
 <script>
 const data=[];window.data=data;let view=[],sel=-1;
-const F=${JSON.stringify(cols.map(c=>c.name))},L=${JSON.stringify(Object.fromEntries(cols.map(c=>[c.name,c.label||c.name])))},T=${JSON.stringify(Object.fromEntries(cols.map(c=>[c.name,c.type])))},PK='${pk.name}',DC=${dateCol?`'${dateCol.name}'`:'null'},TC=${JSON.stringify(textCols.map(c=>c.name))},NC=${JSON.stringify(numCols.map(c=>c.name))};
+const CM=${JSON.stringify(cols)},CMAP=Object.fromEntries(CM.map(c=>[c.name,c])),F=CM.map(c=>c.name),L=Object.fromEntries(CM.map(c=>[c.name,c.label||c.name])),T=Object.fromEntries(CM.map(c=>[c.name,c.type])),PK='${pk.name}',DC=${dateCol?`'${dateCol.name}'`:'null'},TC=${JSON.stringify(textCols.map(c=>c.name))},NC=${JSON.stringify(numCols.map(c=>c.name))};
+${calcRuntimeJs()}
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('ko-KR');
 function msg(t){message.textContent=t}
-function cell(r,f){const v=r[f];return T[f]==='num'?fmt(v):T[f]==='bool'?(v?'✓':''):esc(v)}
-function search(){const f=DC?$('q_from').value:'',t=DC?$('q_to').value:'',pkq=$('q_pk').value.trim().toLowerCase();
+function cell(r,f){calcApplyRow(r,CM);const c=CMAP[f],v=r[f];return c.formula?esc(calcFormat(v,c,true)):T[f]==='num'?fmt(v):T[f]==='bool'?(v?'✓':''):esc(v)}
+function search(){data.forEach(r=>calcApplyRow(r,CM));const f=DC?$('q_from').value:'',t=DC?$('q_to').value:'',pkq=$('q_pk').value.trim().toLowerCase();
  view=data.filter(r=>(!f||(r[DC]||'')>=f)&&(!t||(r[DC]||'')<=t)&&(!pkq||String(r[PK]??'').toLowerCase().includes(pkq))&&TC.every(c=>{const q=$('q_'+c).value.trim().toLowerCase();return !q||String(r[c]??'').toLowerCase().includes(q)}))
   .sort((a,b)=>DC?String(b[DC]).localeCompare(String(a[DC])):String(b[PK]).localeCompare(String(a[PK])));sel=-1;render();msg('조회결과 '+view.length+'건')}
 function resetQ(){document.querySelectorAll('.filters input').forEach(i=>i.value='');search()}
-function render(){tbody.innerHTML=view.length?view.map((r,i)=>'<tr class="'+(i===sel?'sel':'')+'" onclick="pick('+i+')"><td class="c">'+(i+1)+'</td>'+F.map(f=>'<td'+(T[f]==='num'?' class="r"':'')+'>'+cell(r,f)+'</td>').join('')+'</tr>').join('')
+function render(){view.forEach(r=>calcApplyRow(r,CM));tbody.innerHTML=view.length?view.map((r,i)=>'<tr class="'+(i===sel?'sel':'')+'" onclick="pick('+i+')"><td class="c">'+(i+1)+'</td>'+F.map(f=>'<td'+(T[f]==='num'?' class="r"':'')+'>'+cell(r,f)+'</td>').join('')+'</tr>').join('')
   :'<tr><td colspan="'+(F.length+1)+'" class="empty">조회 결과가 없습니다.</td></tr>';
- NC.forEach(c=>$('t_'+c).textContent=fmt(view.reduce((s,r)=>s+(Number(r[c])||0),0)));countText.textContent=view.length+'건'}
-function pick(i){sel=i;render();const r=view[i];dlBody.innerHTML=F.map(f=>'<div class="lab">'+L[f]+'</div><div>'+cell(r,f)+'</div>').join('');dlg.classList.add('on')}
+ NC.forEach(c=>{const el=$('t_'+c);if(el)el.textContent=calcFormat(view.reduce((s,r)=>s+(Number(r[c])||0),0),CMAP[c],!!CMAP[c]?.unit)});countText.textContent=view.length+'건'}
+function pick(i){sel=i;render();const r=view[i];dlBody.innerHTML=F.map(f=>'<div class="lab">'+L[f]+(CMAP[f].formula?' ƒx':'')+'</div><div>'+cell(r,f)+'</div>').join('');dlg.classList.add('on')}
 function delRow(){if(sel<0)return msg('삭제할 행을 선택하세요.');const r=view[sel];dlg.classList.remove('on');if(!confirm(r[PK]+' 을(를) 삭제할까요?'))return;const i=data.findIndex(x=>x[PK]===r[PK]);if(i>=0)data.splice(i,1);search();msg(r[PK]+' 삭제했습니다.')}
-function exportCsv(){const csv='\\ufeff'+[F.map(f=>L[f]),...view.map(r=>F.map(f=>r[f]))].map(a=>a.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='${slug(s.name)}.csv';a.click()}
+function exportCsv(){data.forEach(r=>calcApplyRow(r,CM));const csv='\\ufeff'+[F.map(f=>L[f]),...view.map(r=>F.map(f=>r[f]))].map(a=>a.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='${slug(s.name)}.csv';a.click()}
 document.querySelectorAll('.filters input').forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter')search()}));dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.classList.remove('on')});
 window.MES={search,exportCsv,setMessage:msg};render();
 <\/script>
@@ -4719,7 +4801,7 @@ function masterDetailScreen(scr,parent,child,edge,loc,lookups){
  const pk=(P.find(c=>c.pk)||P[0]).name;
  const CC=C.filter(c=>c.name!==lk.child&&!c.pk);           /* 명세 그리드에 보일 컬럼 */
  const ckey=(C.find(c=>c.pk)||{}).name||'';
- const field=c=>c.type==='bool'?`<div class="check"><input id="f_${c.name}" type="checkbox"></div>`
+ const field=c=>c.formula?`<input id="f_${c.name}" class="field" readonly data-calc="1" title="계산식: ${esc(c.formula)}" style="background:#f3f7fb;color:#2f6fb5;font-weight:600">`:c.type==='bool'?`<div class="check"><input id="f_${c.name}" type="checkbox"></div>`
   :`<input id="f_${c.name}" class="field${c.req?' req':''}" ${c.type==='num'?'type="number"':c.type==='date'?'type="date"':''}>`;
  const pref=(pk.split('_')[0]||'no').slice(0,2).toUpperCase();
  return `<!doctype html>
@@ -4728,13 +4810,13 @@ function masterDetailScreen(scr,parent,child,edge,loc,lookups){
 <style>.body{grid-template-rows:auto minmax(120px,1fr) minmax(0,1fr)}
 .grid td{padding:2px}.grid input,.grid select{width:100%;height:24px;border:1px solid #cfd6df;border-radius:3px;padding:0 5px;background:#fff}
 .grid input:focus{outline:0;border-color:var(--blue)}.grid td.x{width:28px;text-align:center}
-.grid .del{color:#b03a34;border:0;background:none;font-size:14px}</style></head>
+.grid .del{color:#b03a34;border:0;background:none;font-size:14px}.grid input[readonly],input[data-calc]{background:#f3f7fb;color:#2f6fb5;font-weight:600;border-color:#b9cce2}</style></head>
 <body><div class="screen">
   <div class="title"><h1>${scr.name}</h1><small>${loc}</small></div>
   <div class="body">
     <section class="panel"><div class="cap">헤더 정보 <span class="right" id="modeTxt">신규</span></div>
       <div class="formgrid" style="border-left:0;border-top:0">
-${P.map(c=>`        <div class="lab">${c.label||c.name}</div>${field(c)}`).join('\n')}
+${P.map(c=>`        <div class="lab">${c.label||c.name}${c.formula?' <span title="자동 계산" style="color:#2f6fb5">ƒx</span>':''}</div>${field(c)}`).join('\n')}
       </div>
       <div class="actions"><button class="btn primary" onclick="save()">▤ 저장</button><button class="btn" onclick="clearForm()">✕ 신규</button><button class="btn warn" onclick="remove()">✖ 삭제</button><button class="btn" onclick="exportCsv()">▤ EXCEL</button></div>
     </section>
@@ -4742,64 +4824,70 @@ ${P.map(c=>`        <div class="lab">${c.label||c.name}</div>${field(c)}`).join(
     <section class="panel"><div class="cap">명세 (${child.name}) <span class="right"><button class="btn sm" onclick="addLine()">＋ 행 추가</button> &nbsp;<span id="lineCnt"></span></span></div>
       <div class="tablewrap"><table class="grid">
         <colgroup><col style="width:34px">${CC.map(()=>'<col>').join('')}<col style="width:34px"></colgroup>
-        <thead><tr><th class="c">No</th>${CC.map(c=>`<th${c.type==='num'?' class="r"':''}>${c.label||c.name}</th>`).join('')}<th></th></tr></thead>
+        <thead><tr><th class="c">No</th>${CC.map(c=>`<th${c.type==='num'?' class="r"':''}>${c.label||c.name}${c.formula?' ƒx':''}${c.unit?` (${c.unit})`:''}</th>`).join('')}<th></th></tr></thead>
         <tbody id="lbody"></tbody>
       </table></div>
     </section>
 
     <section class="panel"><div class="cap">전표 목록 <span class="right"><input id="q" class="field" style="width:150px;height:22px" placeholder="검색" oninput="renderList()"> &nbsp;<span id="countText"></span></span></div>
       <div class="tablewrap"><table>
-        <thead><tr>${P.map(c=>`<th${c.type==='num'?' class="r"':''}>${c.label||c.name}</th>`).join('')}<th class="c" style="width:60px">명세</th></tr></thead>
+        <thead><tr>${P.map(c=>`<th${c.type==='num'?' class="r"':''}>${c.label||c.name}${c.formula?' ƒx':''}${c.unit?` (${c.unit})`:''}</th>`).join('')}<th class="c" style="width:60px">명세</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table></div>
     </section>
   </div>
-  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">헤더를 입력하고 명세 행을 추가한 뒤 [저장]. ${P.find(c=>c.pk)?.label||pk} 를 비우면 자동 채번됩니다.</span></footer>
+  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">헤더를 입력하고 명세 행을 추가한 뒤 [저장]. ${P.find(c=>c.pk)?.label||pk} 를 비우면 자동 채번됩니다.${[...P,...C].some(c=>c.formula)?' · ƒx 항목은 자동 계산됩니다.':''}</span></footer>
 </div>
 <script>
 const rows=[];window.rows=rows;const lines=[];window.lines=lines;let sel=null,draft=[];
-const PF=${JSON.stringify(P.map(c=>c.name))},PT=${JSON.stringify(Object.fromEntries(P.map(c=>[c.name,c.type])))},PK='${pk}';
-const CF=${JSON.stringify(CC.map(c=>c.name))},CT=${JSON.stringify(Object.fromEntries(C.map(c=>[c.name,c.type])))},LINK='${lk.child}',CKEY='${ckey}';
-const CREQ=${JSON.stringify(P.filter(c=>c.req&&!c.pk).map(c=>c.name))};
+const PM=${JSON.stringify(P)},PMAP=Object.fromEntries(PM.map(c=>[c.name,c])),PF=PM.map(c=>c.name),PT=Object.fromEntries(PM.map(c=>[c.name,c.type])),PCALC=PM.filter(c=>c.formula).map(c=>c.name),PK='${pk}';
+const CM=${JSON.stringify(C)},CMAP=Object.fromEntries(CM.map(c=>[c.name,c])),CF=${JSON.stringify(CC.map(c=>c.name))},CT=Object.fromEntries(CM.map(c=>[c.name,c.type])),LINK='${lk.child}',CKEY='${ckey}';
+const CREQ=PM.filter(c=>c.req&&!c.pk&&!c.formula).map(c=>c.name);
+${calcRuntimeJs()}
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('ko-KR');const today=()=>new Date().toISOString().slice(0,10);
 function msg(t){message.textContent=t}
-function cell(r,f,T){const v=r[f];return T[f]==='num'?fmt(v):T[f]==='bool'?(v?'✓':''):esc(v)}
+function cell(r,f,T,M){const c=M[f],v=r[f];return c?.formula?esc(calcFormat(v,c,true)):T[f]==='num'?fmt(v):T[f]==='bool'?(v?'✓':''):esc(v)}
+function readHead(base){const o={...(base||{})};for(const f of PF){const c=PMAP[f];if(c.formula)continue;const el=$('f_'+f);if(!el)continue;o[f]=PT[f]==='bool'?el.checked:PT[f]==='num'?(el.value===''?'':Number(el.value)):el.value}return calcApplyRow(o,PM)}
+function syncHead(o){o=o?calcApplyRow(o,PM):readHead();for(const f of PCALC){const el=$('f_'+f);if(el)el.value=calcFormat(o[f],PMAP[f],true)}return o}
 
 /* ── 명세 그리드 ── */
 function renderLines(){
- lbody.innerHTML=draft.length?draft.map((r,i)=>'<tr><td class="c">'+(i+1)+'</td>'+CF.map(f=>
-   '<td>'+(CT[f]==='bool'?'<input type="checkbox" data-i="'+i+'" data-f="'+f+'" '+(r[f]?'checked':'')+'>'
-    :'<input data-i="'+i+'" data-f="'+f+'" '+(CT[f]==='num'?'type="number"':CT[f]==='date'?'type="date"':'')+' value="'+esc(r[f]??'')+'">')+'</td>').join('')
+ draft.forEach(r=>calcApplyRow(r,CM));
+ lbody.innerHTML=draft.length?draft.map((r,i)=>'<tr><td class="c">'+(i+1)+'</td>'+CF.map(f=>{const c=CMAP[f];
+   if(c.formula)return '<td><input readonly data-ci="'+i+'" data-cf="'+f+'" value="'+esc(calcFormat(r[f],c,true))+'"></td>';
+   return '<td>'+(CT[f]==='bool'?'<input type="checkbox" data-i="'+i+'" data-f="'+f+'" '+(r[f]?'checked':'')+'>'
+    :'<input data-i="'+i+'" data-f="'+f+'" '+(CT[f]==='num'?'type="number"':CT[f]==='date'?'type="date"':'')+' value="'+esc(r[f]??'')+'">')+'</td>'}).join('')
    +'<td class="x"><button class="del" onclick="delLine('+i+')">×</button></td></tr>').join('')
   :'<tr><td colspan="'+(CF.length+2)+'" class="empty">명세가 없습니다. [＋ 행 추가]</td></tr>';
  lineCnt.textContent=draft.length+'행';
  lbody.querySelectorAll('[data-f]').forEach(el=>{const ev=el.type==='checkbox'?'change':'input';
-  el.addEventListener(ev,()=>{const r=draft[+el.dataset.i],f=el.dataset.f;
-   r[f]=el.type==='checkbox'?el.checked:(CT[f]==='num'?(el.value===''?'':Number(el.value)):el.value)})});
+  el.addEventListener(ev,()=>{const i=+el.dataset.i,r=draft[i],f=el.dataset.f;
+   r[f]=el.type==='checkbox'?el.checked:(CT[f]==='num'?(el.value===''?'':Number(el.value)):el.value);calcApplyRow(r,CM);
+   lbody.querySelectorAll('[data-ci="'+i+'"]').forEach(x=>x.value=calcFormat(r[x.dataset.cf],CMAP[x.dataset.cf],true))})});
 }
-function addLine(){const o={};for(const f of CF)o[f]=CT[f]==='bool'?false:'';draft.push(o);renderLines();
+function addLine(){const o={};for(const f of CF)if(!CMAP[f].formula)o[f]=CT[f]==='bool'?false:'';calcApplyRow(o,CM);draft.push(o);renderLines();
  const last=lbody.querySelectorAll('tr:last-child [data-f]');if(last.length)last[0].focus()}
 function delLine(i){draft.splice(i,1);renderLines()}
 
 /* ── 전표 목록 ── */
-function renderList(){
+function renderList(){rows.forEach(r=>calcApplyRow(r,PM));lines.forEach(r=>calcApplyRow(r,CM));
  const q=($('q').value||'').trim().toLowerCase();
  const view=rows.filter(r=>!q||PF.some(f=>String(r[f]??'').toLowerCase().includes(q))).sort((a,b)=>String(b[PK]).localeCompare(String(a[PK])));
  tbody.innerHTML=view.length?view.map(r=>'<tr class="'+(r[PK]===sel?'sel':'')+'" onclick="pick(\\''+esc(String(r[PK]))+'\\')">'
-   +PF.map(f=>'<td'+(PT[f]==='num'?' class="r"':'')+'>'+cell(r,f,PT)+'</td>').join('')
+   +PF.map(f=>'<td'+(PT[f]==='num'?' class="r"':'')+'>'+cell(r,f,PT,PMAP)+'</td>').join('')
    +'<td class="c">'+lines.filter(l=>String(l[LINK])===String(r[PK])).length+'</td></tr>').join('')
   :'<tr><td colspan="'+(PF.length+1)+'" class="empty">등록된 전표가 없습니다.</td></tr>';
  countText.textContent=view.length+'건';
 }
 function pick(k){
- const r=rows.find(x=>String(x[PK])===k);if(!r)return;sel=r[PK];
- PF.forEach(f=>{const el=$('f_'+f);if(!el)return;if(PT[f]==='bool')el.checked=!!r[f];else el.value=r[f]??''});
- draft=lines.filter(l=>String(l[LINK])===String(sel)).map(l=>{const o={};for(const f of CF)o[f]=l[f];o.__k=l[CKEY];return o});
+ const r=rows.find(x=>String(x[PK])===k);if(!r)return;calcApplyRow(r,PM);sel=r[PK];
+ PF.forEach(f=>{const el=$('f_'+f);if(!el)return;const c=PMAP[f];if(c.formula)el.value=calcFormat(r[f],c,true);else if(PT[f]==='bool')el.checked=!!r[f];else el.value=r[f]??''});
+ draft=lines.filter(l=>String(l[LINK])===String(sel)).map(l=>{const o={};for(const f of CF)o[f]=l[f];o.__k=l[CKEY];calcApplyRow(o,CM);return o});
  modeTxt.textContent='수정: '+k;renderLines();renderList();msg(k+' 을(를) 불러왔습니다. (명세 '+draft.length+'행)');
 }
-function clearForm(){sel=null;PF.forEach(f=>{const el=$('f_'+f);if(!el)return;if(PT[f]==='bool')el.checked=false;else el.value=PT[f]==='date'?today():''});
- draft=[];modeTxt.textContent='신규';renderLines();renderList();msg('새 전표를 입력하세요.');$('f_'+PK).focus()}
+function clearForm(){sel=null;PF.forEach(f=>{const el=$('f_'+f),c=PMAP[f];if(!el||c.formula)return;if(PT[f]==='bool')el.checked=false;else el.value=PT[f]==='date'?today():''});
+ syncHead();draft=[];modeTxt.textContent='신규';renderLines();renderList();msg('새 전표를 입력하세요.');$('f_'+PK)?.focus()}
 function nextNo(){const p='${pref}-'+today().slice(2).replaceAll('-','')+'-';const n=rows.filter(r=>String(r[PK]).startsWith(p)).map(r=>Number(String(r[PK]).slice(p.length))||0);
  return p+String((n.length?Math.max(...n):0)+1).padStart(3,'0')}
 function nextLineKey(base,i){return base+'-'+String(i+1).padStart(2,'0')}
@@ -4808,14 +4896,13 @@ function save(){
  for(const f of CREQ){const el=$('f_'+f);if(el&&PT[f]!=='bool'&&!String(el.value).trim())return msg((el.previousElementSibling?.textContent||f)+' 은(는) 필수입니다.')}
  if(!draft.length)return msg('명세를 한 행 이상 입력하세요.');
  const no=String($('f_'+PK).value||'').trim()||nextNo();
- const head={};for(const f of PF){const el=$('f_'+f);if(!el)continue;head[f]=PT[f]==='bool'?el.checked:PT[f]==='num'?(el.value===''?'':Number(el.value)):el.value}
- head[PK]=no;
+ const head=readHead();head[PK]=no;calcApplyRow(head,PM);
  if(sel&&sel!==no){const i=rows.findIndex(r=>r[PK]===sel);if(i>=0)rows.splice(i,1);
   for(let i=lines.length-1;i>=0;i--)if(String(lines[i][LINK])===String(sel))lines.splice(i,1)}
  const i=rows.findIndex(r=>r[PK]===no);if(i>=0)rows[i]=head;else rows.push(head);
  for(let k=lines.length-1;k>=0;k--)if(String(lines[k][LINK])===String(no))lines.splice(k,1);
- draft.forEach((r,idx)=>{const o={...r};delete o.__k;o[LINK]=no;${ckey?"o[CKEY]=r.__k||nextLineKey(no,idx);":""}lines.push(o)});
- sel=no;$('f_'+PK).value=no;modeTxt.textContent='수정: '+no;renderLines();renderList();
+ draft.forEach((r,idx)=>{const o={...r};delete o.__k;o[LINK]=no;calcApplyRow(o,CM);${ckey?"o[CKEY]=r.__k||nextLineKey(no,idx);":""}lines.push(o)});
+ sel=no;$('f_'+PK).value=no;syncHead(head);modeTxt.textContent='수정: '+no;renderLines();renderList();
  msg(no+' 저장했습니다. (명세 '+draft.length+'행)');
 }
 function remove(){
@@ -4825,7 +4912,7 @@ function remove(){
  for(let k=lines.length-1;k>=0;k--)if(String(lines[k][LINK])===String(sel))lines.splice(k,1);
  const key=sel;clearForm();msg(key+' 삭제했습니다.');
 }
-function exportCsv(){
+function exportCsv(){rows.forEach(r=>calcApplyRow(r,PM));lines.forEach(r=>calcApplyRow(r,CM));
  const h=[...${JSON.stringify(P.map(c=>c.label||c.name))},...${JSON.stringify(CC.map(c=>c.label||c.name))}];
  const body=[];for(const r of rows){const ls=lines.filter(l=>String(l[LINK])===String(r[PK]));
   if(!ls.length)body.push([...PF.map(f=>r[f]),...CF.map(()=>'')]);
@@ -4833,12 +4920,13 @@ function exportCsv(){
  const csv='\\ufeff'+[h,...body].map(a=>a.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='${slug(scr.name)}.csv';a.click();
 }
+PF.filter(f=>!PMAP[f].formula).forEach(f=>{const el=$('f_'+f);if(el)el.addEventListener(PT[f]==='bool'?'change':'input',()=>syncHead())});
 window.MES={search:renderList,save,setMessage:msg};clearForm();
 <\/script>
 <script src="mes_db.js"><\/script>
 <script>
-MESDB.master({page:'${slug(scr.name)}:rows',table:'${parent.name}',pk:'${pk}',map:${mapOf(parent)},get:()=>rows,render:()=>{renderList();if(sel&&!rows.some(r=>r[PK]===sel))clearForm()}});
-MESDB.master({page:'${slug(scr.name)}:lines',table:'${child.name}',pk:'${ckey||lk.child}',map:${mapOf(child)},get:()=>lines,render:()=>{if(sel)pick(String(sel));renderList()}});
+MESDB.master({page:'${slug(scr.name)}:rows',table:'${parent.name}',pk:'${pk}',map:${mapOf(parent)},get:()=>rows,render:()=>{rows.forEach(r=>calcApplyRow(r,PM));renderList();if(sel&&!rows.some(r=>r[PK]===sel))clearForm()}});
+MESDB.master({page:'${slug(scr.name)}:lines',table:'${child.name}',pk:'${ckey||lk.child}',map:${mapOf(child)},get:()=>lines,render:()=>{lines.forEach(r=>calcApplyRow(r,CM));if(sel)pick(String(sel));renderList()}});
 <\/script>
 <div id="toast"></div></body></html>
 `;
@@ -4859,7 +4947,7 @@ function relationsDoc(){
  s+=`\n## 화면 → 테이블 (사용)\n`;for(const e of D.edges.filter(e=>e.kind==='uses'))s+=`- ${N(e.from)?.name} → ${N(e.to)?.name}${e.label?' : '+e.label:''}\n`;
  s+=`\n## 테이블 → 테이블 (참조)\n`;for(const e of D.edges.filter(e=>e.kind==='ref'))s+=`- ${N(e.from)?.name} → ${N(e.to)?.name}${e.label?' : '+e.label:''}\n`;
  s+=`\n## 화면 흐름\n`;for(const e of D.edges.filter(e=>e.kind==='flow'))s+=`- ${N(e.from)?.name} → ${N(e.to)?.name}${e.label?' : '+e.label:''}\n`;
- s+=`\n## 테이블 정의\n`;for(const t of D.nodes.filter(n=>n.type==='table')){s+=`### ${t.name}\n| 컬럼 | 라벨 | 형 | PK | 필수 |\n|---|---|---|---|---|\n`;for(const c of colsOf(t))s+=`| ${c.name} | ${c.label||''} | ${c.type} | ${c.pk?'✓':''} | ${c.req?'✓':''} |\n`;s+='\n'}
+ s+=`\n## 테이블 정의\n`;for(const t of D.nodes.filter(n=>n.type==='table')){s+=`### ${t.name}\n| 컬럼 | 라벨 | 형 | PK | 필수 | 계산식 | 단위 | DB저장 |\n|---|---|---|---|---|---|---|---|\n`;for(const c of colsOf(t))s+=`| ${c.name} | ${c.label||''} | ${c.type} | ${c.pk?'✓':''} | ${c.req?'✓':''} | ${String(c.formula||'').replace(/\|/g,'\\|')} | ${c.unit||''} | ${c.formula?(c.calcStore?'✓':'화면계산'):''} |\n`;s+='\n'}
  return s;
 }
 function showGen(){
