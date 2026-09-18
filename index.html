@@ -274,7 +274,7 @@ work_date, 일자, date"></textarea></div>
   <div class="bd" style="grid-template-columns:1fr;padding:0;min-height:0">
     <div id="pv_wrap"><iframe id="pv_frame"></iframe></div>
   </div>
-  <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button><button class="btn" onclick="pvMode('check')">체크시트로</button><button class="btn" onclick="pvMode('board')">보드로</button><button class="btn" onclick="pvMode('perm')">권한관리로</button><button class="btn" onclick="pvMode('paste')">붙여넣기로</button>
+  <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button><button class="btn" onclick="pvMode('check')">체크시트로</button><button class="btn" onclick="pvMode('board')">보드로</button><button class="btn" onclick="pvMode('perm')">권한관리로</button><button class="btn" onclick="pvMode('paste')">붙여넣기로</button><button class="btn" onclick="pvMode('dash')">대시보드로</button>
     <button class="btn" onclick="pvCode()">코드 보기</button><span class="msg" id="pv_msg"></span></div>
 </div></div>
 <div class="mbg" id="libDlg"><div class="modal" style="width:min(720px,94vw)">
@@ -383,7 +383,7 @@ function render(){
   const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','node'+(sel&&sel.node===n.id?' sel':''));g.setAttribute('transform',`translate(${n.x},${n.y})`);g.dataset.id=n.id;
   let body='';
   if(n.type==='table'){const cols=n.meta.cols||[];body=cols.length?cols.map((c,i)=>`<text class="col${c.pk?' pk':''}" x="10" y="${44+i*17}">${c.pk?'🔑 ':''}${esc(c.name)}<tspan fill="#8a94a6"> ${esc(c.label||'')}</tspan><tspan fill="#b0b8c4" font-size="10"> ${c.type}</tspan>${c.sample?`<tspan fill="#2e7d5b" font-size="10.5"> ${esc(c.sample)}</tspan>`:''}</text>`).join(''):`<text class="sub" x="10" y="44">컬럼 없음 — 우측에서 추가</text>`}
-  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':n.meta.kind==='board'?'보드':n.meta.kind==='perm'?'권한관리':n.meta.kind==='paste'?'붙여넣기':'기타'}${detailOf(n)?' · 헤더+명세':''}</text>`;
+  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':n.meta.kind==='board'?'보드':n.meta.kind==='perm'?'권한관리':n.meta.kind==='paste'?'붙여넣기':n.meta.kind==='dash'?'대시보드':'기타'}${detailOf(n)?' · 헤더+명세':''}</text>`;
   else body=`<text class="sub" x="10" y="38">${esc(n.meta.desc||n.meta.icon||'')}</text>`;
   g.innerHTML=`<rect class="box" width="${w}" height="${h}"/><rect class="head" width="${w}" height="26" fill="${t.color}"/><rect width="${w}" height="8" y="18" fill="${t.color}"/>
    <text class="title" x="10" y="18">${esc(n.name)}</text><text class="title" x="${w-8}" y="18" text-anchor="end" font-size="10" opacity=".7">${esc(n.type==='table'&&n.meta.host?String(n.meta.host).slice(0,14):t.name)}</text>${body}
@@ -503,7 +503,7 @@ function renderPanel(){
  if(n.type==='module'){h+=`<div class="row2"><div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div><div class="f"><label>설명 (홈 카드)</label><input id="f_desc" value="${esc(n.meta.desc||'')}"></div></div>`}
  if(n.type==='section'){h+=`<div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div>`}
  if(n.type==='screen'){h+=`<div class="row2"><div class="f"><label>파일명</label><input id="f_file" value="${esc(n.meta.file||'')}" placeholder="order_input.html"></div>
-   <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="perm" ${n.meta.kind==='perm'?'selected':''}>권한관리 (사용자+메뉴별 4권한 트리)</option><option value="paste" ${n.meta.kind==='paste'?'selected':''}>엑셀 붙여넣기 등록 (대량 품목)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
+   <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="perm" ${n.meta.kind==='perm'?'selected':''}>권한관리 (사용자+메뉴별 4권한 트리)</option><option value="paste" ${n.meta.kind==='paste'?'selected':''}>엑셀 붙여넣기 등록 (대량 품목)</option><option value="dash" ${n.meta.kind==='dash'?'selected':''}>대시보드 (KPI·알림·그룹별 상태표·자동갱신)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
    <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewScreen()">▶ 화면 미리보기</button></div>
    <label class="ck" style="padding:4px 0"><input id="f_lock" type="checkbox" ${n.meta.locked?'checked':''}>이 화면은 직접 수정함 — 다시 생성해도 덮어쓰지 않기</label>
    <div class="f"><label>사용 테이블 (자동: "사용" 연결)</label><div style="color:#4a5568">${D.edges.filter(e=>e.from===n.id&&e.kind==='uses').map(e=>esc(N(e.to)?.name)).join(', ')||'<span style="color:#8a94a6">없음 — 오른쪽 ○ 를 테이블로 끌어 연결</span>'}</div></div>`}
@@ -907,7 +907,7 @@ const BUILTIN=[
   {type:'screen',name:'점검표 설계',meta:{file:'check_template_design.html',kind:'input'}},
   {type:'screen',name:'체크시트 입력',meta:{file:'check_sheet_input.html',kind:'input'}},
   {type:'screen',name:'점검 종합현황',meta:{file:'check_dashboard.html',kind:'status'}},
-  {type:'screen',name:'미점검 알림판',meta:{file:'check_alert_board.html',kind:'status'}},
+  {type:'screen',name:'미점검 알림판',meta:{file:'check_alert_board.html',kind:'dash'}},
   {type:'table',name:'check_templates',meta:{cols:[COL('template_code','점검표코드','text',1),COL('template_name','점검표명','text',0,1),COL('category','구분(설비/금형/검사기/소방/세척기/안전)'),COL('cycle','주기(일상/주간/월간/분기)'),COL('target_master','점검대상 마스터(설비/금형/계측기)'),COL('approval_yn','결재사용','bool'),COL('is_active','사용','bool')]}},
   {type:'table',name:'check_items',meta:{cols:[COL('item_id','항목ID','num',1),COL('template_code','점검표코드','text',0,1),COL('seq','순번','num'),COL('item_name','점검항목','text',0,1),COL('method','점검방법(육안/측정/작동)'),COL('judge_type','판정형식(OK_NG/수치/선택)'),COL('spec_min','하한','num'),COL('spec_max','상한','num'),COL('unit','단위'),COL('is_required','필수','bool')]}},
   {type:'table',name:'check_logs',meta:{cols:[COL('log_id','점검ID','num',1),COL('template_code','점검표코드','text',0,1),COL('check_date','점검일','date',0,1),COL('check_time','점검시각'),COL('inspector','점검자','text',0,1),COL('target_code','점검대상(호기/금형번호)'),COL('ng_count','NG건수','num'),COL('result','종합판정(OK/NG)'),COL('memo','특이사항'),COL('photo_url','사진첨부'),COL('approval_status','결재상태')]}},
@@ -925,7 +925,7 @@ const BUILTIN=[
   {type:'section',name:'전자결재',meta:{icon:'✍'}},
   {type:'screen',name:'결재 상신(기안)',meta:{file:'approval_draft_input.html',kind:'input'}},
   {type:'screen',name:'결재함(승인/반려)',meta:{file:'approval_box.html',kind:'input'}},
-  {type:'screen',name:'결재 진행현황',meta:{file:'approval_status.html',kind:'status'}},
+  {type:'screen',name:'결재 진행현황',meta:{file:'approval_status.html',kind:'dash'}},
   {type:'screen',name:'결재양식·결재선 관리',meta:{file:'approval_form_management.html',kind:'input'}},
   {type:'screen',name:'위임·대결 설정',meta:{file:'approval_delegate_input.html',kind:'input'}},
   {type:'table',name:'approval_forms',meta:{cols:[COL('form_code','양식코드','text',1),COL('form_name','양식명(점검보고/연차/지출결의/발주승인)','text',0,1),COL('doc_no_rule','문서번호규칙(AP-YYMM-000)'),COL('ref_table','연결 업무테이블'),COL('body_template','본문 템플릿'),COL('is_active','사용','bool')]}},
@@ -960,8 +960,8 @@ const BUILTIN=[
   {type:'section',name:'수주',meta:{icon:'▣'}},
   {type:'screen',name:'수주등록',meta:{file:'sale_order_input.html',kind:'input'}},
   {type:'screen',name:'수주현황',meta:{file:'sale_order_status.html',kind:'status'}},
-  {type:'screen',name:'금형진척현황',meta:{file:'job_progress_board.html',kind:'status'}},
-  {type:'table',name:'jobs',meta:{cols:[COL('job_no','제번','text',1),COL('item_name','품명'),COL('customer_name','고객사'),COL('order_date','수주일','date'),COL('order_status','상태')]}},
+  {type:'screen',name:'금형진척현황',meta:{file:'job_progress_board.html',kind:'dash'}},
+  {type:'table',name:'jobs',meta:{cols:[COL('job_no','제번','text',1),COL('item_name','품명'),COL('customer_name','고객사'),COL('order_date','수주일','date'),COL('order_status','상태(진행/완료/지연/취소)'),COL('current_stage','현재단계'),COL('total_steps','전체공정','num'),COL('done_steps','완료공정','num'),COL('delivery_planned_date','납품계획일','date')]}},
   {type:'table',name:'sale_orders',meta:{cols:[COL('job_no','제번','text',1),COL('order_date','수주일','date',0,1),COL('customer_name','고객사','text',0,1),COL('item_name','품명'),COL('model','기종'),COL('drawing_no','도면번호'),COL('mold_type_name','금형타입'),COL('machine_spec_name','기계사양'),COL('process_set_qty','공정/SET'),COL('order_type','수주구분'),COL('order_price','수주금액','num'),COL('s1_planned_date','T1계획일','date'),COL('delivery_planned_date','납품계획일','date'),COL('completion_date','완료일','date'),COL('order_status','상태')]}}],
   edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','제번 생성'],[1,5,'uses','저장'],[2,5,'uses','조회'],[3,4,'uses','제번별 진척'],[5,4,'ref','job_no → jobs.job_no']]}},
  {cat:'금형제작',name:'금형 설계 · PARTLIST',desc:'설계 계획/실적 + PartList 엑셀 붙여넣기 대량등록(원재료·구매품) (IPTK)',data:{nodes:[
@@ -1105,8 +1105,8 @@ const BUILTIN=[
   {type:'table',name:'board_post',meta:{cols:[COL('id','ID','num',1),COL('category','분류'),COL('module','모듈'),COL('title','제목'),COL('content','내용'),COL('author','작성자'),COL('status','상태'),COL('replies','답변(JSON)')]}}],
   edges:[[0,2,'uses','결재 진행'],[0,3,'uses','점검표 마스터'],[0,4,'uses','결재선'],[1,5,'uses','등록/답변'],[2,3,'ref','template_code → p_check_template'],[4,3,'ref','template_code → p_check_template']]}},
  {cat:'ESG 스마트팩토리',name:'검사기 카메라 모니터링',desc:'ESP32 카메라 상태와 모션 감지 카운트 (smtec)',data:{nodes:[
-  {type:'screen',name:'검사기 상태확인',meta:{file:'camera.html',kind:'status'}},
-  {type:'table',name:'camera_config',meta:{cols:[COL('camera_id','카메라ID','text',1),COL('location','설치위치')]}},
+  {type:'screen',name:'검사기 상태확인',meta:{file:'camera.html',kind:'dash'}},
+  {type:'table',name:'camera_config',meta:{cols:[COL('camera_id','카메라ID','text',1),COL('location','설치위치'),COL('status','상태(가동/정지/오프라인)'),COL('motion_today','금일 감지수','num'),COL('last_seen','최근 응답','date')]}},
   {type:'table',name:'motion_counts',meta:{cols:[COL('id','ID','num',1),COL('camera_id','카메라ID','text',0,1),COL('created_at','감지시각','date'),COL('count','감지수','num')]}}],
   edges:[[0,1,'uses','카메라 목록/스트림'],[0,2,'uses','가동 판정 집계'],[2,1,'ref','camera_id → camera_config.camera_id']]}},
  {cat:'ESG 스마트팩토리',name:'측정 도구 (도면마킹 · 3D)',desc:'도면 마킹(draw_tool3)과 3D 측정교육 도구 — DB 없이 동작 (smtec)',data:{nodes:[
@@ -1134,24 +1134,24 @@ const BUILTIN=[
   edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','출하 기록'],[2,3,'uses','출하 기록'],[1,4,'uses','품번 조회'],[2,5,'uses','상하위 전개']]}},
  {cat:'ESG 스마트팩토리',name:'MES 가동 모니터링',desc:'설비 가동/정지, 안돈, 생산카운터, 월말보고 (smtec)',data:{nodes:[
   {type:'section',name:'MES',meta:{icon:'⚙'}},
-  {type:'screen',name:'가동설비 모니터링',meta:{file:'mes_work.html',kind:'status'}},
+  {type:'screen',name:'가동설비 모니터링',meta:{file:'mes_work.html',kind:'dash'}},
   {type:'screen',name:'MES 이력',meta:{file:'mes_history.html',kind:'status'}},
   {type:'screen',name:'생산 카운터',meta:{file:'stop_time_counter.html',kind:'input'}},
   {type:'screen',name:'생산 월말보고서',meta:{file:'mes_monthly_report.html',kind:'status'}},
-  {type:'table',name:'machine_status',meta:{cols:[COL('id','ID','num',1),COL('machine','설비','text',0,1),COL('status','상태(가동/정지)'),COL('updated_at','갱신시각','date')]}},
+  {type:'table',name:'machine_status',meta:{cols:[COL('id','ID','num',1),COL('machine','설비명','text',0,1),COL('customer','고객사(그룹)'),COL('status','상태(가동/비가동)'),COL('current_mold','금형'),COL('current_item_code','품번'),COL('item_name','품명'),COL('target_qty','가능수량','num'),COL('actual_qty','실적','num'),COL('ng_qty','NG','num'),COL('remaining_minutes','잔여(분)','num'),COL('worker','작업자'),COL('updated_at','갱신시각','date')]}},
   {type:'table',name:'mes_check_log',meta:{cols:[COL('id','ID','num',1),COL('log_date','일자','date'),COL('ho_code','호기'),COL('event','이벤트'),COL('detail','상세')]}},
   {type:'table',name:'daily_downtime',meta:{cols:[COL('id','ID','num',1),COL('work_date','일자','date'),COL('ho_code','호기'),COL('downtime_min','정지(분)','num'),COL('reason','사유')]}},
   {type:'table',name:'work_log',meta:{cols:[COL('id','ID','num',1),COL('work_date','작업일','date'),COL('machine','설비'),COL('part','품번'),COL('count','생산수','num'),COL('stop_min','정지(분)','num')]}},
-  {type:'table',name:'andon_msg',meta:{cols:[COL('id','ID','num',1),COL('ho_code','호기'),COL('msg','메시지'),COL('source','발생원'),COL('created_at','시각','date')]}},
+  {type:'table',name:'andon_msg',meta:{cols:[COL('id','ID','num',1),COL('machine','설비명'),COL('ho_code','호기'),COL('msg','메시지'),COL('source','발생원'),COL('created_at','시각','date')]}},
   {type:'table',name:'machine_master_tj',meta:{cols:[COL('ho_code','호기코드','text',1),COL('machine_name','설비명'),COL('sort_order','순서','num')]}}],
-  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[1,5,'uses','상태 표시'],[1,9,'uses','안돈 발생/해제'],[1,10,'uses','설비 목록'],[2,6,'uses','이력 조회'],[3,8,'uses','카운트 기록'],[4,8,'uses','월간 집계'],[4,7,'uses','정지 집계'],[7,10,'ref','ho_code → machine_master_tj']]}},
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[1,5,'uses','설비 상태·실적 표'],[1,9,'uses','최근 이벤트(안돈)'],[1,10,'uses','설비 목록'],[2,6,'uses','이력 조회'],[3,8,'uses','카운트 기록'],[4,8,'uses','월간 집계'],[4,7,'uses','정지 집계'],[7,10,'ref','ho_code → machine_master_tj']]}},
  {cat:'ESG 스마트팩토리',name:'트윈팩토리 3D',desc:'공장 3D 배치와 설비·계측 매핑, 안돈 연동 (smtec)',data:{nodes:[
   {type:'screen',name:'트윈팩토리 3D',meta:{file:'twin_factory.html',kind:'status'}},
   {type:'table',name:'twin_line',meta:{cols:[COL('id','ID','num',1),COL('line_name','라인명'),COL('sort_order','순서','num')]}},
   {type:'table',name:'twin_zone',meta:{cols:[COL('id','ID','num',1),COL('zone_name','구역명')]}},
   {type:'table',name:'twin_machine',meta:{cols:[COL('id','ID','num',1),COL('line_id','라인ID','num',0,1),COL('ho_code','호기'),COL('pos_x','X','num'),COL('pos_y','Y','num'),COL('pos_z','Z','num')]}},
   {type:'table',name:'twin_meas_map',meta:{cols:[COL('id','ID','num',1),COL('machine_id','설비ID','num',0,1),COL('equipment','측정기'),COL('cam_id','카메라')]}},
-  {type:'table',name:'andon_msg',meta:{cols:[COL('id','ID','num',1),COL('ho_code','호기'),COL('msg','메시지'),COL('source','발생원'),COL('created_at','시각','date')]}}],
+  {type:'table',name:'andon_msg',meta:{cols:[COL('id','ID','num',1),COL('machine','설비명'),COL('ho_code','호기'),COL('msg','메시지'),COL('source','발생원'),COL('created_at','시각','date')]}}],
   edges:[[0,1,'uses','라인 배치'],[0,2,'uses','구역 배치'],[0,3,'uses','설비 배치'],[0,4,'uses','계측 매핑'],[0,5,'uses','안돈 표시'],[3,1,'ref','line_id → twin_line.id'],[4,3,'ref','machine_id → twin_machine.id']]}},
  {cat:'ESG 스마트팩토리',name:'금형부품 관리',desc:'기종-금형-부품 계층과 이력 로그 (mold_parts)',data:{nodes:[
   {type:'screen',name:'금형 부품 관리',meta:{file:'mold_parts.html',kind:'input'}},
@@ -1177,10 +1177,10 @@ const BUILTIN=[
   {type:'table',name:'common_code',meta:{cols:[COL('code_group','코드그룹','text',1),COL('code','코드','text',1),COL('code_name','코드명'),COL('sort_order','순서','num')]}}],
   edges:[[0,2,'uses','체크 저장 · 텔레그램 알림'],[1,3,'uses','체크 저장'],[1,4,'uses','수리이력'],[0,5,'uses','점검항목'],[1,5,'uses','점검항목']]}},
  {cat:'ESG 스마트팩토리',name:'환경 모니터링',desc:'IoT 온습도 센서 현황(1분)과 이력(1시간·30일 보관)',data:{nodes:[
-  {type:'screen',name:'환경 모니터링',meta:{file:'env_dashboard.html',kind:'status'}},
+  {type:'screen',name:'환경 모니터링',meta:{file:'env_dashboard.html',kind:'dash'}},
   {type:'table',name:'env_device',meta:{cols:[COL('device_id','기기ID','text',1),COL('location','설치위치'),COL('threshold','임계값'),COL('calibration','보정값')]}},
-  {type:'table',name:'env_log',meta:{cols:[COL('id','ID','num',1),COL('device_id','기기ID','text',0,1),COL('temperature','온도','num'),COL('humidity','습도','num'),COL('created_at','기록시각','date')]}}],
-  edges:[[0,1,'uses','기기설정'],[0,2,'uses','추이 그래프'],[2,1,'ref','device_id → env_device.device_id']]}},
+  {type:'table',name:'env_log',meta:{cols:[COL('id','ID','num',1),COL('device_id','기기ID','text',0,1),COL('location','설치위치'),COL('temperature','온도','num'),COL('humidity','습도','num'),COL('status','상태(정상/경고/초과)'),COL('created_at','기록시각','date')]}}],
+  edges:[[0,2,'uses','현재값(최근 로그)'],[0,1,'uses','기기설정·임계값'],[2,1,'ref','device_id → env_device.device_id']]}},
  {cat:'ESG 스마트팩토리',name:'근태관리 (연차 · 특근)',desc:'사원 마스터와 연차신청·특근보고 결재 (smtec)',data:{nodes:[
   {type:'screen',name:'근태관리',meta:{file:'leave_request_백업_연차.html',kind:'input'}},
   {type:'table',name:'employees',meta:{cols:[COL('id','ID','num',1),COL('name','성명','text',0,1),COL('dept','부서'),COL('position','직급'),COL('hire_date','입사일','date'),COL('sort_order','순서','num')]}},
@@ -1229,7 +1229,7 @@ const BUILTIN=[
   {type:'section',name:'선적/통관',meta:{icon:'⚓'}},
   {type:'screen',name:'선적등록(B/L)',meta:{file:'shipment_bl_input.html',kind:'input'}},
   {type:'screen',name:'수입통관등록',meta:{file:'customs_clearance_input.html',kind:'input'}},
-  {type:'screen',name:'입항스케줄현황',meta:{file:'arrival_schedule_status.html',kind:'status'}},
+  {type:'screen',name:'입항스케줄현황',meta:{file:'arrival_schedule_status.html',kind:'dash'}},
   {type:'table',name:'import_shipments',meta:{cols:[COL('bl_no','B/L번호','text',1),COL('contract_no','계약번호','text',0,1),COL('vessel_name','선명'),COL('etd','출항일(ETD)','date'),COL('eta','입항예정(ETA)','date'),COL('ata','입항일(ATA)','date'),COL('port_discharge','도착항'),COL('ship_ton','선적수량(톤)','num'),COL('invoice_no','인보이스번호'),COL('invoice_amount','인보이스금액','num'),COL('status','상태(선적/입항/통관/입고)')]}},
   {type:'table',name:'customs_clearances',meta:{cols:[COL('clearance_no','수입신고번호','text',1),COL('bl_no','B/L번호','text',0,1),COL('declare_date','신고일','date'),COL('accept_date','수리일','date'),COL('rate_applied','적용환율','num'),COL('dutiable_value','과세가격(원)','num'),COL('duty','관세','num'),COL('vat','부가세','num'),COL('forwarder','관세사/포워더'),COL('clearance_fee','통관수수료','num'),COL('freight_inland','내륙운송비','num')]}}],
   edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','B/L 저장'],[2,5,'uses','신고 저장'],[3,4,'uses','ETA/입항 조회'],[5,4,'ref','bl_no → import_shipments'],[1,2,'flow','선적 → 입항 → 통관']]}},
@@ -1720,9 +1720,10 @@ function buildPreview(n,kindOverride){
  const kind=kindOverride||n.meta.kind||'input';
  if(!t)return {html:`<!doctype html><meta charset="utf-8"><style>${PV_CSS}</style><div class="screen"><div class="title"><h1>${esc(n.name)}</h1></div><div class="body"><section class="panel"><div class="empty">이 화면에 "사용" 연결된 테이블이 없습니다.<br>블록 오른쪽 ○ 를 끌어 테이블에 연결하면 입력칸이 만들어집니다.</div></section></div></div>`,code:''};
  const isChk=kind==='check'||(kind==='input'&&isCheckTable(t));
- const isBoard=kind==='board',isPerm=kind==='perm',isPaste=kind==='paste';
- const md=(kind==='status'||isChk||isBoard||isPerm||isPaste)?null:detailOf(n);
+ const isBoard=kind==='board',isPerm=kind==='perm',isPaste=kind==='paste',isDash=kind==='dash';
+ const md=(kind==='status'||isChk||isBoard||isPerm||isPaste||isDash)?null:detailOf(n);
  let html=md?masterDetailScreen(n,md.parent,md.child,md.edge,'미리보기',[])
+   :isDash?dashScreen(n,ts,'미리보기')
    :isPaste?pasteScreen(n,ts,'미리보기')
    :isPerm?permScreen(n,ts,'미리보기')
    :isBoard?boardScreen(n,ts,'미리보기')
@@ -1740,6 +1741,17 @@ function buildPreview(n,kindOverride){
  if(md){const lk=linkCol(md.parent,md.child,md.edge);
   const ls=sampleRows(md.child,3).map((r,i)=>({...r,[lk.child]:JSON.parse(seed)[0][lk.parent]}));
   extraSeed=`lines.push(...${JSON.stringify(ls)});pick(String(rows[0][PK]));`}
+ if(isDash){const R=dashRoles(ts);const f=R.f;
+  const G=['1라인','2라인','3라인'],ST=R.statusVals.length?R.statusVals:['가동','비가동','점검'];
+  const rows=[];for(let i=0;i<9;i++){const r={};r[f.key]=(R.keyLabel||'대상')+' '+(i+1);
+   if(f.group)r[f.group]=G[i%3];if(f.status)r[f.status]=ST[i%ST.length]||ST[0];
+   for(const c of R.nums){r[c.name]=c===R.target?100:(c===R.actual?[92,55,20,88,73,0,66,41,97][i]:(i+1)*7)}
+   for(const c of R.texts)if(!r[c.name])r[c.name]=(c.label||c.name)+' '+(i+1);
+   if(f.time)r[f.time]=new Date(Date.now()-i*7*60000).toISOString().slice(0,16).replace('T',' ');rows.push(r)}
+  let logs=[];if(R.log){const lf=R.lf;for(let i=0;i<6;i++){const l={};l[lf.key]=rows[i%3][f.key];if(lf.time)l[lf.time]=new Date(Date.now()-i*23*60000).toISOString().slice(0,16).replace('T',' ');
+   if(lf.text)l[lf.text]=['정지 — 금형 교체','가동 재개','NG 3건 발생','점검 시작','가동 재개','자재 대기'][i];logs.push(l)}}
+  html=html.replace('</body>',`<script>try{ROWS.push(...${JSON.stringify(rows)});LOGS.push(...${JSON.stringify(logs)});boot();if(window.msg)msg('미리보기 — 그룹 칩으로 거르고, 행을 누르면 상세·이벤트가 열립니다. 자동갱신 ${'5'}분.');}catch(e){document.body.insertAdjacentHTML('afterbegin','<pre style="color:#c00;padding:8px">'+e.message+'</pre>')}<\/script></body>`);
+  return{html,code};}
  if(isPaste){const R=pasteRoles(ts);
   const rows=[1,2,3].map(i=>{const o={};for(const c of R.body)o[c.name]=(c.type==='num'?i:(c.label||c.name)+' '+i);
    o[R.f.key]='M-00'+i;if(R.f.parent)o[R.f.parent]='J-2609-01';if(R.pk)o[R.pk.name]=i*10;return o});
@@ -1818,7 +1830,7 @@ function pvFull(){
 function previewScreen(id,kind){
  const n=N(id||(sel&&sel.node));if(!n||n.type!=='screen')return;
  pvNode=n;const {html}=buildPreview(n,kind);
- $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':(kind||n.meta.kind)==='check'?'체크시트':(kind||n.meta.kind)==='board'?'보드':(kind||n.meta.kind)==='perm'?'권한관리':(kind||n.meta.kind)==='paste'?'붙여넣기':'기타'}`;
+ $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':(kind||n.meta.kind)==='check'?'체크시트':(kind||n.meta.kind)==='board'?'보드':(kind||n.meta.kind)==='perm'?'권한관리':(kind||n.meta.kind)==='paste'?'붙여넣기':(kind||n.meta.kind)==='dash'?'대시보드':'기타'}`;
  pvScale=1;pvResetPos();
  $('pv_frame').srcdoc=html;$('pv_msg').textContent='';pvDlg.classList.add('on');
  pvApply();
@@ -2008,6 +2020,7 @@ if(C.MODE==='json'){C.SUPABASE={url:'local://db',key:'local'};const v='?v='+C.AP
   const use=D.edges.filter(e=>e.from===s.id&&e.kind==='uses').map(e=>N(e.to)).filter(t=>t&&t.type==='table');
   const t=use[0];const loc=locate(s.name);
   if(s.meta.kind==='other'||!t){if(s.meta.kind!=='other')warn.push(`화면 '${s.name}' 에 "사용" 테이블이 없어 빈 화면으로 만듭니다.`);GEN[file]=blankScreen(s,loc);continue}
+  if(s.meta.kind==='dash'){GEN[file]=dashScreen(s,use,loc);continue}
   if(s.meta.kind==='paste'){GEN[file]=pasteScreen(s,use,loc);continue}
   if(s.meta.kind==='perm'){GEN[file]=permScreen(s,use,loc);continue}
   if(s.meta.kind==='board'){GEN[file]=boardScreen(s,use,loc);continue}
@@ -2026,6 +2039,156 @@ const esc1=s=>String(s).replace(/'/g,"\\'");
 function slug(s){return s.replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase()||'screen_'+uid()}
 const colsOf=t=>(t.meta.cols||[]).filter(c=>c.name);
 const mapOf=t=>'{'+colsOf(t).map(c=>`${c.name}:${c.type==='text'?`'${c.name}'`:`{col:'${c.name}',type:'${c.type}'}`}`).join(',')+'}';
+/* ═══ 대시보드 화면 ═══ (mes_work.html 가동설비 모니터링 틀)
+   KPI 타일(전체·상태별 건수·합계) → 알림박스(불량 상태·기한 임박) → 그룹 필터칩 → 그룹별 헤더통계 + 상태표(뱃지·달성률·정지행 흐림)
+   → 행 클릭 시 상세 + 최근 이벤트(연결된 로그 테이블) 모달. 자동갱신 주기 선택. */
+function dashRoles(ts){
+ const main=ts[0];const cols=colsOf(main);
+ const find=(re,pred)=>cols.find(c=>re.test(c.name)&&(!pred||pred(c)));
+ const status=find(/^status$|_status$|^state$|^result$|^judge$|^is_running$/i)||find(/status|state/i)||null;
+ const pk=cols.find(c=>c.pk);
+ const key=(pk&&pk.type!=='num'?pk:null)||find(/machine|_code$|_no$|_id$|^name$/i,c=>c.type!=='num'&&c!==status)||cols.find(c=>c.type==='text'&&c!==status)||pk||cols[0];
+ const group=find(/customer|^line|group|zone|dept|department|category|plant|location|vendor|area|site/i,c=>c.type==='text'&&c!==key&&c!==status)||null;
+ const time=find(/updated_at|created_at|_at$|_time$|last_|_date$/i,c=>c.type==='date'||/time|_at$/i.test(c.name))||null;
+ const nums=cols.filter(c=>c.type==='num'&&!c.pk);
+ const target=nums.find(c=>/target|plan|goal|capacity|std/i.test(c.name))||null;
+ const actual=nums.find(c=>c!==target&&/actual|result|count|done|prod|good_qty|^qty$/i.test(c.name))||(target?nums.find(c=>c!==target):null);
+ const bad=nums.find(c=>/ng|defect|fail|error|stop|down/i.test(c.name))||null;
+ const texts=cols.filter(c=>c.type==='text'&&![key,group,status].includes(c));
+ const due=find(/due|deadline|next_|eta|planned|plan_date|_due/i,c=>c.type==='date')||null;
+ /* 상태값 후보: 라벨 괄호 안 (가동/정지) 같은 표기에서 뽑는다 */
+ let statusVals=[];if(status){const m=String(status.label||'').match(/\(([^)]+)\)/);if(m)statusVals=m[1].split(/[\/·,]/).map(x=>x.trim()).filter(Boolean)}
+ /* 로그 테이블: 두 번째 이후 테이블 중 시각 컬럼이 있는 것 */
+ const log=ts.slice(1).find(t=>colsOf(t).some(c=>c.type==='date'||/_at$|time/i.test(c.name)))||null;
+ let lf=null;if(log){const lc=colsOf(log);const lk=lc.find(c=>c.name===key.name)||lc.find(c=>/code|machine|_no$|_id$|name/i.test(c.name)&&!c.pk)||lc[0];
+  lf={key:lk.name,time:(lc.find(c=>c.type==='date'||/_at$|time/i.test(c.name))||{}).name||null,text:(lc.find(c=>/msg|message|event|detail|reason|content|action|remark|memo/i.test(c.name))||lc.find(c=>c.type==='text'&&c!==lk)||{}).name||null}}
+ return{main,cols,status,key,group,time,nums,target,actual,bad,texts,due,statusVals,log,lf,keyLabel:key&&key.label,
+  f:{key:key.name,status:status?status.name:null,group:group?group.name:null,time:time?time.name:null,target:target?target.name:null,actual:actual?actual.name:null,bad:bad?bad.name:null,due:due?due.name:null}};
+}
+function dashScreen(s,ts,loc){
+ const R=dashRoles(ts);if(!R.main)return blankScreen(s,loc);const f=R.f;
+ const tblCols=R.cols.filter(c=>!c.pk||c===R.key);
+ return `<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${s.name}</title>
+<script src="app_config.js"><\/script><link rel="stylesheet" href="mes_screen.css">
+<style>
+.body{display:flex;flex-direction:column;gap:8px;overflow:auto}
+.title .live{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:12px;color:#5b6b7a}
+.title .dot{width:8px;height:8px;border-radius:50%;background:#2e7d32;display:inline-block}
+.title .dot.off{background:#9e9e9e}
+.title select{height:24px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.st{border:1px solid var(--line);background:#fff;padding:8px 10px;border-left:4px solid #9aa4b5}
+.st .l{font-size:11px;color:#6b7686}.st .v{font-size:22px;font-weight:700;line-height:1.2}
+.st.ok{border-left-color:#2e7d32}.st.ok .v{color:#2e7d32}
+.st.ng{border-left-color:#c62828}.st.ng .v{color:#c62828}
+.st.warn{border-left-color:#ef8f00}.st.warn .v{color:#b36b00}
+.st.sum{border-left-color:#2f6fb5}.st.sum .v{color:#2f6fb5}
+.alert{border:1px solid #f1c8c8;background:#fff5f5;padding:7px 10px;display:none}
+.alert.on{display:block}.alert h3{margin:0 0 4px;font-size:12.5px;color:#b3261e}
+.alert .it{display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;background:#fff;border:1px solid #f1c8c8;border-radius:10px;font-size:11.5px;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{height:26px;padding:0 10px;border:1px solid #b7c1ca;background:#fff;border-radius:13px;font-size:12px}
+.chip.on{background:var(--sel);color:#fff;border-color:var(--sel)}
+.cg{border:1px solid var(--line);background:#fff}
+.cg-hdr{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:6px 10px;background:linear-gradient(#f5f8fa,#e6edf2);border-bottom:1px solid var(--line)}
+.cg-hdr h2{margin:0;font-size:13.5px}
+.cg-hdr .s{font-size:12px;color:#456}.cg-hdr .gr{color:#2e7d32;font-weight:700}.cg-hdr .rd{color:#c62828;font-weight:700}
+.badge{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:700;color:#fff;background:#9aa4b5}
+.badge.ok{background:#2e7d32}.badge.ng{background:#c62828}.badge.warn{background:#ef8f00}
+tr.dim td{color:#98a2ad;background:#fafbfc}
+.prog{display:inline-block;width:70px;height:8px;background:#e6edf2;border-radius:4px;vertical-align:middle;margin-right:4px;overflow:hidden}
+.prog i{display:block;height:100%;background:#2e7d32}.prog i.md{background:#ef8f00}.prog i.lo{background:#c62828}
+tbody tr{cursor:pointer}
+.modal-bg{position:fixed;inset:0;background:rgba(20,28,35,.38);display:none;align-items:center;justify-content:center;z-index:1000}.modal-bg.on{display:flex}
+.modal{background:#fff;border:1px solid #7f8f9c;box-shadow:0 6px 24px rgba(0,0,0,.3);width:min(560px,94vw);max-height:88vh;display:flex;flex-direction:column}
+.modal .t{height:30px;display:flex;align-items:center;padding:0 12px;color:#fff;background:linear-gradient(#5f7f9f,#3f5f7d);font-weight:700}.modal .t .x{margin-left:auto;cursor:pointer;font-size:16px}
+.modal .bd{padding:10px 12px;overflow:auto}
+.kv{display:grid;grid-template-columns:110px 1fr 110px 1fr;gap:3px 6px;font-size:12px}.kv .k{color:#6b7686}
+.ev{margin-top:10px;border-top:1px solid var(--line);padding-top:6px}
+.ev h4{margin:0 0 4px;font-size:12px;color:#3b556d}
+.ev .row{display:flex;gap:8px;padding:3px 0;border-bottom:1px dashed #e0e6eb;font-size:11.5px}.ev .row .tm{color:#8a94a6;white-space:nowrap}
+@media(max-width:680px){.kv{grid-template-columns:90px 1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style></head>
+<body><div class="screen">
+  <div class="title"><h1>${s.name}</h1><small>${loc}</small>
+    <span class="live"><span class="dot" id="dot"></span><span id="lastUpd">-</span> │ 갱신 <select id="ivl" onchange="setIvl()"><option value="1">1분</option><option value="5" selected>5분</option><option value="10">10분</option><option value="0">수동</option></select>
+     <span id="cd"></span> <button class="btn sm" onclick="reload()">🔄 새로고침</button></span></div>
+  <div class="body">
+    <div class="stats" id="stats"></div>
+    <div class="alert" id="alertBox"><h3 id="alertT">⚠ 확인 필요</h3><div id="alertL"></div></div>
+    ${f.group?'<div class="chips" id="chips"></div>':''}
+    <div id="groups"></div>
+  </div>
+  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">행을 누르면 상세와 최근 이벤트가 열립니다.</span></footer>
+</div>
+<div class="modal-bg" id="dlg" onclick="if(event.target===this)dlg.classList.remove('on')"><div class="modal"><div class="t"><span id="dT"></span><span class="x" onclick="dlg.classList.remove('on')">×</span></div><div class="bd" id="dB"></div></div></div>
+<script>
+const ROWS=[],LOGS=[];window.ROWS=ROWS;window.LOGS=LOGS;
+const F=${JSON.stringify(f)},LF=${JSON.stringify(R.lf)};
+const COLS=${JSON.stringify(tblCols.map(c=>({n:c.name,l:c.label||c.name,t:c.type})))};
+const NUMS=${JSON.stringify(R.nums.map(c=>({n:c.name,l:c.label||c.name})))};
+const GOOD=/가동|정상|양호|완료|OK|RUN|정상가동|승인|입고|합격/i,BAD=/정지|비가동|NG|고장|알람|지연|불량|STOP|반려|취소|미점검|초과|경고/i,WARN=/점검|대기|보류|IDLE|임박|진행|검토|수리|예정/i;
+const cls=v=>{v=String(v??'');return BAD.test(v)?'ng':GOOD.test(v)?'ok':WARN.test(v)?'warn':''};
+const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>(n===''||n==null||isNaN(Number(n)))?(n??'-'):Number(n).toLocaleString('ko-KR');
+function msg(t){message.textContent=t}
+let cur='ALL',timer=null,left=0;
+function boot(){render();setIvl()}
+function setIvl(){clearInterval(timer);const m=+ivl.value;if(!m){cd.textContent='';return}left=m*60;cd.textContent=m+':00 후';
+ timer=setInterval(()=>{left--;cd.textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0')+' 후';if(left<=0){left=m*60;reload()}},1000)}
+async function reload(){
+ if(window.MESDB&&MESDB.online){try{const rs=await MESDB.table('${R.main.name}').select('select=*',{fresh:true});ROWS.length=0;ROWS.push(...rs);
+   ${R.log?`try{const ls=await MESDB.table('${R.log.name}').select('select=*&order=${R.lf.time||R.lf.key}.desc&limit=300',{fresh:true});LOGS.length=0;LOGS.push(...ls)}catch(e){}`:''}
+   dot.classList.remove('off')}catch(e){dot.classList.add('off');msg('갱신 실패: '+e.message.slice(0,80))}}
+ render();lastUpd.textContent=new Date().toLocaleTimeString('ko-KR');}
+const isDue=r=>F.due&&r[F.due]&&new Date(r[F.due])<=new Date(Date.now()+3*864e5);
+function render(){
+ const all=ROWS;const st=F.status;
+ /* KPI */
+ let h='<div class="st"><div class="l">전체</div><div class="v">'+all.length+'</div></div>';
+ if(st){const vals=[...new Set(all.map(r=>r[st]).filter(v=>v!=null&&v!==''))];
+  for(const v of vals)h+='<div class="st '+cls(v)+'"><div class="l">'+esc(v)+'</div><div class="v">'+all.filter(r=>r[st]===v).length+'</div></div>'}
+ if(F.due){const n=all.filter(isDue).length;if(n)h+='<div class="st warn"><div class="l">⏰ 3일 이내</div><div class="v">'+n+'</div></div>'}
+ for(const c of NUMS.slice(0,3)){const sum=all.reduce((a,r)=>a+(Number(r[c.n])||0),0);h+='<div class="st '+(c.n===F.bad?'ng':'sum')+'"><div class="l">'+esc(c.l)+' 합계</div><div class="v">'+fmt(sum)+'</div></div>'}
+ if(F.target&&F.actual){const t=all.reduce((a,r)=>a+(Number(r[F.target])||0),0),a=all.reduce((a2,r)=>a2+(Number(r[F.actual])||0),0);if(t)h+='<div class="st sum"><div class="l">달성률</div><div class="v">'+Math.round(a/t*100)+'%</div></div>'}
+ stats.innerHTML=h;
+ /* 알림 */
+ const al=all.filter(r=>(st&&cls(r[st])==='ng')||isDue(r));
+ alertBox.classList.toggle('on',!!al.length);
+ alertT.textContent='⚠ 확인 필요 '+al.length+'건'+(F.due?' (불량 상태 · 기한 3일 이내)':'');
+ alertL.innerHTML=al.slice(0,30).map(r=>'<span class="it" onclick="openRow(\\''+esc(String(r[F.key]))+'\\')">'+esc(r[F.key])+(st?' · '+esc(r[st]):'')+(isDue(r)?' · '+esc(r[F.due]):'')+'</span>').join('');
+ /* 그룹 */
+ const gk=F.group;const groups={};for(const r of all){const g=gk?(r[gk]||'(미지정)'):'';(groups[g]??=[]).push(r)}
+ const names=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'ko'));
+ if(gk){chips.innerHTML='<button class="chip '+(cur==='ALL'?'on':'')+'" onclick="pick(\\'ALL\\')">전체 ('+all.length+')</button>'+names.map(g=>'<button class="chip '+(cur===g?'on':'')+'" onclick="pick(\\''+esc(g)+'\\')">'+esc(g)+' ('+groups[g].length+')</button>').join('')}
+ const show=(cur==='ALL'||!gk)?names:names.filter(g=>g===cur);
+ $('groups').innerHTML=show.map(g=>{const rows=groups[g];
+  const ok=st?rows.filter(r=>cls(r[st])==='ok').length:0,ng=st?rows.filter(r=>cls(r[st])==='ng').length:0;
+  const hd='<div class="cg-hdr">'+(gk?'<h2>🏢 '+esc(g)+'</h2>':'')+'<span class="s">'+rows.length+'건</span>'+(st?'<span class="s gr">'+esc((rows.find(r=>cls(r[st])==='ok')||{})[st]||'정상')+' '+ok+'</span><span class="s rd">'+esc((rows.find(r=>cls(r[st])==='ng')||{})[st]||'이상')+' '+ng+'</span>':'')
+   +NUMS.slice(0,2).map(c=>'<span class="s">'+esc(c.l)+' '+fmt(rows.reduce((a,r)=>a+(Number(r[c.n])||0),0))+'</span>').join('')+'</div>';
+  const tb='<div class="tablewrap"><table><thead><tr>'+COLS.map(c=>'<th'+(c.t==='num'?' class="r"':'')+'>'+esc(c.l)+'</th>').join('')+(F.target&&F.actual?'<th>달성</th>':'')+'</tr></thead><tbody>'
+   +rows.map(r=>{const bad=st&&cls(r[st])==='ng';let tr='<tr class="'+(bad?'dim':'')+'" onclick="openRow(\\''+esc(String(r[F.key]))+'\\')">';
+    for(const c of COLS){const v=r[c.n];tr+='<td'+(c.t==='num'?' class="r"':'')+'>'+(c.n===st?'<span class="badge '+cls(v)+'">'+esc(v||'-')+'</span>':c.t==='num'?fmt(v):esc(v??''))+'</td>'}
+    if(F.target&&F.actual){const t=Number(r[F.target])||0,a=Number(r[F.actual])||0,p=t?Math.min(100,Math.round(a/t*100)):0;tr+='<td><span class="prog"><i class="'+(p>=80?'':p>=50?'md':'lo')+'" style="width:'+p+'%"></i></span>'+(t?p+'%':'-')+'</td>'}
+    return tr+'</tr>'}).join('')+'</tbody></table></div>';
+  return '<div class="cg">'+hd+tb+'</div>'}).join('')||'<div class="empty">표시할 자료가 없습니다.</div>';
+}
+function pick(g){cur=g;render()}
+function openRow(k){const r=ROWS.find(x=>String(x[F.key])===k);if(!r)return;
+ dT.textContent=(F.group&&r[F.group]?r[F.group]+' · ':'')+k;
+ let h='<div class="kv">'+COLS.map(c=>'<span class="k">'+esc(c.l)+'</span><span>'+(c.n===F.status?'<span class="badge '+cls(r[c.n])+'">'+esc(r[c.n]||'-')+'</span>':esc(c.t==='num'?fmt(r[c.n]):(r[c.n]??'-')))+'</span>').join('')+'</div>';
+ if(LF){const ev=LOGS.filter(l=>String(l[LF.key])===k||String(l[LF.key])===String(r[LF.key])).slice(0,20);
+  h+='<div class="ev"><h4>최근 이벤트 '+ev.length+'건</h4>'+(ev.length?ev.map(l=>'<div class="row"><span class="tm">'+esc(LF.time?String(l[LF.time]).slice(0,16).replace('T',' '):'')+'</span><span>'+esc(LF.text?l[LF.text]:JSON.stringify(l))+'</span></div>').join(''):'<div style="color:#8a94a6;font-size:11.5px">이벤트 없음</div>')+'</div>'}
+ dB.innerHTML=h;dlg.classList.add('on')}
+window.MES={search:render,setMessage:msg};
+<\/script>
+<script src="mes_db.js"><\/script>
+<script>(async()=>{try{await MESDB.ready}catch(e){}if(window.MESDB&&MESDB.online){await reload()}else{boot()}
+ ${R.log?`try{MESDB.onChange(['${R.main.name}','${R.log.name}'],()=>reload())}catch(e){}`:`try{MESDB.onChange(['${R.main.name}'],()=>reload())}catch(e){}`}})();<\/script>
+<div id="toast"></div></body></html>
+`;
+}
 /* ═══ 엑셀 붙여넣기 등록 화면 ═══
    상단 부모키(제번) 선택 → 엑셀 표를 Ctrl+V → 제목행 자동 인식(컬럼 라벨/이름으로 매칭) → 미리보기(신규·수정·중복) → 리스트 추가 → 체크 후 등록.
    컬럼 인식 규칙을 테이블 정의에서 만들어 내므로 품목·자재·거래처 어떤 표에도 쓸 수 있다. */
