@@ -1099,7 +1099,7 @@ function renderPanel(){
     <td><button class="x" data-del="${i}">×</button></td></tr>
     ${(c.formula!==undefined||c.calc)?`<tr><td colspan="8" style="background:#f3f7fb;padding:5px 6px"><div style="display:grid;grid-template-columns:auto 1fr 52px 54px auto;gap:5px;align-items:center"><b style="color:#2f6fb5">ƒx</b><input data-i="${i}" data-k="formula" value="${esc(c.formula||'')}" placeholder="예: qty * unit_price  /  IF(plan_qty == 0, 0, result_qty / plan_qty * 100)" style="border:1px solid #b9cce2;background:#fff"><input data-i="${i}" data-k="unit" value="${esc(c.unit||'')}" placeholder="단위"><input data-i="${i}" data-k="decimals" type="number" min="0" max="8" value="${esc(c.decimals??'')}" placeholder="소수"><label class="ck" title="체크하면 계산 결과도 DB 컬럼에 저장"><input type="checkbox" data-i="${i}" data-k="calcStore" ${c.calcStore?'checked':''}>DB</label></div><div style="font-size:10.8px;color:#6b7686;margin-top:3px">사용: + − ×(*) ÷(/) %, 비교(>, &lt;, ==), IF(), ROUND(), MIN(), MAX(), ABS(), COALESCE(), TODAY(), DAYS(시작일,종료일)</div></td></tr>`:''}
     ${(FLOW_COL.test(c.name)||c.flow)?`<tr><td colspan="8" style="background:#f7f9fb;padding:2px 6px 5px"><span style="font-size:11px;color:#8a94a6">⇢ 상태흐름</span> <input data-i="${i}" data-k="flow" value="${esc(c.flow||'')}" placeholder="대기 > 승인 > 발주 > 입고완료 | 취소, 보류  (비우면 라벨 괄호 안 순서)" style="width:calc(100% - 70px);border:1px solid #dbe3ea;background:#fff">${parseFlow(c)?`<div style="font-size:11px;color:#2e7d5b;margin-top:2px">→ ${parseFlow(c).steps.join(' › ')}${parseFlow(c).ends.length?' · 종료: '+parseFlow(c).ends.join(', '):''}</div>`:''}</td></tr>`:''}`).join('')}</tbody></table></div>
-   <div class="acts"><button class="btn" id="addCol">＋ 컬럼</button><button class="btn" id="addStd">＋ 기본 컬럼 (비고·수정일)</button><button class="btn" id="addCalcEx">ƒx 계산식 예제</button><button class="btn" id="autoColNames" title="중분류 → 화면 → 라벨의 영문 약자를 조합해 컬럼명을 자동으로 만듭니다">⚡ 자동칼럼명</button><button class="btn primary" onclick="openPaste()">📋 항목 붙여넣기</button><button class="btn" onclick="sampleOne()">⇩ 실제 데이터 1건</button><span class="msg" id="smpMsg" style="font-size:11.5px;color:#8a94a6"></span></div>
+   <div class="acts"><button class="btn" id="addCol">＋ 컬럼</button><button class="btn" id="addStd">＋ 기본 컬럼 (비고·수정일)</button><button class="btn" id="addCalcEx">ƒx 계산식 예제</button><button class="btn" id="autoColNames" title="중분류 → 화면 → 라벨의 영문 약자를 조합해 컬럼명을 자동으로 만듭니다">⚡ 자동칼럼명</button><button class="btn" id="autoKeyReq" title="라벨과 컬럼명을 보고 기본키(🔑)와 필수(✱) 항목을 자동으로 선택합니다. 자동선택 뒤에도 직접 수정할 수 있습니다.">⚡ 키·필수 자동선택</button><button class="btn primary" onclick="openPaste()">📋 항목 붙여넣기</button><button class="btn" onclick="sampleOne()">⇩ 실제 데이터 1건</button><span class="msg" id="smpMsg" style="font-size:11.5px;color:#8a94a6"></span></div>
    <div style="font-size:11px;color:#8a94a6;line-height:1.55">계산식은 같은 행의 <b>컬럼명</b>을 사용합니다. 예: <code>amount = qty * unit_price</code>, <code>defect_rate = IF(total_qty == 0, 0, defect_qty / total_qty * 100)</code>. 기본은 화면 계산이며, ƒx 행의 <b>DB</b>를 체크한 경우에만 계산값 컬럼을 DB에도 생성·저장합니다.</div></div>
    <section class="src" style="margin-top:2px"><h4>⚙ 운영 자동화</h4>
     <div class="acts"><button class="btn primary" id="addOpsEx">⚙ 운영기능 예제</button><span style="font-size:11.5px;color:#8a94a6">승인 Workflow · 자동번호 · 납기알림 기본 예제를 한 번에 추가합니다.</span></div>
@@ -1147,6 +1147,7 @@ function renderPanel(){
   $('addStd').onclick=()=>{for(const c of [{name:'remark',label:'비고',type:'text'},{name:'updated_at',label:'수정일',type:'date'}])if(!n.meta.cols.some(x=>x.name===c.name))n.meta.cols.push(c);renderPanel();render()};
   $('addCalcEx').onclick=()=>{addCalcExamples(n);renderPanel();render()};
   $('autoColNames').onclick=()=>{autoColumnNames(n);renderPanel();render()};
+  if($('autoKeyReq'))$('autoKeyReq').onclick=()=>{autoKeyRequired(n);renderPanel();render()};
   $('addOpsEx').onclick=()=>{addOperationsExamples(n);renderPanel();render()};
   if($('f_auto_enable'))$('f_auto_enable').onchange=e=>{const a=n.meta.autoNo||(n.meta.autoNo={});a.enabled=e.target.checked;save();renderPanel()};
   if($('f_auto_prefix'))$('f_auto_prefix').oninput=e=>{const a=n.meta.autoNo||(n.meta.autoNo={});a.prefix=e.target.value.trim().toUpperCase();save()};
@@ -1260,6 +1261,68 @@ function autoColumnNames(t){
  save();
  const path=`${ctx.sec?.name||ctx.mod?.name||'공통'} → ${ctx.scr?.name||'(연결 화면 없음)'}`;
  $('stat').textContent=`⚡ 자동칼럼명 ${changed}개 적용 · 기준: ${path}${skipped?' · 약자 미등록 라벨 '+skipped+'개는 기존명/자동코드 사용':''}`;
+}
+
+
+/* ═══════════════ 기본키 · 필수 자동선택 ═══════════════
+   - 기본키: ID/키/번호/코드/제번 등 고유값 성격의 항목을 우선 판정한다.
+   - 복합 기본키가 이미 2개 이상이면 사용자가 의도한 것으로 보고 유지한다.
+   - 필수: 기본키 + 날짜/대상/작업자/수량 등 핵심 업무 항목을 체크한다.
+   - 비고/메모/첨부/사진/감사(수정·승인 등) 항목은 자동 필수에서 제외한다.
+   자동판정 후 사용자가 체크를 자유롭게 바꿀 수 있다. */
+function autoKeyRequired(t){
+ const cols=t?.meta?.cols||[];
+ if(!cols.length){$('stat').textContent='⚡ 키·필수 자동선택 — 컬럼이 없습니다.';return}
+ const txt=c=>(String(c.label||'')+' '+String(c.name||'')).toLowerCase().replace(/\s+/g,' ');
+ const label=c=>String(c.label||'').trim();
+ const name=c=>String(c.name||'').trim().toLowerCase();
+ const isCalc=c=>c.formula!==undefined||c.calc;
+ const optionalRe=/(비고|메모|특기|설명|상세|내용|첨부|사진|이미지|파일|remark|memo|note|desc|attach|photo|image|file|수정일|수정일시|updated|created_at|생성일|등록일시|검토일|확인일|승인일|반려사유|전화|휴대폰|이메일|주소)/i;
+ const pkScore=c=>{
+  if(isCalc(c))return -999;
+  const l=label(c),n=name(c),x=txt(c);let sc=0;
+  /* 라벨을 가장 신뢰하고, 컬럼명은 보조로 사용한다. */
+  if(/(^|[^a-z])(id|key)([^a-z]|$)/i.test(n)||/(식별키|고유키|기본키|아이디|ID)$/i.test(l))sc+=120;
+  if(/(번호|제번)$/i.test(l)||/(^|_)(no|number)$/i.test(n))sc+=105;
+  if(/코드$/i.test(l)||/(^|_)(code|cd)$/i.test(n))sc+=95;
+  if(/번호|제번|코드|식별|키|ID/i.test(l))sc+=35;
+  if(/(_id|_key|_no|_code)$/.test(n))sc+=30;
+  if(/(일자|날짜|시간|수량|금액|단가|비고|상태|구분|이름|명칭|작업자|담당자|검사자|결과|판정)$/i.test(l))sc-=55;
+  if(optionalRe.test(x))sc-=80;
+  if(c.type==='bool')sc-=80;
+  return sc;
+ };
+ let pkCols=cols.filter(c=>c.pk&&!isCalc(c)),pkMsg='';
+ if(pkCols.length>=2){
+  pkCols.forEach(c=>c.req=true);pkMsg=`복합 기본키 ${pkCols.length}개 유지`;
+ }else{
+  let best=null,bestScore=-999;
+  for(const c of cols){const sc=pkScore(c);if(sc>bestScore){best=c;bestScore=sc}}
+  const current=pkCols[0]||null,currentScore=current?pkScore(current):-999;
+  /* 기존 키가 충분히 그럴듯하면 유지하고, 약한 키보다 훨씬 좋은 후보가 있으면 교체한다. */
+  let pick=current;
+  if(!pick||(best&&bestScore>=70&&bestScore>currentScore+25))pick=best;
+  if(pick&&pkScore(pick)>=45){
+   cols.forEach(c=>{if(!isCalc(c))c.pk=(c===pick)});pick.pk=true;pick.req=true;
+   pkMsg=`기본키: ${label(pick)||name(pick)}`;
+  }else{
+   if(current&&currentScore<45)current.pk=false;
+   pkMsg='기본키 후보 없음 (번호·코드·ID 항목 확인 필요)';
+  }
+ }
+ const requiredRe=/(번호|제번|코드|ID|아이디|일자|작업일|검사일|수주일|발주일|출하일|입고일|품번|품목|품명|제품|설비|작업자|담당자|검사자|거래처|고객사|공정|금형|수량|판정|검사결과|결과명|제목)/i;
+ const reqNameRe=/(^|_)(id|key|no|code|work_date|inspect_date|order_date|ship_date|item_no|item_code|item_name|machine|equipment|worker|inspector|customer|vendor|process|mold|qty|quantity|judg|result|title)(_|$)/i;
+ let added=0;
+ for(const c of cols){
+  if(isCalc(c))continue;
+  if(c.pk){if(!c.req){c.req=true;added++}continue}
+  const x=txt(c),l=label(c),n=name(c);
+  if(optionalRe.test(x)||c.type==='bool'||/(상태|진행상태|승인상태|구분|유형|순번|단계)$/i.test(l))continue;
+  if(requiredRe.test(l)||reqNameRe.test(n)){if(!c.req){c.req=true;added++}}
+ }
+ save();
+ const reqCount=cols.filter(c=>c.req).length;
+ $('stat').textContent=`⚡ 키·필수 자동선택 완료 · ${pkMsg} · 필수 ${reqCount}개${added?` (${added}개 자동 추가)`:''} · 자동선택 후 직접 수정 가능`;
 }
 
 /* ═══════════════ 자동정렬 (계층: 대메뉴 → 중분류 → 화면 → 테이블) ═══════════════ */
