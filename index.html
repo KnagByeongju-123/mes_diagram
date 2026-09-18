@@ -29,6 +29,7 @@ header .sp{flex:1}
 .tb:hover{background:var(--steel-3);color:#fff}
 .tb.primary{background:var(--amber);color:var(--steel);font-weight:700}.tb.primary:hover{background:#ffbf55}
 .tb.line{border-color:var(--line-2)}
+.tb:disabled{opacity:.38;cursor:default;pointer-events:none}
 .tb .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 /* canvas */
 .stage{position:relative;overflow:hidden;background:var(--paper);
@@ -167,6 +168,7 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
     <button onclick="loadSample()">✦ 샘플 설계 불러오기</button>
     <hr>
     <button onclick="openMerge()">◈ 기준정보 통합 (중복 마스터 합치기)</button>
+    <button onclick="autoLinkOrphans()">🔗 미연결 부모 자동정리</button>
     <button onclick="autoLayout()">⇶ 자동정렬</button>
     <button onclick="fitAll()">⤢ 전체 보기</button>
   </div></div>
@@ -188,6 +190,7 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
   </div></div>
 
   <span class="sp"></span>
+  <button class="tb line" id="undoBtn" onclick="undoDelete()" disabled title="삭제한 블록/연결 되돌리기 (Ctrl+Z)">↶ 되돌리기</button>
   <input id="sysName" value="SAMPLE MES" title="생성될 시스템 이름" style="height:30px;width:150px;background:var(--steel-2);border:1px solid var(--line-2);border-radius:var(--r);color:#fff;padding:0 8px;margin-right:6px">
   <button class="tb line" onclick="validateDesign(true)">✓ 설계검증</button>
   <button class="tb primary" onclick="generate()">▶ 시스템 생성</button>
@@ -209,7 +212,7 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
     <span><i style="border-color:#8b5cf6"></i>참조 (테이블 → 테이블, FK)</span>
     <span><i style="border-color:#2fb27c;border-style:dashed"></i>흐름 (화면 → 화면)</span>
   </div>
-  <div class="hint">블록 더블클릭 = 화면 미리보기 · 드래그 = 이동 · 오른쪽 ○ 를 끌어 다른 블록에 놓기 = 연결 · 선/블록 클릭 = 편집 · Delete = 삭제 · 빈 곳 드래그 = 화면 이동 · 휠 = 확대/축소 · Ctrl+S = ☁ 저장</div>
+  <div class="hint">블록 더블클릭 = 화면 미리보기 · 드래그 = 이동 · 오른쪽 ○ 를 끌어 다른 블록에 놓기 = 연결 · 선/블록 클릭 = 편집 · Delete = 삭제 · Ctrl+Z = 삭제 되돌리기 · 빈 곳 드래그 = 화면 이동 · 휠 = 확대/축소 · Ctrl+S = ☁ 저장</div>
   <div class="zoom"><button onclick="zoomBy(1.2)">+</button><button onclick="zoomBy(1/1.2)">−</button><button onclick="fitAll()" title="전체 보기">⤢</button></div>
 </div>
 
@@ -225,6 +228,16 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
   <div class="valsum" id="valSummary"></div>
   <div class="vallist" id="valList"></div>
   <div class="bt"><button class="btn primary" onclick="validateDesign(true)">↻ 다시 검증</button><button class="btn" onclick="valDlg.classList.remove('on')">닫기</button><span class="msg" id="valMsg"></span></div>
+</div></div>
+
+<div class="mbg" id="parentDlg"><div class="modal" style="width:min(650px,94vw)">
+  <div class="t"><span id="parentTitle">상위 분류 자동 연결</span><span class="x" onclick="parentPickCancel()">×</span></div>
+  <div class="bd" style="grid-template-columns:1fr;min-height:0;padding:14px;display:grid;gap:10px;align-content:start">
+    <div id="parentGuide" style="color:#4a5568;line-height:1.6"></div>
+    <div id="parentList" style="display:grid;gap:6px;max-height:52vh;overflow:auto"></div>
+    <div style="font-size:11.5px;color:#8a94a6">후보는 현재/최근 작업 위치, 화면상의 거리, 이름 유사성으로 정렬됩니다. 애매한 경우에만 이 창이 표시됩니다.</div>
+  </div>
+  <div class="bt"><button class="btn primary" onclick="parentPickApply()">추천 후보에 연결</button><button class="btn" onclick="parentPickNone()">연결 안 함</button><span class="msg" id="parentMsg"></span></div>
 </div></div>
 
 <div class="mbg" id="genDlg"><div class="modal">
@@ -290,8 +303,8 @@ work_date, 일자, date"></textarea></div>
     </section>
     <section class="src">
       <h4>모듈 삽입 시 연관관계</h4>
-      <label class="ck"><input id="lb_auto" type="checkbox" checked>현재 선택한 블록에 자동 연결 (대메뉴→중분류/화면, 중분류→화면, 화면→테이블)</label>
-      <div id="lb_anchor" style="font-size:11.5px;color:#8a94a6;line-height:1.6">선택한 블록이 없으면 모듈 내부 연결만 복원합니다.</div>
+      <label class="ck"><input id="lb_auto" type="checkbox" checked>부모 자동판단 및 자동 연결 (현재 선택 블록 우선)</label>
+      <div id="lb_anchor" style="font-size:11.5px;color:#8a94a6;line-height:1.6">선택한 블록이 없어도 기존 설계에서 적절한 부모 후보를 자동 판단합니다.</div>
     </section>
     <div class="f"><label>기본 모듈 — 구분별 뼈대 (공통 · 금형제작 · ESG 스마트팩토리 · 철강 수입무역 · mm 통합 MES · GI MES) — 🎨 화면 테마: mm 3종 · ESG 3종 · GI 2종</label><div class="links" id="lb_builtin"></div></div>
     <div class="f"><label>내 모듈 <span style="color:#8a94a6;font-size:11px">(이 브라우저 · ☁ 연결 시 Supabase 공유)</span></label><div class="links" id="lb_mine"></div></div>
@@ -377,6 +390,31 @@ let D={nodes:[],edges:[]},sel=null,view={x:40,y:40,k:1},uid=()=>Math.random().to
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const N=id=>D.nodes.find(n=>n.id===id);
+const DELETE_UNDO_LIMIT=30;
+let deleteUndo=[];
+const cloneUndo=o=>JSON.parse(JSON.stringify(o));
+function updateUndoUI(){
+ const b=$('undoBtn');if(!b)return;const a=deleteUndo[deleteUndo.length-1];
+ b.disabled=!a;b.title=a?`삭제 되돌리기: ${a.label||'마지막 항목'} (Ctrl+Z)`:'되돌릴 삭제 내역이 없습니다 (Ctrl+Z)';
+}
+function rememberDelete(a){deleteUndo.push(a);if(deleteUndo.length>DELETE_UNDO_LIMIT)deleteUndo.shift();updateUndoUI()}
+function clearDeleteUndo(){deleteUndo=[];updateUndoUI()}
+function undoDelete(){
+ const a=deleteUndo.pop();if(!a){updateUndoUI();return}
+ if(a.kind==='node'){
+  if(!N(a.node.id))D.nodes.push(cloneUndo(a.node));
+  for(const e of a.edges||[]){
+   if(N(e.from)&&N(e.to)&&!D.edges.some(x=>x.id===e.id))D.edges.push(cloneUndo(e));
+  }
+  select({node:a.node.id});
+  $('stat').textContent=`↶ 되돌림 — '${a.node.name}' 블록과 연결 ${(a.edges||[]).length}개를 복구했습니다.`;
+ }else if(a.kind==='edge'){
+  const e=a.edge;
+  if(N(e.from)&&N(e.to)&&!D.edges.some(x=>x.id===e.id)){D.edges.push(cloneUndo(e));select({edge:e.id});$('stat').textContent=`↶ 되돌림 — '${a.label||'연결'}'을 복구했습니다.`}
+  else{$('stat').textContent='되돌릴 연결의 양쪽 블록이 없어 복구하지 못했습니다.'}
+ }
+ updateUndoUI();save();
+}
 function save(){try{localStorage.setItem(LS,JSON.stringify({D,view}))}catch(e){}}
 
 /* ═══════════════ 노드 크기 ═══════════════ */
@@ -415,7 +453,7 @@ function render(){
   eg.appendChild(g);
  }
  $('stat').textContent=`블록 ${D.nodes.length} · 연결 ${D.edges.length}  (자동 저장됨)`;
- save();
+ updateUndoUI();save();
 }
 function edgePath(a,b){
  const p1=ports(a).out,p2=ports(b).in;
@@ -466,7 +504,7 @@ svg.addEventListener('wheel',e=>{e.preventDefault();const r=svg.getBoundingClien
 svg.addEventListener('dblclick',e=>{const node=e.target.closest('.node');if(!node)return;
  const n=N(node.dataset.id);if(n&&n.type==='screen')previewScreen(n.id);
  else{const inp=$('f_name');if(inp){inp.focus();inp.select()}}});
-document.addEventListener('keydown',e=>{if((e.key==='Delete'||e.key==='Backspace')&&sel&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();deleteSel()}});
+document.addEventListener('keydown',e=>{const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!typing){e.preventDefault();undoDelete();return}if((e.key==='Delete'||e.key==='Backspace')&&sel&&!typing){e.preventDefault();deleteSel()}});
 function zoomBy(k){const r=svg.getBoundingClientRect(),mx=r.width/2,my=r.height/2;view.x=mx-(mx-view.x)*k;view.y=my-(my-view.y)*k;view.k*=k;render()}
 function fitAll(){if(!D.nodes.length)return;const r=svg.getBoundingClientRect();if(!r.width||!r.height)return;
  let x1=1e9,y1=1e9,x2=-1e9,y2=-1e9;for(const n of D.nodes){const s=size(n);x1=Math.min(x1,n.x);y1=Math.min(y1,n.y);x2=Math.max(x2,n.x+s.w);y2=Math.max(y2,n.y+s.h)}
@@ -489,8 +527,128 @@ function contextKind(a,b){
  const k=inferredKind(a,b);return(k==='contains'||k==='uses')?k:null;
 }
 function hasEdge(from,to,kind){return D.edges.some(e=>e.from===from&&e.to===to&&(!kind||e.kind===kind))}
+/* ═══ 부모 자동판단 엔진 ═══
+   대분류→중분류→화면 계층은 가능한 한 자동 연결한다.
+   1) 현재 선택/그 선택의 상위 경로  2) 최근 작업 경로  3) 이름 유사성  4) 화면 거리 순으로 점수를 매긴다.
+   후보 하나 또는 점수 차가 충분하면 자동 연결, 애매하면 사용자에게 후보를 확인받는다. */
+const LAST_CTX={module:null,section:null,screen:null};
+let PARENT_PICK=null,REPAIR_QUEUE=[],REPAIR_COUNT=0;
+function containsParents(id){return D.edges.filter(e=>e.kind==='contains'&&e.to===id).map(e=>N(e.from)).filter(Boolean)}
+function screenForTable(id){return D.edges.filter(e=>e.kind==='uses'&&e.to===id).map(e=>N(e.from)).filter(n=>n&&n.type==='screen')}
+function rememberContext(n){
+ if(!n)return;
+ if(n.type==='module')LAST_CTX.module=n.id;
+ if(n.type==='section'){
+  LAST_CTX.section=n.id;const m=containsParents(n.id).find(x=>x.type==='module');if(m)LAST_CTX.module=m.id;
+ }
+ if(n.type==='screen'){
+  LAST_CTX.screen=n.id;const p=containsParents(n.id)[0];
+  if(p?.type==='section'){LAST_CTX.section=p.id;const m=containsParents(p.id).find(x=>x.type==='module');if(m)LAST_CTX.module=m.id}
+  else if(p?.type==='module')LAST_CTX.module=p.id;
+ }
+ if(n.type==='table'){
+  const sc=screenForTable(n.id);if(sc.length===1)rememberContext(sc[0]);
+ }
+}
+function parentTypesFor(type){return type==='section'?['module']:type==='screen'?['section','module']:type==='table'?['screen']:[]}
+function contextParentsFor(childType,contextNode){
+ const out=[];const put=n=>{if(n&&!out.some(x=>x.id===n.id)&&parentTypesFor(childType).includes(n.type))out.push(n)};
+ if(!contextNode)return out;
+ put(contextNode);
+ if(childType==='section'){
+  if(contextNode.type==='section')containsParents(contextNode.id).forEach(put);
+  if(contextNode.type==='screen'){
+   const p=containsParents(contextNode.id)[0];put(p);if(p?.type==='section')containsParents(p.id).forEach(put);
+  }
+  if(contextNode.type==='table'){
+   const sc=screenForTable(contextNode.id);if(sc.length===1){const p=containsParents(sc[0].id)[0];put(p);if(p?.type==='section')containsParents(p.id).forEach(put)}
+  }
+ }else if(childType==='screen'){
+  if(contextNode.type==='screen')containsParents(contextNode.id).forEach(put);
+  if(contextNode.type==='table'){
+   const sc=screenForTable(contextNode.id);if(sc.length===1)containsParents(sc[0].id).forEach(put);
+  }
+ }else if(childType==='table'){
+  if(contextNode.type==='table')screenForTable(contextNode.id).forEach(put);
+ }
+ return out;
+}
+function textAffinity(a,b){
+ a=String(a||'').toLowerCase().replace(/관리|현황|등록|조회|화면|메뉴/g,' ').trim();
+ b=String(b||'').toLowerCase().replace(/관리|현황|등록|조회|화면|메뉴/g,' ').trim();
+ if(!a||!b)return 0;
+ let pre=0;while(pre<Math.min(a.length,b.length)&&a[pre]===b[pre])pre++;
+ const A=a.split(/[\s_\-./()·]+/).filter(x=>x.length>1),B=b.split(/[\s_\-./()·]+/).filter(x=>x.length>1);
+ const same=A.filter(x=>B.some(y=>x===y||x.includes(y)||y.includes(x))).length;
+ let sc=Math.min(18,pre*4)+Math.min(14,same*7);
+ if(a.length>=2&&b.includes(a.slice(0,2))||b.length>=2&&a.includes(b.slice(0,2)))sc+=6;
+ return Math.min(30,sc);
+}
+function rankParentCandidates(child,contextNode){
+ const pts=parentTypesFor(child.type);if(!pts.length)return[];
+ const ctx=contextParentsFor(child.type,contextNode||null),ctxIds=new Set(ctx.map(x=>x.id));
+ const recent=new Set(pts.map(t=>LAST_CTX[t]).filter(Boolean));
+ const hasSections=child.type==='screen'&&D.nodes.some(n=>n.type==='section');
+ return D.nodes.filter(p=>p.id!==child.id&&pts.includes(p.type)).map(p=>{
+  let score=0,reasons=[];
+  if(ctxIds.has(p.id)){score+=120;reasons.push('현재 작업 위치')}
+  if(recent.has(p.id)){score+=68;reasons.push('최근 작업 위치')}
+  if(child.type==='screen'&&p.type==='section'){score+=hasSections?20:8;reasons.push('중분류 우선')}
+  const aff=textAffinity(p.name,child.name);if(aff){score+=aff;reasons.push('이름 유사')}
+  const dx=(child.x??0)-(p.x??0),dy=(child.y??0)-(p.y??0),dist=Math.hypot(dx,dy);
+  const near=Math.max(0,28-Math.floor(dist/45));if(near){score+=near;reasons.push('가까운 위치')}
+  if(dx>0){score+=8;reasons.push('왼쪽 상위블록')}
+  return{node:p,score,reasons:[...new Set(reasons)]};
+ }).sort((a,b)=>b.score-a.score||a.node.y-b.node.y||a.node.x-b.node.x);
+}
+function clearParentDecision(cands){
+ if(!cands.length)return null;if(cands.length===1)return cands[0];
+ const a=cands[0],b=cands[1];
+ if(a.score>=105)return a;
+ if(a.score>=72&&a.score-b.score>=28)return a;
+ return null;
+}
+function existingParent(child){
+ if(child.type==='section'||child.type==='screen')return D.edges.some(e=>e.kind==='contains'&&e.to===child.id);
+ if(child.type==='table')return D.edges.some(e=>e.kind==='uses'&&e.to===child.id);
+ return true;
+}
+function attachToParent(parent,children){
+ let count=0,names=[];
+ for(const child of children){if(!child||existingParent(child))continue;const k=contextKind(parent,child);if(!k)continue;
+  if(!hasEdge(parent.id,child.id,k)){D.edges.push({id:uid(),from:parent.id,to:child.id,kind:k,label:''});count++;names.push(child.name)}}
+ if(count)save();return{count,names};
+}
+function openParentChoice(children,cands,title,onDone){
+ children=(Array.isArray(children)?children:[children]).filter(Boolean);if(!children.length||!cands.length){onDone?.(null);return}
+ PARENT_PICK={childIds:children.map(x=>x.id),cands,onDone};
+ $('parentTitle').textContent=title||'상위 분류 자동 연결';
+ const ct=children[0],more=children.length>1?` 외 ${children.length-1}개`:'';
+ $('parentGuide').innerHTML=`<b>${esc(ct.name)}${more}</b> 의 상위 분류가 여러 개 가능합니다. 가장 알맞은 위치를 선택하세요.`;
+ $('parentList').innerHTML=cands.slice(0,10).map((c,i)=>`<label style="display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:10px;border:1px solid ${i===0?'#8bb4f4':'var(--line)'};border-radius:6px;background:${i===0?'#f7fbff':'#fff'};cursor:pointer">
+   <input type="radio" name="parentCandidate" value="${esc(c.node.id)}" ${i===0?'checked':''}>
+   <span><b>${esc(c.node.name)}</b> <small style="color:#8a94a6">${TYPE[c.node.type].name}</small><br><small style="color:#8a94a6">${esc(c.reasons.join(' · ')||'후보')}</small></span>
+   <span style="font-size:11px;color:#8a94a6">추천 ${c.score}</span></label>`).join('');
+ $('parentMsg').textContent='';parentDlg.classList.add('on');
+}
+function parentPickFinish(parent){
+ const st=PARENT_PICK;PARENT_PICK=null;parentDlg.classList.remove('on');if(!st)return;
+ let r={count:0,names:[]};if(parent){const kids=st.childIds.map(N).filter(Boolean);r=attachToParent(parent,kids);if(r.count)$('stat').textContent=`${parent.name} → ${r.names.join(', ')} 자동 연결`}
+ st.onDone?.(parent,r);
+}
+function parentPickApply(){if(!PARENT_PICK)return;const id=document.querySelector('input[name="parentCandidate"]:checked')?.value;parentPickFinish(N(id))}
+function parentPickNone(){parentPickFinish(null)}
+function parentPickCancel(){parentPickFinish(null)}
+function autoParentNode(child,opts){
+ opts=opts||{};if(!child||existingParent(child)||!parentTypesFor(child.type).length)return{status:'none',cands:[]};
+ const cands=rankParentCandidates(child,opts.contextNode||null);if(!cands.length)return{status:'none',cands};
+ const best=clearParentDecision(cands);
+ if(best){const r=attachToParent(best.node,[child]);return{status:r.count?'attached':'none',parent:best.node,cands,r}}
+ if(opts.dialog!==false){openParentChoice([child],cands,opts.title||'상위 분류 자동 연결',opts.onDone);return{status:'pending',cands}}
+ return{status:'ambiguous',cands};
+}
 function addNode(type,name,meta,x,y){
- const manual=arguments.length===1,anchor=manual&&sel&&sel.node?N(sel.node):null;
+ const manual=arguments.length===1,contextNode=manual&&sel&&sel.node?N(sel.node):null;
  const r=svg.getBoundingClientRect();
  const n={id:uid(),type,name:name||TYPE[type].name+' '+(D.nodes.filter(z=>z.type===type).length+1),
   x:x??Math.round(((r.width/2-view.x)/view.k-60+Math.random()*80)/8)*8,y:y??Math.round(((r.height/2-view.y)/view.k-30+Math.random()*80)/8)*8,
@@ -498,11 +656,11 @@ function addNode(type,name,meta,x,y){
    :type==='screen'?{file:'',kind:'input'}
    :{icon:'▣',desc:''})};
  D.nodes.push(n);
- let auto='';
- if(anchor&&anchor.id!==n.id){const k=contextKind(anchor,n);
-  if(k&&!hasEdge(anchor.id,n.id,k)){D.edges.push({id:uid(),from:anchor.id,to:n.id,kind:k,label:''});auto=` · ${anchor.name} → ${n.name} 자동 연결`;}}
+ let ar={status:'none'};
+ if(manual)ar=autoParentNode(n,{contextNode,dialog:true,title:type==='section'?'중분류의 대분류 선택':type==='screen'?'화면의 중분류 선택':type==='table'?'테이블의 사용 화면 선택':'상위 분류 자동 연결'});
  select({node:n.id});
- if(auto)$('stat').textContent=`블록 추가${auto}`;
+ if(ar.status==='attached'&&ar.parent)$('stat').textContent=`블록 추가 · ${ar.parent.name} → ${n.name} 자동 연결`;
+ else if(ar.status==='pending')$('stat').textContent=`블록 추가 · '${n.name}' 상위 분류 후보 확인 필요`;
  return n;
 }
 function addEdge(from,to,kind,label,opts){
@@ -518,11 +676,21 @@ function addEdge(from,to,kind,label,opts){
 }
 function deleteSel(){
  if(!sel)return;
- if(sel.node){const n=N(sel.node);if(!confirm(`'${n.name}' 블록과 연결된 선을 모두 삭제할까요?`))return;D.nodes=D.nodes.filter(x=>x.id!==sel.node);D.edges=D.edges.filter(e=>e.from!==sel.node&&e.to!==sel.node)}
- else D.edges=D.edges.filter(e=>e.id!==sel.edge);
- select(null);
+ let msg='';
+ if(sel.node){
+  const n=N(sel.node);if(!n)return;if(!confirm(`'${n.name}' 블록과 연결된 선을 모두 삭제할까요?\n\n삭제 후 상단 [↶ 되돌리기] 또는 Ctrl+Z 로 복구할 수 있습니다.`))return;
+  const edges=D.edges.filter(e=>e.from===n.id||e.to===n.id);
+  rememberDelete({kind:'node',node:cloneUndo(n),edges:cloneUndo(edges),label:n.name});
+  D.nodes=D.nodes.filter(x=>x.id!==n.id);D.edges=D.edges.filter(e=>e.from!==n.id&&e.to!==n.id);
+  msg=`'${n.name}' 삭제됨 · ↶ 되돌리기 가능`;
+ }else{
+  const e=D.edges.find(x=>x.id===sel.edge);if(!e)return;const a=N(e.from),b=N(e.to);
+  rememberDelete({kind:'edge',edge:cloneUndo(e),label:`${a?.name||''} → ${b?.name||''}`});
+  D.edges=D.edges.filter(x=>x.id!==e.id);msg='연결 삭제됨 · ↶ 되돌리기 가능';
+ }
+ select(null);$('stat').textContent=msg;updateUndoUI();save();
 }
-function select(s){sel=s;renderPanel();render()}
+function select(s){sel=s;if(s&&s.node)rememberContext(N(s.node));renderPanel();render()}
 function renderPanel(){
  const P=$('panel'),T=$('pType');
  if(!sel){$('pTitle').textContent='선택 없음';T.style.display='none';P.innerHTML='<div class="empty">블록이나 선을 클릭하면 여기서 편집합니다.<br><br><b>대메뉴 → 중분류 → 화면</b> 을 "포함" 으로 잇고,<br>화면이 쓰는 <b>테이블</b>을 "사용" 으로 이으면<br>[▶ 시스템 생성] 이 전체를 만들어 줍니다.</div>';return}
@@ -610,7 +778,7 @@ function autoLayout(){
 
 /* ═══════════════ 저장/열기 ═══════════════ */
 function exportJson(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D,null,1)],{type:'application/json'}));a.download='system_design.json';a.click()}
-function importJson(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=()=>{const f=i.files[0];const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.nodes)throw 0;D=d;select(null);fitAll()}catch(e){alert('설계 파일 형식이 아닙니다.')}};r.readAsText(f)};i.click()}
+function importJson(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=()=>{const f=i.files[0];const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.nodes)throw 0;clearDeleteUndo();D=d;select(null);fitAll()}catch(e){alert('설계 파일 형식이 아닙니다.')}};r.readAsText(f)};i.click()}
 
 
 
@@ -854,7 +1022,7 @@ function wizNext(){
    테이블 기본 컬럼은 5H(언제·어디서·누가·무엇을·어떻게·얼마나) 기준. */
 function newDesign(withSkeleton){
  if(D.nodes.length&&!confirm('현재 설계를 지우고 새로 시작할까요? (필요하면 먼저 ☁ 저장 하세요)'))return;
- D={nodes:[],edges:[]};curName='';try{localStorage.removeItem('sysdesign.name')}catch(e){}updateTitle();
+ clearDeleteUndo();D={nodes:[],edges:[]};curName='';try{localStorage.removeItem('sysdesign.name')}catch(e){}updateTitle();
  if(!withSkeleton){select(null);view={x:40,y:40,k:1};render();
   $('stat').textContent='빈 설계 — [＋ 추가] 로 블록을 놓거나, [설계 › 문답으로 만들기] · [모듈 보관함] 으로 시작하세요.';return}
  const mod=addNode('module','대분류',{icon:'▣',desc:''},0,0);
@@ -883,7 +1051,7 @@ function newDesign(withSkeleton){
 /* ═══════════════ 샘플 (mes_template 의 SAMPLE MES) ═══════════════ */
 function loadSample(){
  if(D.nodes.length&&!confirm('현재 설계를 지우고 샘플을 불러올까요?'))return;
- D={nodes:[],edges:[]};const M={},S={},SC={},T={};
+ clearDeleteUndo();D={nodes:[],edges:[]};const M={},S={},SC={},T={};
  const mod=(n,icon,desc)=>M[n]=addNode('module',n,{icon,desc},0,0);
  const sec=(m,n,icon)=>{S[n]=addNode('section',n,{icon},0,0);addEdge(M[m].id,S[n].id,'contains')};
  const scr=(s,n,file,kind)=>{SC[n]=addNode('screen',n,{file,kind},0,0);addEdge(S[s].id,SC[n].id,'contains')};
@@ -1778,7 +1946,7 @@ function setMy(list){try{localStorage.setItem(LIB_LS,JSON.stringify(list))}catch
 let LIBALL=[];                                   /* 화면에 뿌린 내 모듈 (로컬 + ☁) */
 function libAnchorText(){
  const a=sel&&sel.node?N(sel.node):null,el=$('lb_anchor');if(!el)return;
- if(!a){el.innerHTML='선택한 블록이 없으므로 <b>모듈 내부 연결만</b> 복원합니다.';return}
+ if(!a){el.innerHTML='선택한 블록이 없어도 <b>기존 대분류/중분류/화면을 후보로 자동 판단</b>합니다. 후보가 비슷하면 선택창이 뜹니다.';return}
  const next=a.type==='module'?'중분류 또는 화면':a.type==='section'?'화면':a.type==='screen'?'테이블':'자동 연결 없음 (FK는 직접 지정)';
  el.innerHTML=`현재 선택: <b>${esc(a.name)}</b> (${TYPE[a.type].name}) → 삽입 모듈의 <b>${next}</b>를 자동 연결합니다.`;
 }
@@ -1990,12 +2158,37 @@ function autoAttachModule(anchor,made,data){
  }
  return{count,skipped,names};
 }
+function moduleExternalRoots(made,data){
+ const dn=data.nodes||[],de=data.edges||[];if(dn.some(n=>n.type==='module'))return[];
+ const incoming=(i,k)=>de.some(e=>e[1]===i&&e[2]===k);
+ let idx=dn.map((n,i)=>({n,i})).filter(x=>x.n.type==='section'&&!incoming(x.i,'contains')).map(x=>x.i);
+ if(idx.length)return idx.map(i=>made[i]).filter(Boolean);
+ idx=dn.map((n,i)=>({n,i})).filter(x=>x.n.type==='screen'&&!incoming(x.i,'contains')).map(x=>x.i);
+ if(idx.length)return idx.map(i=>made[i]).filter(Boolean);
+ const first=dn.findIndex(n=>n.type==='table');return first>=0&&made[first]?[made[first]]:[];
+}
+function autoAttachModuleSmart(made,data,label,contextNode){
+ const roots=moduleExternalRoots(made,data);if(!roots.length)return{count:0,skipped:0,names:[],status:'none'};
+ const cands=rankParentCandidates(roots[0],contextNode||null);if(!cands.length)return{count:0,skipped:0,names:[],status:'none'};
+ const best=clearParentDecision(cands);
+ if(best){const r=attachToParent(best.node,roots);return{...r,skipped:0,status:r.count?'attached':'none',parent:best.node}}
+ openParentChoice(roots,cands,`모듈 '${label||''}' 상위 분류 선택`,(p,r)=>{
+  if(p&&r.count)$('stat').textContent=`모듈 '${label||''}' · ${p.name} 아래 ${r.count}개 자동 연결`;
+  else if(!p)$('stat').textContent=`모듈 '${label||''}' 삽입 · 상위 분류 연결은 보류됨`;
+ });
+ return{count:0,skipped:0,names:[],status:'pending'};
+}
 /* 모듈을 현재 설계에 넣는다. 테이블·같은 대메뉴는 재사용하고,
    중분류/화면은 같은 부모 아래에 있을 때만 재사용하여 엉뚱한 메뉴와 합쳐지는 것을 막는다. */
 function insertModule(data,label,opts){
  opts=opts||{};if(!data||!data.nodes)return;
  const autoOn=opts.auto!==false&&(!$('lb_auto')||$('lb_auto').checked);
- const anchor=autoOn&&sel&&sel.node?N(sel.node):null;
+ const contextNode=autoOn&&sel&&sel.node?N(sel.node):null;
+ const dn0=data.nodes||[],de0=data.edges||[];
+ const has0=t=>dn0.some(n=>n.type===t),inc0=(i,k)=>de0.some(e=>e[1]===i&&e[2]===k);
+ let rootType=null;
+ if(!has0('module')){const si=dn0.findIndex((n,i)=>n.type==='section'&&!inc0(i,'contains')),ci=dn0.findIndex((n,i)=>n.type==='screen'&&!inc0(i,'contains'));rootType=si>=0?'section':ci>=0?'screen':dn0.some(n=>n.type==='table')?'table':null}
+ const anchor=contextNode&&rootType&&contextKind(contextNode,{type:rootType})?contextNode:null;
  const r=svg.getBoundingClientRect();
  let ox=Math.round(((r.width/2-view.x)/view.k-140)/8)*8, oy=Math.round(((60-view.y)/view.k)/8)*8;
  while(D.nodes.some(n=>Math.abs(n.x-ox)<30&&Math.abs(n.y-oy)<30))oy+=40;
@@ -2027,10 +2220,11 @@ function insertModule(data,label,opts){
  for(const [a,b,kind,lab,card] of (data.edges||[]))
   if(made[a]&&made[b]&&!D.edges.some(e=>e.from===made[a].id&&e.to===made[b].id&&e.kind===kind)){
    const ex=inferredKind(made[a],made[b]);if(ex===kind){D.edges.push({id:uid(),from:made[a].id,to:made[b].id,kind,label:lab||'',...(card?{card}:{})});internal++}}
- const at=autoOn?autoAttachModule(anchor,made,data):{count:0,skipped:0,names:[]};
+ let at={count:0,skipped:0,names:[],status:'none'};
+ if(autoOn)at=anchor?{...autoAttachModule(anchor,made,data),status:'attached'}:autoAttachModuleSmart(made,data,label,contextNode);
  libDlg.classList.remove('on');
  select({node:made[0].id});
- const ext=at.count?` · 선택 블록과 자동 연결 ${at.count}건 (${at.names.join(', ')})`:anchor&&autoOn?' · 자동 연결 대상 없음':'';
+ const ext=at.count?` · 자동 연결 ${at.count}건 (${at.names.join(', ')})`:at.status==='pending'?' · 상위 분류 후보 확인 필요':autoOn?' · 자동 연결 대상 없음':'';
  const skip=at.skipped?` · 기존 부모가 있어 ${at.skipped}건 건너뜀`:'';
  $('stat').textContent=`모듈 '${label||''}' 삽입 — 블록 ${made.length}개 · 내부 연결 ${internal}건${ext}${skip}`;
 }
@@ -3221,6 +3415,23 @@ async function previewOrigin(n){
 function pvMode(k){if(!pvNode)return;pvNode.meta.kind=k;render();renderPanel();previewScreen(pvNode.id,k)}
 function pvCode(){if(!pvNode)return;const {code}=buildPreview(pvNode);
  GEN={[(pvNode.meta.file||'screen.html')]:code};genCur=Object.keys(GEN)[0];pvDlg.classList.remove('on');showGen();}
+
+/* ═══ 기존 설계의 미연결 중분류/화면 자동정리 ═══ */
+function autoLinkOrphans(){
+ const orphans=D.nodes.filter(n=>(n.type==='section'||n.type==='screen')&&!D.edges.some(e=>e.kind==='contains'&&e.to===n.id));
+ if(!orphans.length){$('stat').textContent='미연결 중분류/화면이 없습니다.';return}
+ REPAIR_QUEUE=orphans.map(n=>n.id);REPAIR_COUNT=0;processRepairQueue();
+}
+function processRepairQueue(){
+ while(REPAIR_QUEUE.length){
+  const child=N(REPAIR_QUEUE.shift());if(!child||existingParent(child))continue;
+  const cands=rankParentCandidates(child,null);if(!cands.length)continue;
+  const best=clearParentDecision(cands);
+  if(best){const r=attachToParent(best.node,[child]);REPAIR_COUNT+=r.count;continue}
+  openParentChoice([child],cands,'미연결 부모 자동정리',(p,r)=>{REPAIR_COUNT+=r.count||0;processRepairQueue()});return;
+ }
+ render();$('stat').textContent=`미연결 부모 자동정리 완료 · 자동 연결 ${REPAIR_COUNT}건`;
+}
 
 /* ═══════════════ 설계 검증 ═══════════════ */
 let LAST_VALIDATION={errors:[],warnings:[]};
@@ -4717,7 +4928,7 @@ async function cloudOpen(){
 }
 async function cloudLoad(name){
  try{const rs=await sb('system_designs?select=data&name=eq.'+encodeURIComponent(name));if(!rs.length)throw new Error('없는 설계입니다.');
-  const d=rs[0].data;D={nodes:d.nodes||[],edges:d.edges||[]};if(d.sysName)$('sysName').value=d.sysName;if(d.view)view=d.view;
+  const d=rs[0].data;clearDeleteUndo();D={nodes:d.nodes||[],edges:d.edges||[]};if(d.sysName)$('sysName').value=d.sysName;if(d.view)view=d.view;
   curName=name;try{localStorage.setItem('sysdesign.name',name)}catch(e){}updateTitle();cloudDlg.classList.remove('on');select(null);fitAll();
  }catch(e){$('cloudMsg').textContent='불러오기 실패: '+e.message}
 }
@@ -5166,7 +5377,7 @@ async function crawl(){
  setTimeout(()=>crawlDlg.classList.remove('on'),600);
 }
 function buildFromPages(start,pages,o){
- if(o.replace){D={nodes:[],edges:[]}}
+ if(o.replace){clearDeleteUndo();D={nodes:[],edges:[]}}
  const __before=new Set(D.nodes.map(n=>n.id));
  const host=new URL(start).host,root=pages.get(start);
  const appName=String(root?.title||host).split(/[|—–·]/)[0].trim().slice(0,20)||host;
@@ -5325,7 +5536,7 @@ function introStat(){
 function resumeLast(){
  if(!LAST){try{LAST=JSON.parse(localStorage.getItem(LS+'.prev')||'null')}catch(e){}}
  if(!LAST||!LAST.D)return;
- D=LAST.D;view=LAST.view||{x:40,y:40,k:1};
+ clearDeleteUndo();D=LAST.D;view=LAST.view||{x:40,y:40,k:1};
  try{curName=localStorage.getItem('sysdesign.name')||''}catch(e){}
  updateTitle();select(null);render();save();
  $('stat').textContent=`지난 작업을 불러왔습니다 — 블록 ${D.nodes.length} · 연결 ${D.edges.length}`;
