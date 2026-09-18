@@ -274,7 +274,7 @@ work_date, 일자, date"></textarea></div>
   <div class="bd" style="grid-template-columns:1fr;padding:0;min-height:0">
     <div id="pv_wrap"><iframe id="pv_frame"></iframe></div>
   </div>
-  <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button><button class="btn" onclick="pvMode('check')">체크시트로</button><button class="btn" onclick="pvMode('board')">보드로</button>
+  <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button><button class="btn" onclick="pvMode('check')">체크시트로</button><button class="btn" onclick="pvMode('board')">보드로</button><button class="btn" onclick="pvMode('perm')">권한관리로</button>
     <button class="btn" onclick="pvCode()">코드 보기</button><span class="msg" id="pv_msg"></span></div>
 </div></div>
 <div class="mbg" id="libDlg"><div class="modal" style="width:min(720px,94vw)">
@@ -383,7 +383,7 @@ function render(){
   const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','node'+(sel&&sel.node===n.id?' sel':''));g.setAttribute('transform',`translate(${n.x},${n.y})`);g.dataset.id=n.id;
   let body='';
   if(n.type==='table'){const cols=n.meta.cols||[];body=cols.length?cols.map((c,i)=>`<text class="col${c.pk?' pk':''}" x="10" y="${44+i*17}">${c.pk?'🔑 ':''}${esc(c.name)}<tspan fill="#8a94a6"> ${esc(c.label||'')}</tspan><tspan fill="#b0b8c4" font-size="10"> ${c.type}</tspan>${c.sample?`<tspan fill="#2e7d5b" font-size="10.5"> ${esc(c.sample)}</tspan>`:''}</text>`).join(''):`<text class="sub" x="10" y="44">컬럼 없음 — 우측에서 추가</text>`}
-  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':n.meta.kind==='board'?'보드':'기타'}${detailOf(n)?' · 헤더+명세':''}</text>`;
+  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':n.meta.kind==='board'?'보드':n.meta.kind==='perm'?'권한관리':'기타'}${detailOf(n)?' · 헤더+명세':''}</text>`;
   else body=`<text class="sub" x="10" y="38">${esc(n.meta.desc||n.meta.icon||'')}</text>`;
   g.innerHTML=`<rect class="box" width="${w}" height="${h}"/><rect class="head" width="${w}" height="26" fill="${t.color}"/><rect width="${w}" height="8" y="18" fill="${t.color}"/>
    <text class="title" x="10" y="18">${esc(n.name)}</text><text class="title" x="${w-8}" y="18" text-anchor="end" font-size="10" opacity=".7">${esc(n.type==='table'&&n.meta.host?String(n.meta.host).slice(0,14):t.name)}</text>${body}
@@ -503,7 +503,7 @@ function renderPanel(){
  if(n.type==='module'){h+=`<div class="row2"><div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div><div class="f"><label>설명 (홈 카드)</label><input id="f_desc" value="${esc(n.meta.desc||'')}"></div></div>`}
  if(n.type==='section'){h+=`<div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div>`}
  if(n.type==='screen'){h+=`<div class="row2"><div class="f"><label>파일명</label><input id="f_file" value="${esc(n.meta.file||'')}" placeholder="order_input.html"></div>
-   <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
+   <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="perm" ${n.meta.kind==='perm'?'selected':''}>권한관리 (사용자+메뉴별 4권한 트리)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
    <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewScreen()">▶ 화면 미리보기</button></div>
    <label class="ck" style="padding:4px 0"><input id="f_lock" type="checkbox" ${n.meta.locked?'checked':''}>이 화면은 직접 수정함 — 다시 생성해도 덮어쓰지 않기</label>
    <div class="f"><label>사용 테이블 (자동: "사용" 연결)</label><div style="color:#4a5568">${D.edges.filter(e=>e.from===n.id&&e.kind==='uses').map(e=>esc(N(e.to)?.name)).join(', ')||'<span style="color:#8a94a6">없음 — 오른쪽 ○ 를 테이블로 끌어 연결</span>'}</div></div>`}
@@ -858,11 +858,15 @@ function loadSample(){
 const LIB_LS='sysdesign.modules';
 const COL=(name,label,type,pk,req)=>({name,label,type:type||'text',pk:!!pk,req:!!req});
 const BUILTIN=[
- {cat:'공통 기본',name:'사용자 · 권한',desc:'로그인 계정과 메뉴 권한 (mes_template 공통)',data:{nodes:[
-  {type:'table',name:'users',meta:{cols:[COL('user_key','사용자키','text',1),COL('user_id','아이디'),COL('name','이름'),COL('department_name','부서'),COL('position_name','직급'),COL('role','권한'),COL('is_active','사용','bool')]}},
-  {type:'table',name:'user_permissions',meta:{cols:[COL('user_key','사용자키','text',1),COL('menu_name','메뉴명','text',1),COL('can_view','조회','bool'),COL('can_save','저장','bool'),COL('can_edit','수정','bool'),COL('can_delete','삭제','bool')]}},
-  {type:'screen',name:'사용자정보',meta:{file:'user_information.html',kind:'other'}}],
-  edges:[[2,0,'uses','계정 등록'],[2,1,'uses','권한 저장'],[1,0,'ref','user_key → users.user_key']]}},
+ {cat:'공통 기본',name:'사용자 · 권한',desc:'로그인 계정 + 메뉴별 4권한(조회/저장/수정/삭제) 트리 — 상위 체크 시 하위 일괄, 권한복사',data:{nodes:[
+  {type:'section',name:'사용자',meta:{icon:'👥'}},
+  {type:'screen',name:'사용자정보',meta:{file:'user_information.html',kind:'perm'}},
+  {type:'table',name:'users',meta:{cols:[COL('user_key','사용자키','text',1),COL('user_id','아이디'),COL('name','성명','text',0,1),COL('english_name','성명(영문)'),COL('department_code','부서코드'),COL('department_name','부서'),COL('business_division','사업부'),COL('position_code','직급코드'),COL('position_name','직급'),COL('user_group','사용자그룹'),COL('process_group','공정그룹'),COL('employee_no','사원번호'),COL('mobile_phone','휴대폰'),COL('phone','전화번호'),COL('email','이메일'),COL('auth_email','로그인메일'),COL('role','권한역할(user/admin/master)'),COL('registered_date','등록일','date'),COL('is_active','사용','bool'),COL('remark','비고')]}},
+  {type:'table',name:'user_permissions',meta:{cols:[COL('user_key','사용자키','text',1),COL('menu_name','메뉴경로(대메뉴/중분류/화면)','text',1),COL('menu_path','경로배열'),COL('can_view','조회','bool'),COL('can_save','저장','bool'),COL('can_edit','수정','bool'),COL('can_delete','삭제','bool')]}},
+  {type:'table',name:'user_initial_passwords',meta:{cols:[COL('user_id','아이디','text',1),COL('temp_password','발급 비밀번호'),COL('issued_by','발급자'),COL('issued_at','발급시각','date'),COL('changed_by_user','본인변경','bool')]}}],
+  edges:[[0,1,'contains',''],
+   [1,2,'uses','계정 등록·수정·삭제'],[1,3,'uses','메뉴별 권한 저장·복사'],[1,4,'uses','비밀번호 발급·재설정(마스터 조회)'],
+   [3,2,'ref','user_key → users.user_key'],[4,2,'ref','user_id → users.user_id']]}},
  {cat:'공통 기본',name:'거래처 · 품목',desc:'어느 업종에나 필요한 기준정보 2종',data:{nodes:[
   {type:'table',name:'vendors',meta:{cols:[COL('vendor_code','거래처코드','text',1),COL('vendor_name','거래처명','text',0,1),COL('vendor_type','구분'),COL('phone','전화'),COL('manager_name','담당자'),COL('is_active','사용','bool')]}},
   {type:'table',name:'items',meta:{cols:[COL('item_code','품번','text',1),COL('item_name','품명','text',0,1),COL('spec','규격'),COL('unit','단위'),COL('unit_price','단가','num'),COL('customer_name','고객사')]}},
@@ -1705,9 +1709,10 @@ function buildPreview(n,kindOverride){
  const kind=kindOverride||n.meta.kind||'input';
  if(!t)return {html:`<!doctype html><meta charset="utf-8"><style>${PV_CSS}</style><div class="screen"><div class="title"><h1>${esc(n.name)}</h1></div><div class="body"><section class="panel"><div class="empty">이 화면에 "사용" 연결된 테이블이 없습니다.<br>블록 오른쪽 ○ 를 끌어 테이블에 연결하면 입력칸이 만들어집니다.</div></section></div></div>`,code:''};
  const isChk=kind==='check'||(kind==='input'&&isCheckTable(t));
- const isBoard=kind==='board';
- const md=(kind==='status'||isChk||isBoard)?null:detailOf(n);
+ const isBoard=kind==='board',isPerm=kind==='perm';
+ const md=(kind==='status'||isChk||isBoard||isPerm)?null:detailOf(n);
  let html=md?masterDetailScreen(n,md.parent,md.child,md.edge,'미리보기',[])
+   :isPerm?permScreen(n,ts,'미리보기')
    :isBoard?boardScreen(n,ts,'미리보기')
    :isChk?checkScreen(n,t,'미리보기')
    :kind==='status'?statusScreen(n,t,'미리보기'):inputScreen(n,t,'미리보기',ts.slice(1));
@@ -1723,6 +1728,14 @@ function buildPreview(n,kindOverride){
  if(md){const lk=linkCol(md.parent,md.child,md.edge);
   const ls=sampleRows(md.child,3).map((r,i)=>({...r,[lk.child]:JSON.parse(seed)[0][lk.parent]}));
   extraSeed=`lines.push(...${JSON.stringify(ls)});pick(String(rows[0][PK]));`}
+ if(isPerm){const R=permRoles(ts);
+  const us=[{[R.f.ukey]:'10300_장소율',[R.f.uname]:'장소율'},{[R.f.ukey]:'10100_김현우',[R.f.uname]:'김현우'},{[R.f.ukey]:'20100_박민서',[R.f.uname]:'박민서'}];
+  const dep=['품질관리팀','설계','구매/가공'],pos=['팀장','과장','사원'],rol=['master','user','user'];
+  us.forEach((u,i)=>{if(R.f.udept)u[R.f.udept]=dep[i];if(R.f.upos)u[R.f.upos]=pos[i];if(R.f.urole)u[R.f.urole]=rol[i];if(R.f.uactive)u[R.f.uactive]=true;if(R.f.uid)u[R.f.uid]=['jsy','khw','pms'][i]});
+  const tr=designTree();const first=tr[0]&&tr[0].secs[0]?tr[0].name+'/'+tr[0].secs[0].name:'';
+  const ps=first?[{[R.f.pkey]:'10100_김현우',[R.f.pmenu]:first,[R.f.pview]:true,[R.f.psave]:true,[R.f.pedit]:false,[R.f.pdel]:false}]:[];
+  html=html.replace('</body>',`<script>try{window.__TREE=${JSON.stringify(tr)};USERS.push(...${JSON.stringify(us)});PERMS.push(...${JSON.stringify(ps)});boot();if(window.msg)msg('미리보기 — 왼쪽에서 사용자를 고르고 아래 트리에서 메뉴별 조회·저장·수정·삭제를 체크한 뒤 [권한저장]');}catch(e){document.body.insertAdjacentHTML('afterbegin','<pre style="color:#c00;padding:8px">'+e.message+'</pre>')}<\/script></body>`);
+  return{html,code};}
  if(isBoard){const R=boardRoles(ts);
   const jobs=sampleRows(R.jobs,3).map((r,i)=>({...r,[R.f.job]:'J-2609-0'+(i+1),...(R.f.item?{[R.f.item]:['프레스금형 A','트랜스퍼 금형','프로그레시브 금형'][i]}:{})}));
   const PN=['MC','GR','HT','WE','LA'];const parts=[];
@@ -1788,7 +1801,7 @@ function pvFull(){
 function previewScreen(id,kind){
  const n=N(id||(sel&&sel.node));if(!n||n.type!=='screen')return;
  pvNode=n;const {html}=buildPreview(n,kind);
- $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':(kind||n.meta.kind)==='check'?'체크시트':(kind||n.meta.kind)==='board'?'보드':'기타'}`;
+ $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':(kind||n.meta.kind)==='check'?'체크시트':(kind||n.meta.kind)==='board'?'보드':(kind||n.meta.kind)==='perm'?'권한관리':'기타'}`;
  pvScale=1;pvResetPos();
  $('pv_frame').srcdoc=html;$('pv_msg').textContent='';pvDlg.classList.add('on');
  pvApply();
@@ -1978,6 +1991,7 @@ if(C.MODE==='json'){C.SUPABASE={url:'local://db',key:'local'};const v='?v='+C.AP
   const use=D.edges.filter(e=>e.from===s.id&&e.kind==='uses').map(e=>N(e.to)).filter(t=>t&&t.type==='table');
   const t=use[0];const loc=locate(s.name);
   if(s.meta.kind==='other'||!t){if(s.meta.kind!=='other')warn.push(`화면 '${s.name}' 에 "사용" 테이블이 없어 빈 화면으로 만듭니다.`);GEN[file]=blankScreen(s,loc);continue}
+  if(s.meta.kind==='perm'){GEN[file]=permScreen(s,use,loc);continue}
   if(s.meta.kind==='board'){GEN[file]=boardScreen(s,use,loc);continue}
   if(s.meta.kind==='check'||(s.meta.kind==='input'&&isCheckTable(t))){GEN[file]=checkScreen(s,t,loc);continue}
   const md=detailOf(s);
@@ -1994,6 +2008,242 @@ const esc1=s=>String(s).replace(/'/g,"\\'");
 function slug(s){return s.replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase()||'screen_'+uid()}
 const colsOf=t=>(t.meta.cols||[]).filter(c=>c.name);
 const mapOf=t=>'{'+colsOf(t).map(c=>`${c.name}:${c.type==='text'?`'${c.name}'`:`{col:'${c.name}',type:'${c.type}'}`}`).join(',')+'}';
+/* ═══ 권한관리 화면 ═══
+   좌: 부서별 사용자 목록 · 우상: 사용자 상세 · 우하: 메뉴 트리 × 4권한(조회/저장/수정/삭제)
+   메뉴 트리는 실제 시스템에서 APP_CONFIG.menuTree() 를, 미리보기에서는 설계도 계층을 그대로 쓴다. */
+function designTree(){
+ const kids=id=>D.edges.filter(e=>e.from===id&&e.kind==='contains').map(e=>N(e.to)).filter(Boolean);
+ const sortY=a=>a.slice().sort((p,q)=>p.y-q.y||p.x-q.x);
+ return sortY(D.nodes.filter(n=>n.type==='module')).map(m=>{
+  const secs=sortY(kids(m.id).filter(n=>n.type==='section')).map(x=>({name:x.name,items:sortY(kids(x.id).filter(n=>n.type==='screen')).map(v=>v.name)}));
+  const direct=sortY(kids(m.id).filter(n=>n.type==='screen')).map(v=>v.name);
+  if(direct.length)secs.push({name:m.name,items:direct});
+  return{name:m.name,secs};});
+}
+function permRoles(ts){
+ const has=(t,re)=>colsOf(t).some(c=>re.test(c.name));
+ const perms=ts.find(t=>has(t,/^can_view$|^can_save$/i))||ts.find(t=>/permission|perm|right/i.test(t.name));
+ const pw=ts.find(t=>t!==perms&&has(t,/temp_password|initial_password/i));
+ const users=ts.find(t=>t!==perms&&t!==pw&&(has(t,/^user_key$|^user_id$/i)||/user|employee|member/i.test(t.name)))||ts.find(t=>t!==perms&&t!==pw);
+ const col=(t,re,d)=>{const c=t&&colsOf(t).find(x=>re.test(x.name));return c?c.name:d};
+ const f={
+  ukey:col(users,/^user_key$/i,null)||col(users,/^id$|^user_id$/i,'user_key'),
+  uid:col(users,/^user_id$/i,null),uname:col(users,/^name$/i,'name'),
+  udept:col(users,/department_name|^dept$/i,null)||col(users,/department/i,null),upos:col(users,/position_name|^position$/i,null)||col(users,/position/i,null),
+  urole:col(users,/^role$/i,null),uactive:col(users,/is_active|^use_yn$/i,null),
+  pkey:col(perms,/^user_key$/i,'user_key'),pmenu:col(perms,/menu_name|^menu$/i,'menu_name'),ppath:col(perms,/menu_path/i,null),
+  pview:col(perms,/can_view/i,'can_view'),psave:col(perms,/can_save/i,'can_save'),pedit:col(perms,/can_edit/i,'can_edit'),pdel:col(perms,/can_delete|can_del/i,'can_delete'),
+  wid:col(pw,/^user_id$/i,'user_id'),wpw:col(pw,/temp_password/i,'temp_password'),wchg:col(pw,/changed_by_user/i,null),wat:col(pw,/issued_at/i,null)};
+ return{users,perms,pw,f};
+}
+function permScreen(s,ts,loc){
+ const R=permRoles(ts);if(!R.users||!R.perms)return blankScreen(s,loc);
+ const f=R.f;const ucols=colsOf(R.users);
+ const HIDE=new Set([f.ukey]);
+ const det=ucols.filter(c=>!HIDE.has(c.name));
+ const field=c=>c.type==='bool'?`<div class="check"><input id="d_${c.name}" type="checkbox"></div>`
+  :c.name===f.urole?`<select id="d_${c.name}" class="field"><option value="user">user</option><option value="admin">admin</option><option value="master">master</option></select>`
+  :`<input id="d_${c.name}" class="field" ${c.type==='num'?'type="number"':c.type==='date'?'type="date"':''}>`;
+ return `<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${s.name}</title>
+<script src="app_config.js"><\/script><link rel="stylesheet" href="mes_screen.css">
+<style>
+.body{grid-template-columns:minmax(240px,34%) minmax(0,1fr)}
+.right{min-height:0;display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:7px}
+.userlist{flex:1;min-height:0;overflow:auto}
+.group-title{height:24px;display:flex;align-items:center;padding:0 8px;background:#edf3f7;border-bottom:1px solid #c8d3dc;color:#3b556d;font-weight:700;font-size:11.5px}
+.user-row{display:grid;grid-template-columns:70px 1fr 52px;min-height:26px;border-bottom:1px solid #e0e6eb;cursor:pointer}
+.user-row span{padding:5px 8px;border-right:1px solid #e0e6eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-row:hover{background:#eef6fc}.user-row.on{background:var(--sel);color:#fff}
+.user-row .use{justify-self:center;font-size:11px;color:#2e7d32}.user-row .use.off{color:#c62828}
+.user-row.on .use{color:#dff5e3}
+.perm-head{display:grid;grid-template-columns:minmax(0,1fr) 260px;background:linear-gradient(#e7f0f7,#cadae7);border-bottom:1px solid var(--line);font-weight:700}
+.perm-head>div{padding:6px 8px;border-right:1px solid #aebbc6}
+.perm-list{flex:1;min-height:0;overflow:auto;background:#fff}
+.perm-row{display:grid;grid-template-columns:minmax(0,1fr) 260px;min-height:26px;border-bottom:1px solid #e0e6eb;align-items:center}
+.perm-row.mod{background:linear-gradient(#eef5fb,#e2edf6);font-weight:700}
+.perm-row.sec{background:#f7fafc}.perm-row:hover{background:#edf6fd}
+.perm-row>div{padding:4px 8px;border-right:1px solid #e0e6eb}
+.perm-row .toggle{cursor:pointer;user-select:none;display:inline-block;width:14px;color:#5b6b7a}
+.rights{display:flex;gap:8px}
+.rights label{display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;font-size:11.5px}
+.rights input{margin:0}
+.path{padding-left:calc(8px + var(--depth)*15px)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note{padding:12px;color:#7c8993}
+.rolebadge{font-weight:700;font-size:10.5px;margin-left:4px}
+@media(max-width:900px){.body{grid-template-columns:1fr;grid-template-rows:180px auto}.perm-head,.perm-row{grid-template-columns:minmax(0,1fr) 200px}.rights label span{display:none}}
+</style></head>
+<body><div class="screen">
+  <div class="title"><h1>${s.name}</h1><small>${loc}</small></div>
+  <div class="body">
+    <section class="panel">
+      <div class="cap">사용자 목록 <span class="right" id="countText"></span></div>
+      <div class="filters"><div class="lab">검색</div><input id="q" class="field" style="flex:1" oninput="renderUsers()" placeholder="이름 · 아이디 · 부서">
+        <label class="ck" style="white-space:nowrap"><input type="checkbox" id="d_all" onchange="renderUsers()">미사용 포함</label></div>
+      <div class="user-row" style="background:#dbe9f4;font-weight:700;color:#33506b"><span>직급</span><span>성명</span><span class="use" style="color:#33506b">사용</span></div>
+      <div class="userlist" id="userList"></div>
+    </section>
+    <section class="right">
+      <div class="panel"><div class="cap">사용자정보 <span class="right" id="selTxt">선택 없음</span></div>
+        <div class="formgrid" style="border-left:0;border-top:0">
+${det.map(c=>`          <div class="lab">${c.label||c.name}</div>${field(c)}`).join('\n')}
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="refresh()">⟳ 새로고침</button>
+        <button class="btn primary" onclick="saveUser()">▣ 저장</button>
+        <button class="btn warn" onclick="delUser()">✖ 삭제</button>
+        <button class="btn" onclick="addUser()">＋ 신규</button>
+        <button class="btn" onclick="expandAll(true)">⊞ 전체펼침</button>
+        <button class="btn" onclick="expandAll(false)">⊟ 접기</button>
+        <button class="btn primary" id="btnPerm" onclick="savePerms()">🔒 권한저장</button>
+        <button class="btn" onclick="copyPerms()">⧉ 권한복사</button>
+      </div>
+      <div class="panel">
+        <div class="cap">권한 <span class="right" id="permCnt"></span></div>
+        <div class="perm-head"><div>메뉴명</div><div class="rights">
+          <label><input type="checkbox" onclick="setAll('view',this.checked)">조회</label>
+          <label><input type="checkbox" onclick="setAll('save',this.checked)">저장</label>
+          <label><input type="checkbox" onclick="setAll('edit',this.checked)">수정</label>
+          <label><input type="checkbox" onclick="setAll('del',this.checked)">삭제</label></div></div>
+        <div class="perm-list" id="permList"><div class="note">사용자를 선택하세요.</div></div>
+      </div>
+    </section>
+  </div>
+  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">상위 메뉴를 체크하면 하위 전체에 적용됩니다. 저장/수정/삭제는 조회를 포함합니다.</span></footer>
+</div>
+<script>
+const USERS=[],PERMS=[];window.USERS=USERS;window.PERMS=PERMS;
+const F=${JSON.stringify(f)};
+const UC=${JSON.stringify(det.map(c=>c.name))},UT=${JSON.stringify(Object.fromEntries(ucols.map(c=>[c.name,c.type])))};
+const RIGHTS=[['view','조회'],['save','저장'],['edit','수정'],['del','삭제']];
+const RC={view:F.pview,save:F.psave,edit:F.pedit,del:F.pdel};
+const FALLBACK_TREE=${JSON.stringify(designTree())};
+let TREE=[],sel='',openSet=new Set(),pIdx=new Map(),loadedFor=null,dirty=false;
+const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function msg(t){message.textContent=t}
+function getTree(){try{const A=window.APP_CONFIG||window.parent.APP_CONFIG;if(A&&A.menuTree)return A.menuTree()}catch(e){}
+ return (window.__TREE&&window.__TREE.length)?window.__TREE:FALLBACK_TREE}
+function boot(){TREE=getTree();openSet=new Set(TREE.map(m=>m.name));renderUsers();if(USERS.length)pick(USERS[0][F.ukey])}
+/* ── 사용자 목록 ── */
+function deptOf(u){return (F.udept&&String(u[F.udept]||'').trim())||'부서없음'}
+function renderUsers(){
+ const q=($('q').value||'').trim().toLowerCase(),all=$('d_all').checked;
+ const list=USERS.filter(u=>{
+  if(q&&![u[F.uname],F.uid?u[F.uid]:'',F.udept?u[F.udept]:''].some(v=>String(v??'').toLowerCase().includes(q)))return false;
+  if(!all&&F.uactive&&u[F.uactive]===false)return false;return true});
+ const g=new Map();for(const u of list){const k=deptOf(u);if(!g.has(k))g.set(k,[]);g.get(k).push(u)}
+ userList.innerHTML=g.size?[...g.entries()].sort((a,b)=>a[0].localeCompare(b[0],'ko')).map(([d,rows])=>
+  '<div class="group-title">부서: '+esc(d)+' <span style="margin-left:auto;font-weight:400">'+rows.length+'명</span></div>'+
+  rows.map(u=>{const off=F.uactive&&u[F.uactive]===false;const rl=F.urole?u[F.urole]:'';
+   return '<div class="user-row '+(u[F.ukey]===sel?'on':'')+'" onclick="pick(\\''+esc(String(u[F.ukey]))+'\\')"><span>'+esc(F.upos?u[F.upos]||'':'')+'</span><span style="'+(off?'color:#9aa5b1;text-decoration:line-through':'')+'">'+esc(u[F.uname])+
+   (rl==='master'?'<b class="rolebadge" style="color:#8e24aa">[마스터]</b>':rl==='admin'?'<b class="rolebadge" style="color:#1e5e91">[관리자]</b>':'')+'</span><span class="use'+(off?' off':'')+'">'+(off?'미사용':'사용')+'</span></div>'}).join('')
+ ).join(''):'<div class="note">사용자가 없습니다.</div>';
+ countText.textContent=list.length+'명';
+}
+function pick(k){
+ if(dirty&&sel&&k!==sel&&!confirm('저장하지 않은 권한 변경이 있습니다. 이동할까요?'))return;
+ if(dirty&&k!==sel){dirty=false;loadedFor=null;markDirty()}
+ sel=k;const u=USERS.find(x=>String(x[F.ukey])===String(k));if(!u)return;
+ for(const c of UC){const el=$('d_'+c);if(!el)continue;if(UT[c]==='bool')el.checked=!!u[c];else el.value=u[c]??''}
+ selTxt.textContent=u[F.uname]+(F.uid&&u[F.uid]?' ('+u[F.uid]+')':'');
+ renderPerms(true);renderUsers();msg(u[F.uname]+' 사용자정보를 표시합니다.')}
+/* ── 권한 트리 ── */
+function allMenus(){const o=[];for(const m of TREE){o.push(m.name);for(const sc of m.secs){o.push(m.name+'/'+sc.name);for(const i of sc.items)o.push(m.name+'/'+sc.name+'/'+i)}}return o}
+function loadIdx(force){if(!force&&loadedFor===sel)return;pIdx=new Map();loadedFor=sel;
+ PERMS.filter(p=>String(p[F.pkey])===String(sel)).forEach(p=>pIdx.set(p[F.pmenu],{...p}))}
+function getP(menu){let p=pIdx.get(menu);
+ if(!p){p={[F.pkey]:sel,[F.pmenu]:menu,[F.pview]:false,[F.psave]:false,[F.pedit]:false,[F.pdel]:false};pIdx.set(menu,p)}return p}
+function cell(menu){const p=getP(menu);
+ return '<div class="rights">'+RIGHTS.map(([k,l])=>'<label><input type="checkbox" data-menu="'+esc(menu)+'" data-right="'+k+'" '+(p[RC[k]]?'checked':'')+' onchange="toggleRight(this)"><span>'+l+'</span></label>').join('')+'</div>'}
+function renderPerms(force){
+ if(!sel){permList.innerHTML='<div class="note">사용자를 선택하세요.</div>';return}
+ if(!TREE.length){permList.innerHTML='<div class="note">메뉴 구조를 읽지 못했습니다. (app_config.js 의 menuTree)</div>';return}
+ loadIdx(force);const h=[];
+ for(const m of TREE){const open=openSet.has(m.name);
+  h.push('<div class="perm-row mod"><div class="path" style="--depth:0"><span class="toggle" onclick="toggleNode(\\''+esc(m.name)+'\\')">'+(open?'⊟':'⊞')+'</span> '+esc(m.name)+'</div>'+cell(m.name)+'</div>');
+  if(!open)continue;
+  for(const sc of m.secs){const sk=m.name+'/'+sc.name,so=openSet.has(sk);
+   h.push('<div class="perm-row sec"><div class="path" style="--depth:1"><span class="toggle" onclick="toggleNode(\\''+esc(sk)+'\\')">'+(so?'⊟':'⊞')+'</span> '+esc(sc.name)+'</div>'+cell(sk)+'</div>');
+   if(!so)continue;
+   for(const it of sc.items)h.push('<div class="perm-row"><div class="path" style="--depth:2">└ '+esc(it)+'</div>'+cell(m.name+'/'+sc.name+'/'+it)+'</div>')}}
+ permList.innerHTML=h.join('');
+ const n=[...pIdx.values()].filter(p=>p[F.pview]||p[F.psave]||p[F.pedit]||p[F.pdel]).length;permCnt.textContent=n+'개 메뉴 허용';
+}
+function toggleNode(k){openSet.has(k)?openSet.delete(k):openSet.add(k);renderPerms()}
+function expandAll(on){openSet=new Set();if(on)for(const m of TREE){openSet.add(m.name);for(const sc of m.secs)openSet.add(m.name+'/'+sc.name)}renderPerms()}
+function applyOne(p,r,on){p[RC[r]]=on;
+ if(r!=='view'&&on)p[F.pview]=true;                       /* 저장·수정·삭제는 조회를 포함 */
+ if(r==='view'&&!on){p[F.psave]=p[F.pedit]=p[F.pdel]=false}}
+function toggleRight(el){
+ if(!sel)return msg('사용자를 먼저 선택하세요.');
+ const menu=el.dataset.menu,r=el.dataset.right;applyOne(getP(menu),r,el.checked);
+ if(menu.split('/').length<3)allMenus().filter(m=>m.startsWith(menu+'/')).forEach(m=>applyOne(getP(m),r,el.checked));
+ dirty=true;renderPerms();markDirty();msg(menu+' 권한을 변경했습니다. [권한저장]을 누르세요.')}
+function setAll(r,on){if(!sel)return msg('사용자를 먼저 선택하세요.');
+ allMenus().forEach(m=>applyOne(getP(m),r,on));dirty=true;renderPerms();markDirty();
+ msg('전체 메뉴의 '+RIGHTS.find(x=>x[0]===r)[1]+' 권한을 '+(on?'부여':'해제')+'했습니다.')}
+function markDirty(){btnPerm.textContent=dirty?'🔒 권한저장 ●':'🔒 권한저장';btnPerm.style.background=dirty?'linear-gradient(#fff6d8,#ffe9a8)':''}
+/* ── 저장 ── */
+async function savePerms(){
+ if(!sel)return msg('사용자를 선택하세요.');
+ const u=USERS.find(x=>String(x[F.ukey])===String(sel));
+ const rows=[...pIdx.values()].filter(p=>p[F.pview]||p[F.psave]||p[F.pedit]||p[F.pdel])
+  .map(p=>{const o={[F.pkey]:sel,[F.pmenu]:p[F.pmenu],[F.pview]:!!p[F.pview],[F.psave]:!!p[F.psave],[F.pedit]:!!p[F.pedit],[F.pdel]:!!p[F.pdel]};
+   ${f.ppath?`o[F.ppath]=String(p[F.pmenu]).split('/');`:''}return o});
+ for(let i=PERMS.length-1;i>=0;i--)if(String(PERMS[i][F.pkey])===String(sel))PERMS.splice(i,1);
+ PERMS.push(...rows);
+ if(window.MESDB&&MESDB.online){try{
+   await MESDB.rest('${R.perms.name}?'+F.pkey+'=eq.'+encodeURIComponent(sel),{method:'DELETE',headers:{Prefer:'return=minimal'}});
+   if(rows.length)await MESDB.table('${R.perms.name}').upsert(rows,F.pkey+','+F.pmenu);
+  }catch(e){return msg('권한 저장 실패: '+e.message.slice(0,120))}}
+ dirty=false;loadedFor=null;markDirty();renderPerms(true);
+ const rl=F.urole?u[F.urole]:'';
+ msg(u[F.uname]+' 권한 '+rows.length+'건 저장.'+((rl==='master'||rl==='admin')?' ※ '+(rl==='master'?'마스터':'관리자')+'는 권한 설정과 무관하게 전체 메뉴를 사용합니다.':' 다음 로그인부터 적용됩니다.'))}
+function copyPerms(){
+ if(!sel)return msg('복사할 원본 사용자를 선택하세요.');
+ const u=USERS.find(x=>String(x[F.ukey])===String(sel));
+ const others=USERS.filter(x=>x[F.ukey]!==sel).map(x=>x[F.uname]).join(', ');
+ const to=prompt(u[F.uname]+' 의 권한을 복사할 대상 사용자명\\n('+others+')');if(!to)return;
+ const t=USERS.find(x=>String(x[F.uname]).trim()===to.trim());if(!t)return msg('해당 사용자를 찾을 수 없습니다.');
+ const src=[...pIdx.values()].filter(p=>p[F.pview]||p[F.psave]||p[F.pedit]||p[F.pdel]);
+ for(let i=PERMS.length-1;i>=0;i--)if(String(PERMS[i][F.pkey])===String(t[F.ukey]))PERMS.splice(i,1);
+ PERMS.push(...src.map(p=>({[F.pkey]:t[F.ukey],[F.pmenu]:p[F.pmenu],[F.pview]:p[F.pview],[F.psave]:p[F.psave],[F.pedit]:p[F.pedit],[F.pdel]:p[F.pdel]})));
+ msg(u[F.uname]+' → '+t[F.uname]+' 권한 '+src.length+'건 복사. '+t[F.uname]+' 선택 후 [권한저장]을 누르세요.')}
+function saveUser(){
+ if(!sel)return msg('사용자를 선택하세요.');
+ const u=USERS.find(x=>String(x[F.ukey])===String(sel));if(!u)return;
+ for(const c of UC){const el=$('d_'+c);if(!el)continue;u[c]=UT[c]==='bool'?el.checked:UT[c]==='num'?(el.value===''?'':Number(el.value)):el.value}
+ if(window.MESDB&&MESDB.syncMaster)MESDB.syncMaster().catch(()=>{});
+ renderUsers();msg(u[F.uname]+' 사용자 정보를 저장했습니다.')}
+function addUser(){
+ const nm=prompt('새 사용자 이름');if(!nm)return;
+ const key=prompt('사용자키 (예: 부서코드_이름)',(F.udept?'':'')+nm);if(!key)return;
+ if(USERS.some(x=>String(x[F.ukey])===key))return msg('이미 있는 사용자키입니다.');
+ const o={[F.ukey]:key,[F.uname]:nm};if(F.uactive)o[F.uactive]=true;if(F.urole)o[F.urole]='user';
+ USERS.push(o);if(window.MESDB&&MESDB.syncMaster)MESDB.syncMaster().catch(()=>{});
+ renderUsers();pick(key);msg(nm+' 추가 — 상세를 채우고 [저장], 아래 트리에서 권한을 주고 [권한저장]')}
+async function delUser(){
+ if(!sel)return msg('삭제할 사용자를 선택하세요.');
+ const u=USERS.find(x=>String(x[F.ukey])===String(sel));if(!u)return;
+ if(!confirm(u[F.uname]+' 사용자를 삭제할까요?\\n메뉴 권한도 함께 삭제됩니다.'))return;
+ if(window.MESDB&&MESDB.online){try{await MESDB.rest('${R.perms.name}?'+F.pkey+'=eq.'+encodeURIComponent(sel),{method:'DELETE',headers:{Prefer:'return=minimal'}})}catch(e){}}
+ for(let i=PERMS.length-1;i>=0;i--)if(String(PERMS[i][F.pkey])===String(sel))PERMS.splice(i,1);
+ const i=USERS.indexOf(u);if(i>=0)USERS.splice(i,1);
+ if(window.MESDB&&MESDB.syncMaster)MESDB.syncMaster().catch(()=>{});
+ sel='';loadedFor=null;renderUsers();renderPerms(true);msg(u[F.uname]+' 삭제했습니다.')}
+function refresh(){if(window.MESDB&&MESDB.reloadMaster)MESDB.reloadMaster();renderUsers();if(sel)pick(sel);msg('다시 조회했습니다.')}
+window.MES={search:renderUsers,save:saveUser,delete:delUser,setMessage:msg};
+<\/script>
+<script src="mes_db.js"><\/script>
+<script>
+MESDB.master({page:'${slug(s.name)}:users',table:'${R.users.name}',pk:'${f.ukey}',map:${mapOf(R.users)},get:()=>USERS,render:()=>{renderUsers();if(sel)pick(sel);else if(USERS.length)pick(USERS[0][F.ukey])}});
+MESDB.table('${R.perms.name}').select('select=*').then(rs=>{PERMS.length=0;PERMS.push(...rs);loadedFor=null;renderPerms(true)}).catch(()=>{});
+boot();
+<\/script>
+<div id="toast"></div></body></html>
+`;
+}
 /* ═══ 파이프라인 보드 화면 ═══
    외주가공 발주형: [제번 목록] · [부품 × 공정1..N 매트릭스] · [협력업체] · [구매요청 리스트]
    연결 테이블 역할은 이름·컬럼으로 추정: 제번(job), 부품(steps 컬럼), 라인(status+step_no), 업체(vendor). */
