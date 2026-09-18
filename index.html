@@ -3046,17 +3046,56 @@ function previewScreen(id,kind){
   }
  }catch(e){}};
 }
+
+/* ═══ 원본 미리보기 안전장치 ═══
+   원본 화면은 대개 로그인 가드가 있어, 세션이 없으면 location.href='index.html' 로 튕긴다.
+   미리보기(iframe)에서는 그 주소가 저장소 raw 주소라 브라우저가 프레임을 막아 빈 화면이 된다.
+   → ① 화면 이동을 막고 ② 가짜(메모리) 세션을 넣어 가드를 통과시킨다. 미리보기에서만 적용. */
+function pvGuardScript(){
+ const now=Date.now(),day=864e5;
+ const seedL={
+  mm_user_session:JSON.stringify({role:'admin',id:'preview',name:'미리보기',factory:'',dept:'설계',position:'',exp:now+day}),
+  esg_pin_auth:JSON.stringify({name:'미리보기',pin:'',dept:'설계',position:'',emp_id:'PV',exp:now+day}),
+  ki_sess:JSON.stringify({access_token:'preview',refresh_token:'preview',exp:now+day,uid:'preview',email:'preview@local'})};
+ const seedS={
+  ESG_USER:JSON.stringify({name:'미리보기',dept:'설계',position:'',emp_id:'PV'}),
+  ki_me_cache:JSON.stringify({uid:'preview',me:{emp_no:'PV',emp_name:'미리보기',role:'관리자',dept:'설계',is_active:true},perm:{},ts:now})};
+ return `<script>(function(){
+ function mk(seed){var m=Object.assign({},seed);var o={getItem:function(k){return Object.prototype.hasOwnProperty.call(m,k)?m[k]:null},
+  setItem:function(k,v){m[k]=String(v)},removeItem:function(k){delete m[k]},clear:function(){m={}},key:function(i){return Object.keys(m)[i]||null}};
+  Object.defineProperty(o,'length',{get:function(){return Object.keys(m).length}});return o}
+ try{Object.defineProperty(window,'localStorage',{configurable:true,get:function(){return mk(${JSON.stringify(seedL)})}})}catch(e){}
+ try{Object.defineProperty(window,'sessionStorage',{configurable:true,get:function(){return mk(${JSON.stringify(seedS)})}})}catch(e){}
+ function blocked(u){try{parent.postMessage({pvNav:String(u||'')},'*')}catch(e){}}
+ Object.defineProperty(window,'__pvNav',{configurable:true,set:blocked,get:function(){return location.href}});
+ window.__pvGo=blocked;window.open=function(u){blocked(u);return null};
+ window.alert=function(m){try{parent.postMessage({pvAlert:String(m||'')},'*')}catch(e){}};
+ window.addEventListener('submit',function(e){e.preventDefault();blocked('form submit')},true);
+})();<\/script>`;
+}
+/* 인라인된 스크립트의 화면 이동 호출을 미리보기용으로 무력화 */
+function pvNeutralizeNav(html){
+ return html
+  .replace(/(?:window\.|document\.|top\.|parent\.|self\.)?location\s*\.\s*href\s*=(?!=)/g,'window.__pvNav=')
+  .replace(/(?:window\.|document\.|top\.|parent\.|self\.)?location\s*\.\s*(?:replace|assign)\s*\(/g,'window.__pvGo(')
+  .replace(/(?:window\.|document\.|top\.|parent\.|self\.)?location\s*\.\s*reload\s*\(\s*\)/g,'void 0');
+}
+if(!window.__pvNavListener){window.__pvNavListener=true;
+ window.addEventListener('message',e=>{const d=e&&e.data;if(!d)return;
+  if(d.pvNav!==undefined)$('pv_msg').textContent=`이 화면이 '${String(d.pvNav).slice(0,60)}' 로 이동하려 했습니다 — 미리보기에서는 막았습니다 (생성된 시스템에서는 정상 이동).`;
+  else if(d.pvAlert!==undefined)$('pv_msg').textContent='화면 알림: '+String(d.pvAlert).slice(0,80);});
+}
 async function previewOrigin(n){
  const url=originUrl(n);pvScale=1;pvResetPos();
  $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · 📎 원본 (${url})`;
  $('pv_frame').srcdoc='<p style="font:14px sans-serif;padding:24px;color:#666">원본 파일 받는 중… '+esc(url)+'</p>';$('pv_msg').textContent='';pvDlg.classList.add('on');pvApply();
  try{let html=await fetchText(url);const dir=url.slice(0,url.lastIndexOf('/')+1);const assets={};
   await Promise.all(relAssets(html).map(async a=>{try{assets[a]=await fetchText(dir+a)}catch(e){}}));
-  html=inlineAssets(originSub(html),assets);
-  if(!/<base\s/i.test(html))html=html.replace(/<head[^>]*>/i,m=>m+`<base href="${dir}">`);
-  if(pvNode!==n)return;$('pv_frame').srcdoc=html;$('pv_msg').textContent='원본 화면 — 자체 로그인(PIN 등)과 Supabase 를 그대로 씁니다.';
+  html=pvNeutralizeNav(inlineAssets(originSub(html),assets));
+  html=html.replace(/<head[^>]*>/i,m=>m+(/<base\s/i.test(html)?'':`<base href="${dir}">`)+pvGuardScript());
+  if(pvNode!==n)return;$('pv_frame').srcdoc=html;$('pv_msg').textContent='원본 화면 — 미리보기는 임시 세션으로 화면만 띄웁니다. 자료는 실제 Supabase 가 연결돼야 조회됩니다.';
   setTimeout(()=>{if(pvNode!==n)return;let blank=false;try{const d=$('pv_frame').contentDocument;blank=!d||!d.body||d.body.innerText.trim().length<5}catch(e){blank=true}
-   if(blank)$('pv_msg').textContent='원본이 비어 보이면 그 화면이 로그인 세션(PIN/사용자)을 요구하는 것입니다 — 생성된 시스템에서는 원본 로그인 화면을 거쳐 열립니다. [↗ 원본 열기]로 실제 동작을 확인하세요.'},2500);
+   if(blank&&!/이동하려|알림/.test($('pv_msg').textContent))$('pv_msg').textContent='원본이 비어 보입니다 — 그 화면이 DB(Supabase) 조회에 실패했거나 로그인 세션을 요구하는 경우입니다. [↗ 원본 열기]로 실제 동작을 확인하세요.'},2500);
  }catch(e){$('pv_frame').srcdoc='<p style="font:14px sans-serif;padding:24px;color:#c00">원본을 받지 못했습니다: '+esc(e.message)+'<br><br>'+esc(url)+'</p>'}
 }
 function pvMode(k){if(!pvNode)return;pvNode.meta.kind=k;render();renderPanel();previewScreen(pvNode.id,k)}
