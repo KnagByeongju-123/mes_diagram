@@ -993,7 +993,7 @@ const BUILTIN=[
    [2,3,'uses','PIN 해시 대조 → 사용자 식별'],[2,5,'uses','접속 이력'],
    [3,4,'ref','pin_plain 첫자리 → pin_dept_map.pin_prefix'],[5,3,'ref','user_id → user_pin.id'],
    [1,2,'flow','PIN 발급 → 현장 로그인']]}},
- {cat:'금형제작',name:'금형 수주 · 제번',desc:'제번(JOB) 채번과 수주, 진척 현황 (IPTK)',data:{nodes:[
+ {cat:'금형제작',name:'금형 수주 · 제번',desc:'제번(JOB) 채번과 수주, 진척 현황 (태진 금형제작)',data:{nodes:[
   {type:'section',name:'수주',meta:{icon:'▣'}},
   {type:'screen',name:'수주등록',meta:{file:'sale_order_input.html',kind:'input',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
   {type:'screen',name:'수주현황',meta:{file:'sale_order_status.html',kind:'status',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
@@ -1001,7 +1001,7 @@ const BUILTIN=[
   {type:'table',name:'jobs',meta:{cols:[COL('job_no','제번','text',1),COL('item_name','품명'),COL('customer_name','고객사'),COL('order_date','수주일','date'),COL('order_status','상태(진행/완료/지연/취소)','text',0,0,'진행 > 완료 | 지연, 취소'),COL('current_stage','현재단계'),COL('total_steps','전체공정','num'),COL('done_steps','완료공정','num'),COL('delivery_planned_date','납품계획일','date')]}},
   {type:'table',name:'sale_orders',meta:{cols:[COL('job_no','제번','text',1),COL('order_date','수주일','date',0,1),COL('customer_name','고객사','text',0,1),COL('item_name','품명'),COL('model','기종'),COL('drawing_no','도면번호'),COL('mold_type_name','금형타입'),COL('machine_spec_name','기계사양'),COL('process_set_qty','공정/SET'),COL('order_type','수주구분'),COL('order_price','수주금액','num'),COL('s1_planned_date','T1계획일','date'),COL('delivery_planned_date','납품계획일','date'),COL('completion_date','완료일','date'),COL('order_status','상태','text',0,0,'진행 > 완료 | 지연, 취소')]}}],
   edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','제번 생성'],[1,5,'uses','저장'],[2,5,'uses','조회'],[3,4,'uses','제번별 진척'],[5,4,'ref','job_no → jobs.job_no']]}},
- {cat:'금형제작',name:'금형 설계 · PARTLIST',desc:'설계 계획/실적 + PartList 엑셀 붙여넣기 대량등록(원재료·구매품) (IPTK)',data:{nodes:[
+ {cat:'금형제작',name:'금형 설계 · PARTLIST',desc:'설계 계획/실적 + PartList 엑셀 붙여넣기 대량등록(원재료·구매품) (태진 금형제작)',data:{nodes:[
   {type:'section',name:'설계',meta:{icon:'✎'}},
   {type:'screen',name:'설계계획등록',meta:{file:'design_plan_input.html',kind:'input',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
   {type:'screen',name:'설계실적등록',meta:{file:'design_result_input.html',kind:'input',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
@@ -1052,7 +1052,7 @@ const BUILTIN=[
    [5,7,'uses','계획 공정'],[5,8,'uses','공정순번별 진척'],
    [7,6,'ref','job_no → job_pool'],[7,12,'ref','standard_process → 가공공정표준'],[8,9,'ref','vendor_name → vendors'],[8,7,'ref','part_no·step_no → 계획 공정'],[12,10,'ref','steps[] → processes.process_code'],
    [1,2,'flow','발주 → 입고(다음 공정 가능)'],[2,3,'flow','입고 → 입고확정(금액 확정)']]}},
- {cat:'금형제작',name:'금형 가공 · 공정이력',desc:'가공계획(기준공정 라우팅·부품 전개)과 공정이력카드 (IPTK)',data:{nodes:[
+ {cat:'금형제작',name:'금형 가공 · 공정이력',desc:'가공계획(기준공정 라우팅·부품 전개)과 공정이력카드 (태진 금형제작)',data:{nodes:[
   {type:'section',name:'가공',meta:{icon:'⚒'}},
   {type:'screen',name:'가공계획등록',meta:{file:'machining_plan_input.html',kind:'input',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
   {type:'screen',name:'공정이력카드',meta:{file:'process_history_card.html',kind:'status',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
@@ -1065,7 +1065,7 @@ const BUILTIN=[
   {type:'table',name:'partlist_materials',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','부품번호'),COL('part_name','부품명'),COL('material','재질'),COL('spec','규격'),COL('qty','수량','num'),COL('process_code','공정')]}},
   {type:'table',name:'process_history_cards',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번'),COL('part_no','부품번호'),COL('process_code','공정코드'),COL('work_date','작업일','date'),COL('worker','작업자'),COL('qty','수량','num'),COL('status','상태')]}}],
   edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','계획 저장'],[1,4,'uses','부품별 공정 전개'],[1,5,'uses','라우팅 저장'],[1,6,'uses','기준공정 마스터'],[1,7,'uses','기준공정 세부'],[1,8,'uses','제번 선택'],[1,9,'uses','PartList 승계'],[2,10,'uses','이력 조회/기록'],[4,3,'ref','job_no → machining_plans','1N'],[7,6,'ref','standard_process_id → standard_processes'],[5,6,'ref','기준공정 참조'],[1,2,'flow','계획 후 실적 기록']]}},
- {cat:'금형제작',name:'금형 조립 · 검사',desc:'사내조립 실적과 검사실적 (IPTK)',data:{nodes:[
+ {cat:'금형제작',name:'금형 조립 · 검사',desc:'사내조립 실적과 검사실적 (태진 금형제작)',data:{nodes:[
   {type:'section',name:'조립',meta:{icon:'⚙'}},
   {type:'screen',name:'조립실적등록',meta:{file:'assembly_result_input.html',kind:'input',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
   {type:'screen',name:'검사실적등록',meta:{file:'inspection_result_input.html',kind:'input',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
@@ -1073,14 +1073,14 @@ const BUILTIN=[
   {type:'table',name:'assembly_steps',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('machining_process_code','공정'),COL('step_name','세부작업'),COL('worker','작업자'),COL('work_date','작업일','date'),COL('man_hour','공수','num'),COL('status','상태')]}},
   {type:'table',name:'inspection_results',meta:{cols:[COL('insp_no','검사번호','text',1),COL('insp_date','검사일','date'),COL('job_no','제번'),COL('part_no','부품번호'),COL('insp_code','검사항목'),COL('value','측정값','num'),COL('judge','판정'),COL('worker','검사자')]}}],
   edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','조립건 관리'],[1,4,'uses','세부작업 저장'],[2,5,'uses','검사 저장'],[4,3,'ref','job_no → assembly_jobs.job_no','1N'],[1,2,'flow','조립 완료 후 검사']]}},
- {cat:'금형제작',name:'금형 원가 · 경비',desc:'제번별 경비와 실시간 제조원가 (IPTK)',data:{nodes:[
+ {cat:'금형제작',name:'금형 원가 · 경비',desc:'제번별 경비와 실시간 제조원가 (태진 금형제작)',data:{nodes:[
   {type:'section',name:'원가',meta:{icon:'◴'}},
   {type:'screen',name:'경비등록',meta:{file:'expense_registration.html',kind:'input',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
   {type:'screen',name:'제조원가조회',meta:{file:'manufacturing_cost_inquiry.html',kind:'status',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
   {type:'table',name:'expenses',meta:{cols:[COL('row_no','No','num',1),COL('expense_date','일자','date',0,1),COL('job_no','제번'),COL('reason_name','경비사유'),COL('amount','금액','num'),COL('vendor_name','거래처'),COL('remark','비고')]}},
   {type:'table',name:'expense_reasons',meta:{cols:[COL('reason_code','사유코드','text',1),COL('reason_name','경비사유')]}}],
   edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','저장'],[1,4,'uses','사유 조회'],[2,3,'uses','제번별 집계'],[3,4,'ref','reason_name → expense_reasons']]}},
- {cat:'금형제작',name:'금형 기준정보',desc:'금형타입 · 기계사양 · 부품 · 공정 마스터 (IPTK)',data:{nodes:[
+ {cat:'금형제작',name:'금형 기준정보',desc:'금형타입 · 기계사양 · 부품 · 공정 마스터 (태진 금형제작)',data:{nodes:[
   {type:'screen',name:'금형타입관리',meta:{file:'mold_type_management.html',kind:'input',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
   {type:'screen',name:'기계사양관리',meta:{file:'machine_spec_management.html',kind:'input',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
   {type:'screen',name:'부품관리',meta:{file:'part_management.html',kind:'input',repo:'ESG_Smart_Factory_Mold',origin:true,skin:'tjd-mold'}},
@@ -2173,7 +2173,7 @@ tr.dirty td:first-child{box-shadow:inset 3px 0 0 #f2a93b}
    .filters/.lab/.field/.formgrid/.tablewrap/.btn/.modal)은 그대로 두고 겉모습만 바꾼다.
    → 미리보기 · ▶시스템 생성(mes_screen.css) · 단일 index.html 모두 같은 스킨을 쓴다. */
 const SKIN={
- base:{name:'MES 표준 (기본)',desc:'생성기 기본 폼 — 태진 금형제작(IPTK) 계열을 일반화한 밝은 ERP. 원본 그대로는 아래 [태진 금형제작] 테마',css:'',shell:''},
+ base:{name:'MES 표준 (기본)',desc:'생성기 기본 폼 — 태진 금형제작 계열을 일반화한 밝은 ERP. 원본 그대로는 아래 [태진 금형제작] 테마',css:'',shell:''},
 
  'mm-dark':{name:'mm 현장 다크',desc:'mm_main 원본 — index.html · head_moldpart_input · mold_repair · work_status (slate #0f172a + ice)',
   css:`/* ── mm 현장 다크 (mm_main 원본 팔레트) ── */
@@ -2325,8 +2325,8 @@ tbody tr.sel,tbody tr.on{background:#2d66ad;color:#fff}
 .modal .t{height:30px;background:linear-gradient(#3d76b5,#2d66ad)}
 .modal .bt{background:#eef2f5;border-top:1px solid #c8d1da}`,
   shell:`:root{--steel:#2d66ad;--steel-2:#1f4f8c;--steel-3:#3d76b5;--paper:#dfe5ea;--line:#c8d1da;--line-2:#1f4f8c;--amber:#f2a93b;--ink:#25313d;--ink-2:#3c4d5e;--ink-3:#667483;--blue:#2d66ad}`},
- 'tjd-mold':{name:'태진 금형제작 (IPTK)',desc:'ESG_Smart_Factory_Mold 원본 — 파란 표머리(#e8f1f8→#c8dbe9) · 얼룩무늬 행 · 라벨 우측정렬 · 48px 제목',
-  css:`/* ── 태진 금형제작 IPTK (ESG_Smart_Factory_Mold 원본 팔레트) ── */
+ 'tjd-mold':{name:'태진 금형제작',desc:'ESG_Smart_Factory_Mold 원본 — 파란 표머리(#e8f1f8→#c8dbe9) · 얼룩무늬 행 · 라벨 우측정렬 · 48px 제목',
+  css:`/* ── 태진 금형제작 (ESG_Smart_Factory_Mold 원본 팔레트) ── */
 :root{--line:#9ba8b4;--line2:#c6d0d8;--blue:#2f75b5;--blue2:#d7e7f2;--ink:#344757;--bg:#f6f8fa;--sel:#2d75b7;--head1:#e8f1f8;--head2:#c8dbe9}
 body{font-family:"Malgun Gothic","맑은 고딕",Arial,sans-serif;font-size:12px;color:var(--ink)}
 .title{height:48px;padding:8px 14px 5px;border-bottom:2px solid #3978ae}
@@ -2736,7 +2736,7 @@ const REPO={
  mm_main:{name:'mm_main — TJ MES 통합 (금형부품·수리·생산일보)',raw:'https://raw.githubusercontent.com/KnagByeongju-123/mm_main/main/'},
  smtec_main2:{name:'smtec_main2 — ESG 스마트팩토리 (점검·불량·IQC)',raw:'https://raw.githubusercontent.com/KnagByeongju-123/smtec_main2/main/'},
  Gyeongil:{name:'Gyeongil — GI MES · SCM Smart (ki_)',raw:'https://raw.githubusercontent.com/KnagByeongju-123/Gyeongil/main/'},
- ESG_Smart_Factory_Mold:{name:'ESG_Smart_Factory_Mold — 금형제작 IPTK MES',raw:'https://raw.githubusercontent.com/KnagByeongju-123/ESG_Smart_Factory_Mold/main/'}
+ ESG_Smart_Factory_Mold:{name:'ESG_Smart_Factory_Mold — 태진 금형제작 MES',raw:'https://raw.githubusercontent.com/KnagByeongju-123/ESG_Smart_Factory_Mold/main/'}
 };
 const GENCFG_LS='design.gencfg';
 let GENCFG=(()=>{try{return JSON.parse(localStorage.getItem(GENCFG_LS)||'{}')}catch(e){return{}}})();
