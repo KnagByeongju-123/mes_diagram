@@ -274,7 +274,7 @@ work_date, 일자, date"></textarea></div>
   <div class="bd" style="grid-template-columns:1fr;padding:0;min-height:0">
     <div id="pv_wrap"><iframe id="pv_frame"></iframe></div>
   </div>
-  <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button><button class="btn" onclick="pvMode('check')">체크시트로</button><button class="btn" onclick="pvMode('board')">보드로</button><button class="btn" onclick="pvMode('perm')">권한관리로</button>
+  <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button><button class="btn" onclick="pvMode('check')">체크시트로</button><button class="btn" onclick="pvMode('board')">보드로</button><button class="btn" onclick="pvMode('perm')">권한관리로</button><button class="btn" onclick="pvMode('paste')">붙여넣기로</button>
     <button class="btn" onclick="pvCode()">코드 보기</button><span class="msg" id="pv_msg"></span></div>
 </div></div>
 <div class="mbg" id="libDlg"><div class="modal" style="width:min(720px,94vw)">
@@ -383,7 +383,7 @@ function render(){
   const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','node'+(sel&&sel.node===n.id?' sel':''));g.setAttribute('transform',`translate(${n.x},${n.y})`);g.dataset.id=n.id;
   let body='';
   if(n.type==='table'){const cols=n.meta.cols||[];body=cols.length?cols.map((c,i)=>`<text class="col${c.pk?' pk':''}" x="10" y="${44+i*17}">${c.pk?'🔑 ':''}${esc(c.name)}<tspan fill="#8a94a6"> ${esc(c.label||'')}</tspan><tspan fill="#b0b8c4" font-size="10"> ${c.type}</tspan>${c.sample?`<tspan fill="#2e7d5b" font-size="10.5"> ${esc(c.sample)}</tspan>`:''}</text>`).join(''):`<text class="sub" x="10" y="44">컬럼 없음 — 우측에서 추가</text>`}
-  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':n.meta.kind==='board'?'보드':n.meta.kind==='perm'?'권한관리':'기타'}${detailOf(n)?' · 헤더+명세':''}</text>`;
+  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':n.meta.kind==='board'?'보드':n.meta.kind==='perm'?'권한관리':n.meta.kind==='paste'?'붙여넣기':'기타'}${detailOf(n)?' · 헤더+명세':''}</text>`;
   else body=`<text class="sub" x="10" y="38">${esc(n.meta.desc||n.meta.icon||'')}</text>`;
   g.innerHTML=`<rect class="box" width="${w}" height="${h}"/><rect class="head" width="${w}" height="26" fill="${t.color}"/><rect width="${w}" height="8" y="18" fill="${t.color}"/>
    <text class="title" x="10" y="18">${esc(n.name)}</text><text class="title" x="${w-8}" y="18" text-anchor="end" font-size="10" opacity=".7">${esc(n.type==='table'&&n.meta.host?String(n.meta.host).slice(0,14):t.name)}</text>${body}
@@ -503,7 +503,7 @@ function renderPanel(){
  if(n.type==='module'){h+=`<div class="row2"><div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div><div class="f"><label>설명 (홈 카드)</label><input id="f_desc" value="${esc(n.meta.desc||'')}"></div></div>`}
  if(n.type==='section'){h+=`<div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div>`}
  if(n.type==='screen'){h+=`<div class="row2"><div class="f"><label>파일명</label><input id="f_file" value="${esc(n.meta.file||'')}" placeholder="order_input.html"></div>
-   <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="perm" ${n.meta.kind==='perm'?'selected':''}>권한관리 (사용자+메뉴별 4권한 트리)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
+   <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="perm" ${n.meta.kind==='perm'?'selected':''}>권한관리 (사용자+메뉴별 4권한 트리)</option><option value="paste" ${n.meta.kind==='paste'?'selected':''}>엑셀 붙여넣기 등록 (대량 품목)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
    <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewScreen()">▶ 화면 미리보기</button></div>
    <label class="ck" style="padding:4px 0"><input id="f_lock" type="checkbox" ${n.meta.locked?'checked':''}>이 화면은 직접 수정함 — 다시 생성해도 덮어쓰지 않기</label>
    <div class="f"><label>사용 테이블 (자동: "사용" 연결)</label><div style="color:#4a5568">${D.edges.filter(e=>e.from===n.id&&e.kind==='uses').map(e=>esc(N(e.to)?.name)).join(', ')||'<span style="color:#8a94a6">없음 — 오른쪽 ○ 를 테이블로 끌어 연결</span>'}</div></div>`}
@@ -964,16 +964,27 @@ const BUILTIN=[
   {type:'table',name:'jobs',meta:{cols:[COL('job_no','제번','text',1),COL('item_name','품명'),COL('customer_name','고객사'),COL('order_date','수주일','date'),COL('order_status','상태')]}},
   {type:'table',name:'sale_orders',meta:{cols:[COL('job_no','제번','text',1),COL('order_date','수주일','date',0,1),COL('customer_name','고객사','text',0,1),COL('item_name','품명'),COL('model','기종'),COL('drawing_no','도면번호'),COL('mold_type_name','금형타입'),COL('machine_spec_name','기계사양'),COL('process_set_qty','공정/SET'),COL('order_type','수주구분'),COL('order_price','수주금액','num'),COL('s1_planned_date','T1계획일','date'),COL('delivery_planned_date','납품계획일','date'),COL('completion_date','완료일','date'),COL('order_status','상태')]}}],
   edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','제번 생성'],[1,5,'uses','저장'],[2,5,'uses','조회'],[3,4,'uses','제번별 진척'],[5,4,'ref','job_no → jobs.job_no']]}},
- {cat:'금형제작',name:'금형 설계 · PARTLIST',desc:'설계 계획/실적과 부품 전개 (IPTK)',data:{nodes:[
+ {cat:'금형제작',name:'금형 설계 · PARTLIST',desc:'설계 계획/실적 + PartList 엑셀 붙여넣기 대량등록(원재료·구매품) (IPTK)',data:{nodes:[
   {type:'section',name:'설계',meta:{icon:'✎'}},
   {type:'screen',name:'설계계획등록',meta:{file:'design_plan_input.html',kind:'input'}},
   {type:'screen',name:'설계실적등록',meta:{file:'design_result_input.html',kind:'input'}},
-  {type:'screen',name:'PartList등록',meta:{file:'partlist_material_input.html',kind:'input'}},
+  {type:'screen',name:'PartList 등록(원재료)',meta:{file:'partlist_material_input.html',kind:'paste'}},
+  {type:'screen',name:'PartList 등록(구매품)',meta:{file:'partlist_purchase_input.html',kind:'paste'}},
+  {type:'screen',name:'PartList 현황',meta:{file:'partlist_status.html',kind:'status'}},
+  {type:'screen',name:'PartList 복사',meta:{file:'partlist_copy.html',kind:'input'}},
   {type:'table',name:'design_plans',meta:{cols:[COL('job_no','제번','text',1),COL('item_name','품명'),COL('customer_name','고객사'),COL('design_completion_planned_date','설계완료계획','date')]}},
   {type:'table',name:'design_plan_steps',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('step_name','세부공정'),COL('planned_date','계획일','date'),COL('completed_date','완료일','date'),COL('designer','설계자')]}},
   {type:'table',name:'design_results',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('work_date','작업일','date'),COL('step_name','세부공정'),COL('designer','설계자'),COL('progress','진척률','num')]}},
-  {type:'table',name:'partlist_materials',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','부품번호'),COL('part_name','부품명'),COL('material','재질'),COL('spec','규격'),COL('qty','수량','num'),COL('process_code','공정')]}}],
-  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','계획 저장'],[1,5,'uses','세부공정'],[2,6,'uses','실적 저장'],[3,7,'uses','저장'],[5,4,'ref','job_no → design_plans.job_no'],[6,5,'ref','세부공정 실적'],[1,2,'flow','계획 후 실적']]}},
+  {type:'table',name:'partlist_materials',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','품번','text',0,1),COL('part_name','품명'),COL('material','재질'),COL('spec','규격'),COL('thickness_dia','두께·직경'),COL('qty','수량','num'),COL('created_by','등록자'),COL('created_date','등록일자','date')]}},
+  {type:'table',name:'partlist_purchases',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','품번','text',0,1),COL('part_name','품명'),COL('type','형식'),COL('spec','규격'),COL('maker','제조사'),COL('qty','수량','num'),COL('created_by','등록자'),COL('created_date','등록일자','date')]}},
+  {type:'table',name:'job_pool',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번'),COL('item_name','품명'),COL('status','상태')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[0,5,'contains',''],[0,6,'contains',''],
+   [1,7,'uses','계획 저장'],[1,8,'uses','세부공정'],[2,9,'uses','실적 저장'],
+   [3,10,'uses','엑셀 붙여넣기 대량 등록'],[3,12,'uses','제번 선택'],
+   [4,11,'uses','엑셀 붙여넣기 대량 등록'],[4,12,'uses','제번 선택'],
+   [5,10,'uses','조회'],[5,11,'uses','조회'],[6,10,'uses','다른 제번에서 복사'],[6,11,'uses','다른 제번에서 복사'],
+   [8,7,'ref','job_no → design_plans.job_no'],[9,8,'ref','세부공정 실적'],[10,12,'ref','job_no → job_pool'],[11,12,'ref','job_no → job_pool'],
+   [1,2,'flow','계획 후 실적'],[2,3,'flow','설계 완료 → PartList 전개']]}},
  {cat:'금형제작',name:'금형 구매 · 외주발주',desc:'원재료/구매품 발주→입고→입고확정 (order_lines) — 외주가공은 별도 모듈',data:{nodes:[
   {type:'section',name:'구매/외주',meta:{icon:'◆'}},
   {type:'screen',name:'발주등록',meta:{file:'material_order_input.html',kind:'input'}},
@@ -1709,9 +1720,10 @@ function buildPreview(n,kindOverride){
  const kind=kindOverride||n.meta.kind||'input';
  if(!t)return {html:`<!doctype html><meta charset="utf-8"><style>${PV_CSS}</style><div class="screen"><div class="title"><h1>${esc(n.name)}</h1></div><div class="body"><section class="panel"><div class="empty">이 화면에 "사용" 연결된 테이블이 없습니다.<br>블록 오른쪽 ○ 를 끌어 테이블에 연결하면 입력칸이 만들어집니다.</div></section></div></div>`,code:''};
  const isChk=kind==='check'||(kind==='input'&&isCheckTable(t));
- const isBoard=kind==='board',isPerm=kind==='perm';
- const md=(kind==='status'||isChk||isBoard||isPerm)?null:detailOf(n);
+ const isBoard=kind==='board',isPerm=kind==='perm',isPaste=kind==='paste';
+ const md=(kind==='status'||isChk||isBoard||isPerm||isPaste)?null:detailOf(n);
  let html=md?masterDetailScreen(n,md.parent,md.child,md.edge,'미리보기',[])
+   :isPaste?pasteScreen(n,ts,'미리보기')
    :isPerm?permScreen(n,ts,'미리보기')
    :isBoard?boardScreen(n,ts,'미리보기')
    :isChk?checkScreen(n,t,'미리보기')
@@ -1728,6 +1740,11 @@ function buildPreview(n,kindOverride){
  if(md){const lk=linkCol(md.parent,md.child,md.edge);
   const ls=sampleRows(md.child,3).map((r,i)=>({...r,[lk.child]:JSON.parse(seed)[0][lk.parent]}));
   extraSeed=`lines.push(...${JSON.stringify(ls)});pick(String(rows[0][PK]));`}
+ if(isPaste){const R=pasteRoles(ts);
+  const rows=[1,2,3].map(i=>{const o={};for(const c of R.body)o[c.name]=(c.type==='num'?i:(c.label||c.name)+' '+i);
+   o[R.f.key]='M-00'+i;if(R.f.parent)o[R.f.parent]='J-2609-01';if(R.pk)o[R.pk.name]=i*10;return o});
+  html=html.replace('</body>',`<script>try{DATA.push(...${JSON.stringify(rows)});boot();if(window.msg)msg('미리보기 — 엑셀에서 복사해 아래 칸에 Ctrl+V 하면 열을 자동으로 읽습니다.');}catch(e){document.body.insertAdjacentHTML('afterbegin','<pre style="color:#c00;padding:8px">'+e.message+'</pre>')}<\/script></body>`);
+  return{html,code};}
  if(isPerm){const R=permRoles(ts);
   const us=[{[R.f.ukey]:'10300_장소율',[R.f.uname]:'장소율'},{[R.f.ukey]:'10100_김현우',[R.f.uname]:'김현우'},{[R.f.ukey]:'20100_박민서',[R.f.uname]:'박민서'}];
   const dep=['품질관리팀','설계','구매/가공'],pos=['팀장','과장','사원'],rol=['master','user','user'];
@@ -1801,7 +1818,7 @@ function pvFull(){
 function previewScreen(id,kind){
  const n=N(id||(sel&&sel.node));if(!n||n.type!=='screen')return;
  pvNode=n;const {html}=buildPreview(n,kind);
- $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':(kind||n.meta.kind)==='check'?'체크시트':(kind||n.meta.kind)==='board'?'보드':(kind||n.meta.kind)==='perm'?'권한관리':'기타'}`;
+ $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':(kind||n.meta.kind)==='check'?'체크시트':(kind||n.meta.kind)==='board'?'보드':(kind||n.meta.kind)==='perm'?'권한관리':(kind||n.meta.kind)==='paste'?'붙여넣기':'기타'}`;
  pvScale=1;pvResetPos();
  $('pv_frame').srcdoc=html;$('pv_msg').textContent='';pvDlg.classList.add('on');
  pvApply();
@@ -1991,6 +2008,7 @@ if(C.MODE==='json'){C.SUPABASE={url:'local://db',key:'local'};const v='?v='+C.AP
   const use=D.edges.filter(e=>e.from===s.id&&e.kind==='uses').map(e=>N(e.to)).filter(t=>t&&t.type==='table');
   const t=use[0];const loc=locate(s.name);
   if(s.meta.kind==='other'||!t){if(s.meta.kind!=='other')warn.push(`화면 '${s.name}' 에 "사용" 테이블이 없어 빈 화면으로 만듭니다.`);GEN[file]=blankScreen(s,loc);continue}
+  if(s.meta.kind==='paste'){GEN[file]=pasteScreen(s,use,loc);continue}
   if(s.meta.kind==='perm'){GEN[file]=permScreen(s,use,loc);continue}
   if(s.meta.kind==='board'){GEN[file]=boardScreen(s,use,loc);continue}
   if(s.meta.kind==='check'||(s.meta.kind==='input'&&isCheckTable(t))){GEN[file]=checkScreen(s,t,loc);continue}
@@ -2008,6 +2026,212 @@ const esc1=s=>String(s).replace(/'/g,"\\'");
 function slug(s){return s.replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase()||'screen_'+uid()}
 const colsOf=t=>(t.meta.cols||[]).filter(c=>c.name);
 const mapOf=t=>'{'+colsOf(t).map(c=>`${c.name}:${c.type==='text'?`'${c.name}'`:`{col:'${c.name}',type:'${c.type}'}`}`).join(',')+'}';
+/* ═══ 엑셀 붙여넣기 등록 화면 ═══
+   상단 부모키(제번) 선택 → 엑셀 표를 Ctrl+V → 제목행 자동 인식(컬럼 라벨/이름으로 매칭) → 미리보기(신규·수정·중복) → 리스트 추가 → 체크 후 등록.
+   컬럼 인식 규칙을 테이블 정의에서 만들어 내므로 품목·자재·거래처 어떤 표에도 쓸 수 있다. */
+function pasteRoles(ts){
+ const t=ts[0];const cols=colsOf(t);
+ const pk=cols.find(c=>c.pk)||null;
+ const META=/created_by|created_date|updated_at|writer|reg_by|reg_date|등록자|등록일/i;
+ const parent=cols.find(c=>!c.pk&&/^job_no$|^order_no$|^contract_no$|^bl_no$|^doc_no$/i.test(c.name))
+   ||cols.find(c=>!c.pk&&c.req&&/_no$|_code$/.test(c.name)&&!/part|item/i.test(c.name))||null;
+ const meta=cols.filter(c=>META.test(c.name));
+ const body=cols.filter(c=>c!==pk&&c!==parent&&!meta.includes(c));
+ const key=(body.find(c=>/part_no|item_code|part_code|code$|_no$/i.test(c.name))||body[0]||{}).name;
+ return{t,pk,parent,meta,body,f:{parent:parent?parent.name:null,key}};
+}
+function pasteScreen(s,ts,loc){
+ const R=pasteRoles(ts);if(!R.t||!R.body.length)return blankScreen(s,loc);
+ const t=R.t,f=R.f;
+ /* 컬럼별 인식 정규식: 라벨의 한글 낱자 사이 공백 허용 + 영문 컬럼명 */
+ const rx=c=>{const lb=String(c.label||'').replace(/\(.*?\)/g,'').trim();
+  const loose=x=>x.split('').map(ch=>/[가-힣a-zA-Z0-9]/.test(ch)?ch:'\\'+ch).join('\\s*');
+  /* 라벨 전체 + ·,/,, 로 나눈 각 조각도 인식 (예: '두께·직경' → 두께 / 직경 도 매칭) */
+  const parts=[...new Set([lb,...lb.split(/[·\/,]/)].map(x=>x.trim()).filter(x=>x.length>=1))];
+  const ko=parts.map(loose);
+  const en=c.name.replace(/_/g,'\\s*_?\\s*');
+  return '/^\\s*('+[...ko,en].filter(Boolean).join('|')+')\\s*$/i'};
+ const listCols=[...(R.parent?[R.parent]:[]),...R.body,...R.meta];
+ return `<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${s.name}</title>
+<script src="app_config.js"><\/script><link rel="stylesheet" href="mes_screen.css">
+<style>
+.body{grid-template-rows:auto auto minmax(0,1fr)}
+.guide{padding:6px 10px;background:#f5f0ff;border:1px solid #d8cdf0;color:#5b3fa0;font-size:11.5px;line-height:1.7}
+.guide b{color:#3f2a78}
+.xwrap{border:1px solid var(--line);background:#fbfcfd}
+.xwrap textarea{width:100%;min-height:76px;border:0;border-bottom:1px solid var(--line2);padding:7px 9px;font:12px ui-monospace,Consolas,monospace;resize:vertical;outline:0}
+.xinfo{padding:5px 9px;font-size:11.5px;color:#456;border-bottom:1px solid var(--line2);background:#fff}
+.xprev{max-height:190px;overflow:auto;background:#fff}
+.xprev table{min-width:620px}
+.xprev tr.dup td{background:#fff1f1}
+.xprev tr.upd td{background:#fffaf0}
+.xbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 9px;background:#fff8e6;border-top:1px solid #e6d3a0}
+.xbar .lab{min-height:24px;padding:0 8px}
+.chkcol{width:34px;text-align:center}
+tbody tr.pick td{background:#eaf3ff}
+tbody tr.pick.sel td{background:var(--sel)}
+td.ed{padding:0}td.ed input{width:100%;height:24px;border:1px solid transparent;background:transparent;padding:0 5px}
+td.ed input:focus{border-color:var(--blue);background:#fff;outline:0}
+@media(max-width:880px){.xprev table{min-width:520px}}
+</style></head>
+<body><div class="screen">
+  <div class="title"><h1>${s.name}</h1><small>${loc}</small></div>
+  <div class="body">
+    <div class="guide">${R.parent?'<b>①</b> '+esc(R.parent.label||R.parent.name)+' 선택 → ':''}<b>${R.parent?'②':'①'}</b> 엑셀에서 <b>${R.body.map(c=>esc(c.label||c.name)).join('·')}</b> 복사(Ctrl+C) → 아래 칸에 <b>Ctrl+V</b> → <b>${R.parent?'③':'②'}</b> [⬇ 리스트에 추가] → 등록할 행 <b>체크</b> → [▤ 등록]
+      <button class="btn sm" style="margin-left:8px" onclick="tplDown()">⤓ 서식 받기</button></div>
+    <section class="xwrap">
+      <div class="xbar" style="background:#eef3f8;border-top:0;border-bottom:1px solid var(--line2)">
+        ${R.parent?`<span class="lab">${esc(R.parent.label||R.parent.name)}</span><input id="pKey" class="field" style="width:190px" list="dlKey" placeholder="선택 또는 입력"><datalist id="dlKey"></datalist>`:''}
+        <span class="msg" id="keyMsg" style="color:#456"></span>
+      </div>
+      <textarea id="xText" placeholder="여기에 붙여넣기 (Ctrl+V)&#10;예) ${R.body.map(c=>c.type==='num'?'1':(c.label||c.name)).join('\t')}" oninput="xPrev()" onpaste="setTimeout(xPrev,30)"></textarea>
+      <div class="xinfo" id="xInfo">붙여넣으면 읽은 결과가 여기 표시됩니다.</div>
+      <div class="xprev" id="xTable"></div>
+      <div class="xbar">
+        ${R.meta.map(c=>`<span class="lab">${esc(c.label||c.name)}</span><input id="m_${c.name}" class="field" style="width:130px" ${c.type==='date'?'type="date"':''}>`).join('')}
+        <span style="color:#6b5a2a;font-size:11.5px">${R.meta.length?'(등록 시 모든 행에 적용)':''}</span>
+        <span style="margin-left:auto"></span>
+        <button class="btn primary" onclick="xAdd()">⬇ 리스트에 추가</button>
+        <button class="btn" onclick="xClear()">✕ 붙여넣기 지우기</button>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="cap">등록 대기 · 등록된 품목 <span class="right"><input id="q" class="field" style="width:130px;height:22px" placeholder="검색" oninput="render()"> &nbsp;<span id="countText"></span></span></div>
+      <div class="actions" style="border-bottom:1px solid var(--line2)">
+        <label class="ck" style="padding:0 6px"><input type="checkbox" id="allChk" onchange="toggleAll(this.checked)">전체선택</label>
+        <button class="btn primary" onclick="regSel()">▤ 등록</button>
+        <button class="btn warn" onclick="delSel()">✖ 선택삭제</button>
+        <button class="btn" onclick="addRow()">＋ 빈 행</button>
+        <button class="btn" onclick="exportCsv()">▤ EXCEL</button>
+      </div>
+      <div class="tablewrap"><table><thead><tr><th class="chkcol"><input type="checkbox" onchange="toggleAll(this.checked)"></th><th style="width:44px">No</th>${listCols.map(c=>`<th${c.type==='num'?' class="r"':''}>${esc(c.label||c.name)}</th>`).join('')}</tr></thead><tbody id="tbody"></tbody></table></div>
+    </section>
+  </div>
+  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">엑셀 표를 그대로 붙여넣으면 제목행을 찾아 열을 맞춥니다.</span></footer>
+</div>
+<script>
+const DATA=[],NEW=[];window.DATA=DATA;
+const COLS=${JSON.stringify(R.body.map(c=>({k:c.name,t:c.label||c.name,n:c.type==='num'})))}.map((c,i)=>({...c,re:[${R.body.map(rx).join(',')}][i]}));
+const F=${JSON.stringify(f)},PK=${JSON.stringify(R.pk?R.pk.name:null)},PKNUM=${JSON.stringify(!!(R.pk&&R.pk.type==='num'))};
+const META=${JSON.stringify(R.meta.map(c=>c.name))},LIST=${JSON.stringify(listCols.map(c=>c.name))};
+const T=${JSON.stringify(Object.fromEntries(colsOf(t).map(c=>[c.name,c.type])))};
+const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+function msg(t){message.textContent=t}
+function boot(){
+ ${R.meta.map(c=>c.type==='date'?`if($('m_${c.name}'))$('m_${c.name}').value=today();`:'').join('')}
+ ${f.parent?`fillKeys();`:''}render();
+}
+${f.parent?`function fillKeys(){const ks=[...new Set(DATA.map(r=>r[F.parent]).filter(Boolean))];
+ dlKey.innerHTML=ks.map(k=>'<option value="'+esc(k)+'">').join('');
+ if(!pKey.value&&ks.length)pKey.value=ks[0];
+ keyMsg.textContent=ks.length?'등록된 '+ks.length+'건':'';}`:''}
+/* ── 붙여넣기 파싱 ── */
+function splitRows(txt){return txt.replace(/\\r/g,'').split('\\n').filter(l=>l.trim()!=='')
+ .map(l=>l.indexOf('\\t')>=0?l.split('\\t'):l.trim().split(/\\s{2,}|\\s*\\|\\s*|,(?=\\S)/))}
+function findHead(g){
+ for(let i=0;i<Math.min(4,g.length);i++){
+  const idx={};let hit=0;
+  g[i].forEach((cell,j)=>{const v=String(cell).trim();if(!v)return;
+   for(const c of COLS)if(idx[c.k]==null&&c.re.test(v)){idx[c.k]=j;hit++;break}});
+  if(hit>=2)return{head:i,idx}}
+ const idx={};COLS.forEach((c,j)=>idx[c.k]=j);return{head:-1,idx};
+}
+function parsed(){
+ const g=splitRows($('xText').value);if(!g.length)return{g:[],rows:[],head:-1,idx:{},skip:0};
+ const{head,idx}=findHead(g);const rows=[];let skip=0;
+ for(let i=head+1;i<g.length;i++){
+  const r={};for(const c of COLS){const j=idx[c.k];let v=j!=null?String(g[i][j]??'').trim():'';
+   if(c.n){const n=Number(String(v).replace(/[^0-9.-]/g,''));v=isNaN(n)||v===''?'':n}
+   r[c.k]=v}
+  if(!String(r[F.key]??'').trim()){skip++;continue}
+  rows.push(r)}
+ return{g,rows,head,idx,skip};
+}
+function xPrev(){
+ const{rows,head,idx,skip}=parsed();
+ if(!rows.length){xInfo.textContent='붙여넣으면 읽은 결과가 여기 표시됩니다.';xTable.innerHTML='';return}
+ const miss=COLS.filter(c=>idx[c.k]==null).map(c=>c.t);
+ const ex=new Set(DATA.map(r=>String(r[F.key])));
+ const uniq=[...new Set(rows.map(r=>String(r[F.key])))];
+ const upd=uniq.filter(k=>ex.has(k)).length;
+ const cnt={};rows.forEach(r=>{const k=String(r[F.key]);cnt[k]=(cnt[k]||0)+1});
+ xInfo.innerHTML=(head>=0?'<span style="color:#1d6b3a">✔ '+(head+1)+'행을 제목행으로 인식':'<span style="color:#1d6b3a">✔ 제목행 없음 → '+COLS.map(c=>c.t).join('·')+' 순서로 읽음')
+  +' · 대상 <b>'+rows.length+'</b>행</span> <span style="color:#456">(신규 '+(uniq.length-upd)+' · 수정 '+upd+')</span>'
+  +(skip?' <span style="color:#8a6d1d">('+esc(COLS.find(c=>c.k===F.key).t)+' 빈 행 '+skip+'개 제외)</span>':'')
+  +(miss.length?'<br><span style="color:#b04a4a">⚠ 제목행에서 못 찾은 열: '+miss.join(', ')+' — 빈 값으로 등록됩니다</span>':'');
+ xTable.innerHTML='<table><thead><tr><th style="width:40px">No</th>'+COLS.map(c=>'<th'+(c.n?' class="r"':'')+'>'+esc(c.t)+'</th>').join('')+'</tr></thead><tbody>'
+  +rows.slice(0,300).map((r,i)=>{const k=String(r[F.key]);const cls=cnt[k]>1?'dup':ex.has(k)?'upd':'';
+   return '<tr class="'+cls+'" title="'+(cnt[k]>1?'중복 — 마지막 행으로 합쳐집니다':ex.has(k)?'기존 항목 수정':'신규')+'"><td>'+(i+1)+'</td>'
+    +COLS.map(c=>'<td'+(c.n?' class="r"':'')+'>'+esc(r[c.k])+'</td>').join('')+'</tr>'}).join('')
+  +'</tbody></table>'+(rows.length>300?'<div style="padding:5px;color:#8a94a6">… 앞 300행만 표시</div>':'');
+}
+function xAdd(){
+ const{rows}=parsed();if(!rows.length)return msg('붙여넣은 내용이 없습니다.');
+ ${f.parent?`const key=(pKey.value||'').trim();if(!key)return msg('${R.parent?esc(R.parent.label||R.parent.name):''} 을(를) 먼저 선택하세요.');`:''}
+ let add=0,upd=0;
+ for(const r of rows){
+  const o={...r};${f.parent?`o[F.parent]=key;`:''}
+  const i=DATA.findIndex(x=>String(x[F.key])===String(r[F.key])${f.parent?`&&String(x[F.parent])===key`:''});
+  if(i>=0){DATA[i]={...DATA[i],...o};DATA[i]._sel=true;upd++}
+  else{o._sel=true;o._new=true;if(PK&&PKNUM)o[PK]='';DATA.push(o);add++}}
+ $('xText').value='';xPrev();${f.parent?'fillKeys();':''}render();
+ msg('리스트에 추가 — 신규 '+add+'건 · 수정 '+upd+'건. 체크된 행을 [▤ 등록] 하세요.');
+}
+function xClear(){$('xText').value='';xPrev();msg('붙여넣기 칸을 지웠습니다.')}
+function tplDown(){const h=COLS.map(c=>c.t);const ex=COLS.map(c=>c.n?'1':c.t+' 예시');
+ const csv='\\ufeff'+[h,ex].map(a=>a.join(',')).join('\\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='${slug(s.name)}_서식.csv';a.click();msg('서식을 내려받았습니다. 엑셀에서 채운 뒤 표 전체를 복사해 붙여넣으세요.')}
+/* ── 리스트 ── */
+function view(){const q=($('q').value||'').trim().toLowerCase();
+ ${f.parent?`const key=(pKey.value||'').trim();`:''}
+ return DATA.filter(r=>{${f.parent?`if(key&&String(r[F.parent]||'')!==key&&!r._new)return false;`:''}
+  return !q||LIST.some(c=>String(r[c]??'').toLowerCase().includes(q))})}
+function render(){
+ const v=view();
+ tbody.innerHTML=v.length?v.map((r,i)=>{const ix=DATA.indexOf(r);
+  return '<tr class="'+(r._sel?'pick':'')+'">'
+  +'<td class="chkcol"><input type="checkbox" '+(r._sel?'checked':'')+' onchange="pickRow('+ix+',this.checked)"></td>'
+  +'<td>'+(i+1)+(r._new?' <span style="color:#2e7d5b;font-size:10px">新</span>':'')+'</td>'
+  +LIST.map(c=>'<td class="ed'+(T[c]==='num'?' r':'')+'"><input value="'+esc(r[c]??'')+'" '+(T[c]==='num'?'type="number"':T[c]==='date'?'type="date"':'')+' oninput="edit('+ix+',\\''+c+'\\',this.value)"></td>').join('')
+  +'</tr>'}).join(''):'<tr><td colspan="'+(LIST.length+2)+'" class="empty">등록된 품목이 없습니다. 엑셀에서 복사(Ctrl+C) 후 위 칸에 붙여넣으세요.</td></tr>';
+ countText.textContent=v.length+'건 (선택 '+v.filter(r=>r._sel).length+')';
+}
+function pickRow(i,on){DATA[i]._sel=on;render()}
+function toggleAll(on){view().forEach(r=>r._sel=on);allChk.checked=on;render()}
+function edit(i,c,v){DATA[i][c]=T[c]==='num'?(v===''?'':Number(v)):v}
+function addRow(){const o={_sel:true,_new:true};${f.parent?`o[F.parent]=(pKey.value||'').trim();`:''}DATA.push(o);render();msg('빈 행을 추가했습니다. 칸을 직접 채우세요.')}
+function delSel(){const sel=DATA.filter(r=>r._sel);if(!sel.length)return msg('삭제할 행을 체크하세요.');
+ if(!confirm(sel.length+'건을 목록에서 삭제할까요?'))return;
+ for(let i=DATA.length-1;i>=0;i--)if(DATA[i]._sel)DATA.splice(i,1);
+ render();msg(sel.length+'건 삭제했습니다.')}
+async function regSel(){
+ const sel=DATA.filter(r=>r._sel);if(!sel.length)return msg('등록할 행을 체크하세요.');
+ const meta={};${R.meta.map(c=>`{const e=$('m_${c.name}');if(e&&e.value)meta['${c.name}']=e.value}`).join('')}
+ for(const r of sel){Object.assign(r,meta);r._new=false}
+ if(window.MESDB&&MESDB.online){
+  const rows=sel.map(r=>{const o={};for(const c of LIST)if(r[c]!==undefined&&r[c]!=='')o[c]=r[c];
+   if(PK&&r[PK]!==''&&r[PK]!=null)o[PK]=r[PK];return o});
+  try{await MESDB.table('${t.name}').upsert(rows${R.pk?`,'${R.pk.name}'`:''})}catch(e){return msg('등록 실패: '+e.message.slice(0,120))}
+ }
+ DATA.forEach(r=>r._sel=false);allChk.checked=false;render();
+ msg(sel.length+'건 등록했습니다.'+(META.length?' ('+META.map(c=>meta[c]).filter(Boolean).join(' · ')+')':''));
+}
+function exportCsv(){const h=LIST.map(c=>{const m=COLS.find(x=>x.k===c);return m?m.t:c});
+ const csv='\\ufeff'+[h,...view().map(r=>LIST.map(c=>r[c]??''))].map(a=>a.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(',')).join('\\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='${slug(s.name)}.csv';a.click()}
+${f.parent?`pKey&&pKey.addEventListener('input',()=>{render();msg((pKey.value||'')+' 기준으로 표시합니다.')});`:''}
+window.MES={search:render,save:regSel,delete:delSel,setMessage:msg};
+<\/script>
+<script src="mes_db.js"><\/script>
+<script>
+MESDB.master({page:'${slug(s.name)}:data',table:'${t.name}',pk:'${R.pk?R.pk.name:f.key}',map:${mapOf(t)},get:()=>DATA,render:()=>{${f.parent?'fillKeys();':''}render()}});
+boot();
+<\/script>
+<div id="toast"></div></body></html>
+`;
+}
 /* ═══ 권한관리 화면 ═══
    좌: 부서별 사용자 목록 · 우상: 사용자 상세 · 우하: 메뉴 트리 × 4권한(조회/저장/수정/삭제)
    메뉴 트리는 실제 시스템에서 APP_CONFIG.menuTree() 를, 미리보기에서는 설계도 계층을 그대로 쓴다. */
