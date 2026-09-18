@@ -307,7 +307,8 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;grid-template-co
         <button onclick="guideGo('g_edit')">④ 내용 수정하기</button>
         <button onclick="guideGo('g_save')">⑤ 저장하고 다시 열기</button>
         <button onclick="guideGo('g_make')">⑥ 시스템 만들기</button>
-        <button onclick="guideGo('g_practice')">⑦ 실습하기</button>
+        <button onclick="guideGo('g_auto')">⑦ 빠른 자동제작</button>
+        <button onclick="guideGo('g_practice')">⑧ 실습하기</button>
       </div>
     </section>
 
@@ -405,8 +406,20 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;grid-template-co
     </section>
 
 
+
+    <section class="manual-sec" id="g_auto">
+      <h3>⑦ 빠른 자동제작 — 시간을 줄이는 방법</h3>
+      <ol>
+        <li><b>화면을 하나 선택</b>하고 오른쪽의 <b>[⚡ 화면 자동완성]</b>을 누르면, 필요한 테이블이 없을 때는 자동으로 만들고 기본 칼럼도 채웁니다.</li>
+        <li>이어서 <b>기본키·필수 항목, 영문 칼럼명, 파일명</b>까지 자동으로 정리합니다. 기존 칼럼은 지우지 않습니다.</li>
+        <li><b>중분류를 선택</b>하면 <b>[⚡ 중분류 화면 자동추천]</b>이 보입니다. 필요한 화면만 체크하고 <b>[선택 화면 한꺼번에 만들기]</b>를 누릅니다.</li>
+        <li>생산·품질·금형·수주·출하·자재·안전 등 중분류의 성격을 보고 보통 많이 쓰는 등록·현황·대시보드 화면을 추천합니다.</li>
+      </ol>
+      <div class="manual-ok"><b>가장 빠른 방법:</b> 대메뉴와 중분류 이름만 먼저 만든 뒤, 중분류의 [화면 자동추천]으로 기본 구조를 만들고 필요한 부분만 수정하세요.</div>
+    </section>
+
     <section class="manual-sec" id="g_practice">
-      <h3>⑦ 실습하기 — 직접 만들어 보세요</h3>
+      <h3>⑧ 실습하기 — 직접 만들어 보세요</h3>
       <p>아래에서 연습할 종류를 고르면 <b>빈 설계 화면</b>에서 직접 만들어 볼 수 있습니다. 왼쪽 아래에 작은 <b>실습 도우미</b>가 열리고, 지금 해야 할 일과 완료 여부를 자동으로 알려줍니다.</p>
       <div class="manual-note"><b>현재 작업이 있어도 괜찮습니다.</b> 실습을 시작하면 실습 전 설계를 따로 백업합니다. 실습이 끝난 뒤 <b>[실습 전 설계 복원]</b>으로 돌아갈 수 있습니다.</div>
       <div class="manual-practice-grid">
@@ -1078,10 +1091,11 @@ function renderPanel(){
    </select><div style="color:#8a94a6;font-size:11.5px">대분류를 클릭하면 이 형식의 업무영역 홈이 열립니다. 실제 업무 수치는 만들지 않고 설계된 메뉴·화면 구조만 자동 요약합니다.</div></div>
    <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewNode('${n.id}')">▶ 대분류 홈 미리보기</button></div>`}
  if(n.type==='section'){h+=`<div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div>
-   <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewNode('${n.id}')">▶ 중분류 홈 미리보기</button></div>`}
+   <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewNode('${n.id}')">▶ 중분류 홈 미리보기</button></div>
+   ${sectionAutoAssistantHtml(n)}`}
  if(n.type==='screen'){h+=`<div class="row2"><div class="f"><label>파일명</label><input id="f_file" value="${esc(n.meta.file||'')}" placeholder="order_input.html"></div>
    <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="perm" ${n.meta.kind==='perm'?'selected':''}>권한관리 (사용자+메뉴별 4권한 트리)</option><option value="paste" ${n.meta.kind==='paste'?'selected':''}>엑셀 붙여넣기 등록 (대량 품목)</option><option value="dash" ${n.meta.kind==='dash'?'selected':''}>대시보드 (KPI·알림·그룹별 상태표·자동갱신)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
-   <div class="acts" style="margin-top:-3px"><button class="btn" id="autoFileName" title="중분류 → 화면 → 연결 테이블의 대표 라벨 순서로 영문 약자를 조합합니다">⚡ 자동파일명</button><span id="autoFileHint" style="font-size:11px;color:#8a94a6">중분류 → 화면 → 대표 라벨(🔑 우선)</span></div>
+   <div class="acts" style="margin-top:-3px"><button class="btn primary" id="autoScreenComplete" title="테이블 연결부터 기본 칼럼·키/필수·칼럼명·파일명까지 한 번에 완성합니다">⚡ 화면 자동완성</button><button class="btn" id="autoFileName" title="중분류 → 화면 → 연결 테이블의 대표 라벨 순서로 영문 약자를 조합합니다">⚡ 자동파일명</button><span id="autoFileHint" style="font-size:11px;color:#8a94a6">자동완성: 테이블 → 기본 칼럼 → 키·필수 → 칼럼명 → 파일명</span></div>
    <div class="f"><label>화면 CSS 테마 (이 화면만)</label><select id="f_skin"><option value="">설계 전체 테마 따름 — ${esc(SKIN[skinId()].name)}</option>${Object.entries(SKIN).map(([k,v])=>`<option value="${k}" ${n.meta.skin===k?'selected':''}>${esc(v.name)}</option>`).join('')}</select></div>
    <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewScreen()">▶ 화면 미리보기</button></div>
    <label class="ck" style="padding:4px 0 4px 25px"><input id="f_lock" type="checkbox" ${n.meta.locked?'checked':''}>이 화면은 직접 수정함 — 다시 생성해도 덮어쓰지 않기</label>
@@ -1127,6 +1141,7 @@ function renderPanel(){
  if($('f_desc'))$('f_desc').oninput=e=>{n.meta.desc=e.target.value;render()};
  if($('f_homeType'))$('f_homeType').onchange=e=>{const v=e.target.value;if(v&&v!=='auto')n.meta.homeType=v;else delete n.meta.homeType;save();render()};
  if($('f_file'))$('f_file').oninput=e=>{n.meta.file=e.target.value.trim();render()};
+ if($('autoScreenComplete'))$('autoScreenComplete').onclick=()=>{autoCompleteScreen(n);renderPanel();render()};
  if($('autoFileName'))$('autoFileName').onclick=()=>{autoScreenFileName(n);renderPanel();render()};
  if($('f_kind'))$('f_kind').onchange=e=>{n.meta.kind=e.target.value;render()};
  if($('f_repo'))$('f_repo').onchange=e=>{const v=e.target.value;if(v)n.meta.repo=v;else delete n.meta.repo;if(!originUrl(n))delete n.meta.origin;save();render();renderPanel()};
@@ -1135,6 +1150,11 @@ function renderPanel(){
  if($('f_lock'))$('f_lock').onchange=e=>{n.meta.locked=e.target.checked;render()};
  if($('f_skin'))$('f_skin').onchange=e=>{const v=e.target.value;if(v)n.meta.skin=v;else delete n.meta.skin;save();
   if(pvDlg.classList.contains('on')&&pvNode===n)previewNode(n.id)};
+ if(n.type==='section'){
+  if($('secAutoAll'))$('secAutoAll').onclick=()=>P.querySelectorAll('[data-sec-auto]:not(:disabled)').forEach(x=>x.checked=true);
+  if($('secAutoNone'))$('secAutoNone').onclick=()=>P.querySelectorAll('[data-sec-auto]:not(:disabled)').forEach(x=>x.checked=false);
+  if($('autoCreateScreens'))$('autoCreateScreens').onclick=()=>{const keys=[...P.querySelectorAll('[data-sec-auto]:checked')].map(x=>x.dataset.secAuto);createRecommendedScreens(n,keys);renderPanel();render()};
+ }
  if(n.type==='table'){
   P.querySelectorAll('.cols [data-k]').forEach(el=>{const ev=el.type==='checkbox'||el.tagName==='SELECT'?'change':'input';
    el.addEventListener(ev,()=>{const c=n.meta.cols[+el.dataset.i];let v=el.type==='checkbox'?el.checked:el.value.trim();if(el.dataset.k==='decimals')v=v===''?'':Math.max(0,Math.min(8,Number(v)||0));c[el.dataset.k]=v;render()})});
@@ -1169,6 +1189,135 @@ function renderPanel(){
 function flipEdge(){const e=D.edges.find(x=>x.id===sel.edge);[e.from,e.to]=[e.to,e.from];render();renderPanel()}
 function cloneNode(){const n=N(sel.node);const c=JSON.parse(JSON.stringify(n));c.id=uid();c.name=n.name+' 복사';c.x+=24;c.y+=24;D.nodes.push(c);select({node:c.id})}
 
+
+
+/* ═══════════════ 빠른 자동설계 ═══════════════
+   ① 화면 자동완성: 화면에 테이블이 없으면 만들고 → 기본 칼럼 → 키·필수 → 자동칼럼명 → 자동파일명 순서로 처리한다.
+   ② 중분류 자동설계: 중분류 성격에 맞는 여러 화면을 선택해 만들고, 공용 업무 테이블과 기본 칼럼을 함께 구성한다.
+   자동기능은 기존 칼럼/화면을 지우지 않고 없는 항목만 보완하는 것을 원칙으로 한다. */
+const SECTION_SCREEN_PROFILE={
+ production:{name:'생산',items:[
+  {key:'prod_input',name:'생산실적 등록',kind:'input'},
+  {key:'prod_status',name:'생산현황',kind:'status'},
+  {key:'prod_dash',name:'생산대시보드',kind:'dash'}]},
+ quality:{name:'품질·검사',items:[
+  {key:'qa_input',name:'검사결과 등록',kind:'input'},
+  {key:'qa_status',name:'검사결과 현황',kind:'status'},
+  {key:'qa_defect',name:'불량현황',kind:'status'},
+  {key:'qa_dash',name:'품질대시보드',kind:'dash'}]},
+ die:{name:'금형',items:[
+  {key:'die_master',name:'금형등록',kind:'input'},
+  {key:'die_check',name:'금형점검 등록',kind:'input'},
+  {key:'die_repair',name:'금형수리이력',kind:'input'},
+  {key:'die_status',name:'금형현황',kind:'status'}]},
+ safety:{name:'안전·위험성평가',items:[
+  {key:'risk_input',name:'위험성평가 등록',kind:'input'},
+  {key:'risk_action',name:'개선조치',kind:'input'},
+  {key:'risk_status',name:'위험성평가 현황',kind:'status'},
+  {key:'risk_dash',name:'안전대시보드',kind:'dash'}]},
+ shipping:{name:'출하',items:[
+  {key:'ship_input',name:'출하등록',kind:'input'},
+  {key:'ship_status',name:'출하현황',kind:'status'},
+  {key:'delivery_status',name:'납품현황',kind:'status'}]},
+ purchase:{name:'구매·발주',items:[
+  {key:'po_input',name:'발주등록',kind:'input'},
+  {key:'po_status',name:'발주현황',kind:'status'},
+  {key:'po_due',name:'납기현황',kind:'status'}]},
+ order:{name:'수주·영업',items:[
+  {key:'order_input',name:'수주등록',kind:'input'},
+  {key:'order_status',name:'수주현황',kind:'status'},
+  {key:'order_dash',name:'수주대시보드',kind:'dash'}]},
+ material:{name:'자재·재고·물류',items:[
+  {key:'mat_in',name:'자재입고',kind:'input'},
+  {key:'mat_out',name:'자재출고',kind:'input'},
+  {key:'stock_status',name:'재고현황',kind:'status'},
+  {key:'stock_dash',name:'재고대시보드',kind:'dash'}]},
+ equipment:{name:'설비·보전',items:[
+  {key:'eq_master',name:'설비등록',kind:'input'},
+  {key:'eq_check',name:'예방점검 등록',kind:'input'},
+  {key:'eq_history',name:'고장이력',kind:'input'},
+  {key:'eq_status',name:'설비현황',kind:'status'}]},
+ hr:{name:'인사·교육',items:[
+  {key:'emp_input',name:'사원정보',kind:'input'},
+  {key:'attendance',name:'근태현황',kind:'status'},
+  {key:'training',name:'교육이력',kind:'input'}]},
+ esg:{name:'ESG·환경',items:[
+  {key:'esg_input',name:'ESG 실적등록',kind:'input'},
+  {key:'esg_status',name:'ESG 현황',kind:'status'},
+  {key:'esg_dash',name:'ESG 대시보드',kind:'dash'}]},
+ permission:{name:'사용자·권한',items:[
+  {key:'user_info',name:'사용자정보',kind:'input'},
+  {key:'permission',name:'권한관리',kind:'perm'}]},
+ common:{name:'공통 업무',items:[
+  {key:'common_input',name:'업무등록',kind:'input'},
+  {key:'common_status',name:'업무현황',kind:'status'}]}
+};
+function sectionProfileId(sec){
+ let mod=null;if(sec?.type==='section')mod=D.edges.filter(e=>e.kind==='contains'&&e.to===sec.id).map(e=>N(e.from)).find(x=>x?.type==='module')||null;
+ const text=`${mod?.name||''} ${sec?.name||''}`;let id='common';
+ if(/권한|사용자|계정/.test(text))id='permission';
+ else if(/품질|검사|불량|측정|검측/.test(text))id='quality';
+ else if(/금형|다이|die|몰드|mold/i.test(text))id='die';
+ else if(/위험성|안전|재해|유해|산업안전/.test(text))id='safety';
+ else if(/출하|납품|배송/.test(text))id='shipping';
+ else if(/구매|발주|협력사/.test(text))id='purchase';
+ else if(/수주|영업|견적|고객/.test(text))id='order';
+ else if(/자재|재고|입고|출고|창고|물류/.test(text))id='material';
+ else if(/설비|보전|보수|정비/.test(text))id='equipment';
+ else if(/인사|사원|근태|교육|직원/.test(text))id='hr';
+ else if(/ESG|환경|에너지|탄소|폐기물/i.test(text))id='esg';
+ else if(/생산|작업|실적|공정/.test(text))id='production';
+ return id;
+}
+function sectionDirectScreens(sec){
+ return D.edges.filter(e=>e.kind==='contains'&&e.from===sec.id).map(e=>N(e.to)).filter(x=>x?.type==='screen');
+}
+function sameScreenName(a,b){return String(a||'').toLowerCase().replace(/[\s_\-·.()]/g,'')===String(b||'').toLowerCase().replace(/[\s_\-·.()]/g,'')}
+function sectionScreenRecommendations(sec){const id=sectionProfileId(sec);return{id,profile:SECTION_SCREEN_PROFILE[id]||SECTION_SCREEN_PROFILE.common}}
+function sectionAutoAssistantHtml(sec){
+ const r=sectionScreenRecommendations(sec),existing=sectionDirectScreens(sec);
+ const rows=r.profile.items.map((x,i)=>{const ex=existing.some(s=>sameScreenName(s.name,x.name));return `<label class="ck" style="padding:5px 8px 5px 26px;border:1px solid #e4e9f0;border-radius:5px;background:${ex?'#f5f6f8':'#fff'}"><input type="checkbox" data-sec-auto="${esc(x.key)}" ${ex?'disabled':'checked'}>${esc(x.name)} <span style="color:#8a94a6;font-size:11px">· ${x.kind==='input'?'등록':x.kind==='status'?'현황':x.kind==='dash'?'대시보드':x.kind==='perm'?'권한관리':x.kind}</span>${ex?' <b style="color:#2e7d5b;font-size:11px">이미 있음</b>':''}</label>`}).join('');
+ return `<section class="src" style="margin-top:4px;background:#f9fbff"><h4>⚡ 중분류 화면 자동추천</h4>
+  <div style="font-size:11.5px;color:#4a5568;line-height:1.6"><b>자동판정:</b> ${esc(r.profile.name)}형 · 필요한 화면을 고른 뒤 한 번에 만듭니다.<br><span style="color:#8a94a6">선택 화면에는 테이블 연결 · 기본 칼럼 · 키/필수 · 자동칼럼명 · 자동파일명까지 함께 적용합니다.</span></div>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px">${rows}</div>
+  <div class="acts"><button class="btn primary" id="autoCreateScreens">⚡ 선택 화면 한꺼번에 만들기</button><button class="btn" id="secAutoAll">전체 선택</button><button class="btn" id="secAutoNone">선택 해제</button></div>
+ </section>`;
+}
+function uniqueTableName(base){
+ base=String(base||'data').toLowerCase().replace(/[^a-z0-9_]+/g,'_').replace(/^_+|_+$/g,'')||'data';if(!/^[a-z_]/.test(base))base='t_'+base;base=base.slice(0,55);
+ const used=new Set(D.nodes.filter(x=>x.type==='table').map(x=>String(x.name||'').toLowerCase()));let n=base,i=2;while(used.has(n))n=(base.slice(0,51)+'_'+i++);return n;
+}
+function autoTableNameForScreen(scr){
+ const c=autoScreenFileContext(scr),sec=autoAbbrText(c.sec?.name||c.mod?.name||'공통','section')||'com',sc=autoAbbrText(scr.name||'화면','screen')||'scr';
+ const st=new Set(sec.split('_')),rest=sc.split('_').filter(x=>x&&!st.has(x));return uniqueTableName([...sec.split('_'),...(rest.length?rest:['data'])].join('_'));
+}
+function createTableForScreen(scr){
+ const t={id:uid(),type:'table',name:autoTableNameForScreen(scr),x:(scr.x||0)+270,y:scr.y||0,meta:{cols:[]}};D.nodes.push(t);D.edges.push({id:uid(),from:scr.id,to:t.id,kind:'uses',label:''});return t;
+}
+function firstUseTable(scr){return D.edges.filter(e=>e.kind==='uses'&&e.from===scr.id).map(e=>N(e.to)).find(x=>x?.type==='table')||null}
+function autoCompleteScreen(scr,opts){
+ opts=opts||{};if(!scr||scr.type!=='screen')return null;let t=opts.table||firstUseTable(scr),created=false;
+ if(!t){t=createTableForScreen(scr);created=true}else if(!D.edges.some(e=>e.kind==='uses'&&e.from===scr.id&&e.to===t.id))D.edges.push({id:uid(),from:scr.id,to:t.id,kind:'uses',label:''});
+ const before=(t.meta?.cols||[]).length;addRecommendedBasicColumns(t);const added=(t.meta?.cols||[]).length-before;autoKeyRequired(t);autoColumnNames(t);autoScreenFileName(scr);save();
+ if(!opts.quiet)$('stat').textContent=`⚡ 화면 자동완성 완료 · ${scr.name} · ${created?'테이블 새로 생성':'기존 테이블 사용'}(${t.name}) · 기본 칼럼 ${added}개 추가 · 키/필수 · 자동칼럼명 · 자동파일명 적용`;
+ return{table:t,created,added};
+}
+function sectionPrimaryTable(sec){
+ const screens=sectionDirectScreens(sec).sort((a,b)=>(a.meta?.kind==='input'?-1:0)-(b.meta?.kind==='input'?-1:0));
+ for(const s of screens){const t=firstUseTable(s);if(t)return t}return null;
+}
+function createRecommendedScreens(sec,keys){
+ if(!sec||sec.type!=='section')return;const r=sectionScreenRecommendations(sec),want=new Set(keys||[]),specs=r.profile.items.filter(x=>want.has(x.key));
+ if(!specs.length){$('stat').textContent='⚡ 만들 화면을 하나 이상 선택하세요.';return}
+ const existing=sectionDirectScreens(sec),created=[];let shared=sectionPrimaryTable(sec),tableWasNew=false;
+ const baseY=existing.length?Math.max(...existing.map(x=>x.y||0))+84:(sec.y||0),sx=(sec.x||0)+230;
+ for(const sp of specs){if(existing.some(x=>sameScreenName(x.name,sp.name)))continue;const scr={id:uid(),type:'screen',name:sp.name,x:sx,y:baseY+created.length*84,meta:{file:'',kind:sp.kind}};D.nodes.push(scr);D.edges.push({id:uid(),from:sec.id,to:scr.id,kind:'contains',label:''});created.push(scr)}
+ if(!created.length){$('stat').textContent='⚡ 선택한 화면은 이미 모두 만들어져 있습니다.';return}
+ if(!shared){shared=createTableForScreen(created[0]);tableWasNew=true}
+ for(const scr of created){if(!D.edges.some(e=>e.kind==='uses'&&e.from===scr.id&&e.to===shared.id))D.edges.push({id:uid(),from:scr.id,to:shared.id,kind:'uses',label:''})}
+ const before=(shared.meta?.cols||[]).length;addRecommendedBasicColumns(shared);const added=(shared.meta?.cols||[]).length-before;autoKeyRequired(shared);autoColumnNames(shared);for(const scr of created)autoScreenFileName(scr);save();
+ select({node:sec.id});$('stat').textContent=`⚡ 중분류 자동설계 완료 · ${r.profile.name}형 · 화면 ${created.length}개 생성 · ${tableWasNew?'공용 테이블 생성':'기존 테이블 사용'}(${shared.name}) · 기본 칼럼 ${added}개 추가 · 파일명/칼럼명/키·필수 자동 적용`;
+}
 
 /* ═══════════════ 자동 컬럼명 ═══════════════
    테이블이 연결된 중분류 → 화면 → 라벨을 읽어 영문 약자를 조합한다.
