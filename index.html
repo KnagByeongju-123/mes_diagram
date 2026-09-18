@@ -605,7 +605,7 @@ work_date, 일자, date"></textarea></div>
    module : {icon,desc,homeType:'auto'|'cards'|'erp'|'dashboard'}
    section: {icon}
    screen : {file,kind:'input'|'status'|'other'}
-   table  : {cols:[{name,label,type:'text'|'num'|'date'|'bool',pk,req,sample,formula,unit,decimals,calcStore}], autoNo:{enabled,prefix,date,digits,sep}, alert:{enabled,dateCol,days}, approval:{enabled,lock,routeTemplate,assignees:{writer,reviewer,confirmer,approver}}} // assignees=users.user_key · formula/운영기능/결재자
+   table  : {cols:[{name,label,type:'text'|'num'|'date'|'bool',pk,req,sample,formula,unit,decimals,calcStore}], autoNo:{enabled,prefix,date,digits,sep}, alert:{enabled,dateCol,days}, approval:{enabled,lock,routeTemplate,assignees:{writer,reviewer,confirmer,approver}}} // assignees=users.user_key · formula/전자결재/결재자
  edges: {id,from,to,kind:'contains'|'uses'|'ref'|'flow',label}
 */
 const TYPE={module:{name:'대메뉴',color:'#3f5f7d',w:170},section:{name:'중분류',color:'#6b8bb5',w:160},screen:{name:'화면',color:'#2e7d5b',w:190},table:{name:'테이블',color:'#7a4fb8',w:210}};
@@ -1100,10 +1100,10 @@ function renderPanel(){
     ${(c.formula!==undefined||c.calc)?`<tr><td colspan="8" style="background:#f3f7fb;padding:5px 6px"><div style="display:grid;grid-template-columns:auto 1fr 52px 54px auto;gap:5px;align-items:center"><b style="color:#2f6fb5">ƒx</b><input data-i="${i}" data-k="formula" value="${esc(c.formula||'')}" placeholder="예: qty * unit_price  /  IF(plan_qty == 0, 0, result_qty / plan_qty * 100)" style="border:1px solid #b9cce2;background:#fff"><input data-i="${i}" data-k="unit" value="${esc(c.unit||'')}" placeholder="단위"><input data-i="${i}" data-k="decimals" type="number" min="0" max="8" value="${esc(c.decimals??'')}" placeholder="소수"><label class="ck" title="체크하면 계산 결과도 DB 컬럼에 저장"><input type="checkbox" data-i="${i}" data-k="calcStore" ${c.calcStore?'checked':''}>DB</label></div><div style="font-size:10.8px;color:#6b7686;margin-top:3px">사용: + − ×(*) ÷(/) %, 비교(>, &lt;, ==), IF(), ROUND(), MIN(), MAX(), ABS(), COALESCE(), TODAY(), DAYS(시작일,종료일)</div></td></tr>`:''}
     ${(FLOW_COL.test(c.name)||c.flow)?`<tr><td colspan="8" style="background:#f7f9fb;padding:2px 6px 5px"><span style="font-size:11px;color:#8a94a6">⇢ 상태흐름</span> <input data-i="${i}" data-k="flow" value="${esc(c.flow||'')}" placeholder="대기 > 승인 > 발주 > 입고완료 | 취소, 보류  (비우면 라벨 괄호 안 순서)" style="width:calc(100% - 70px);border:1px solid #dbe3ea;background:#fff">${parseFlow(c)?`<div style="font-size:11px;color:#2e7d5b;margin-top:2px">→ ${parseFlow(c).steps.join(' › ')}${parseFlow(c).ends.length?' · 종료: '+parseFlow(c).ends.join(', '):''}</div>`:''}</td></tr>`:''}`).join('')}</tbody></table></div>
    ${basicColumnAssistantHtml(n)}
-   <div class="acts"><button class="btn" id="addCol">＋ 컬럼</button><button class="btn" id="addStd">＋ 기본 컬럼 (비고·수정일)</button><button class="btn" id="addCalcEx">ƒx 계산식 예제</button><button class="btn" id="autoColNames" title="중분류 → 화면 → 라벨의 영문 약자를 조합해 컬럼명을 자동으로 만듭니다">⚡ 자동칼럼명</button><button class="btn" id="autoKeyReq" title="라벨과 컬럼명을 보고 기본키(🔑)와 필수(✱) 항목을 자동으로 선택합니다. 자동선택 뒤에도 직접 수정할 수 있습니다.">⚡ 키·필수 자동선택</button><button class="btn primary" onclick="openPaste()">📋 항목 붙여넣기</button><button class="btn" onclick="sampleOne()">⇩ 실제 데이터 1건</button><span class="msg" id="smpMsg" style="font-size:11.5px;color:#8a94a6"></span></div>
+   <div class="acts"><button class="btn" id="addCol">＋ 컬럼</button><button class="btn" id="addStd">＋ 기본 컬럼 (비고·수정일)</button><button class="btn" id="addCalcEx">ƒx 계산식 예제</button><button class="btn primary" id="autoColNames" title="중분류 → 화면 → 라벨의 영문 약자를 조합해 컬럼명을 자동으로 만듭니다">⚡ 자동칼럼명</button><button class="btn primary" id="autoKeyReq" title="라벨과 컬럼명을 보고 기본키(🔑)와 필수(✱) 항목을 자동으로 선택합니다. 자동선택 뒤에도 직접 수정할 수 있습니다.">⚡ 키·필수 자동선택</button><button class="btn" onclick="openPaste()">📋 항목 붙여넣기</button><button class="btn" onclick="sampleOne()">⇩ 실제 데이터 1건</button><span class="msg" id="smpMsg" style="font-size:11.5px;color:#8a94a6"></span></div>
    <div style="font-size:11px;color:#8a94a6;line-height:1.55">계산식은 같은 행의 <b>컬럼명</b>을 사용합니다. 예: <code>amount = qty * unit_price</code>, <code>defect_rate = IF(total_qty == 0, 0, defect_qty / total_qty * 100)</code>. 기본은 화면 계산이며, ƒx 행의 <b>DB</b>를 체크한 경우에만 계산값 컬럼을 DB에도 생성·저장합니다.</div></div>
    <section class="src" style="margin-top:2px"><h4>⚙ 운영 자동화</h4>
-    <div class="acts"><button class="btn primary" id="addOpsEx">⚙ 운영기능 예제</button><span style="font-size:11.5px;color:#8a94a6">승인 Workflow · 자동번호 · 납기알림 기본 예제를 한 번에 추가합니다.</span></div>
+    <div class="acts"><button class="btn primary" id="addOpsEx">전자결재적용</button><button class="btn danger" id="removeOpsEx" ${n.meta._electronicApprovalBackup?'':'disabled'}>전자결재적용해제</button><span style="font-size:11.5px;color:#8a94a6">작성→검토→확인→승인 전자결재와 자동번호·기한알림을 적용합니다. 해제하면 이 버튼으로 추가된 내용만 삭제·원상복구합니다.</span></div>
     <div style="display:grid;gap:7px">
      <div style="border-top:1px solid #e5e9ee;padding-top:7px"><label class="ck"><input id="f_auto_enable" type="checkbox" ${auto.enabled?'checked':''} ${pk0?.type!=='text'?'disabled':''}><b>자동번호</b> — 기본키가 비어 있으면 자동 채번</label>
       <div class="row3" style="margin-top:5px"><div class="f"><label>접두어</label><input id="f_auto_prefix" value="${esc(auto.prefix)}" placeholder="PO"></div><div class="f"><label>날짜형식</label><select id="f_auto_date"><option value="NONE" ${auto.date==='NONE'?'selected':''}>없음</option><option value="YYMM" ${auto.date==='YYMM'?'selected':''}>YYMM</option><option value="YYMMDD" ${auto.date==='YYMMDD'?'selected':''}>YYMMDD</option><option value="YYYYMMDD" ${auto.date==='YYYYMMDD'?'selected':''}>YYYYMMDD</option><option value="YYYY" ${auto.date==='YYYY'?'selected':''}>YYYY</option></select></div><div class="f"><label>일련번호 자리</label><input id="f_auto_digits" type="number" min="1" max="8" value="${auto.digits}"></div></div>
@@ -1153,6 +1153,7 @@ function renderPanel(){
   $('autoColNames').onclick=()=>{autoColumnNames(n);renderPanel();render()};
   if($('autoKeyReq'))$('autoKeyReq').onclick=()=>{autoKeyRequired(n);renderPanel();render()};
   $('addOpsEx').onclick=()=>{addOperationsExamples(n);renderPanel();render()};
+  if($('removeOpsEx'))$('removeOpsEx').onclick=()=>{removeOperationsExamples(n);renderPanel();render()};
   if($('f_auto_enable'))$('f_auto_enable').onchange=e=>{const a=n.meta.autoNo||(n.meta.autoNo={});a.enabled=e.target.checked;save();renderPanel()};
   if($('f_auto_prefix'))$('f_auto_prefix').oninput=e=>{const a=n.meta.autoNo||(n.meta.autoNo={});a.prefix=e.target.value.trim().toUpperCase();save()};
   if($('f_auto_date'))$('f_auto_date').onchange=e=>{const a=n.meta.autoNo||(n.meta.autoNo={});a.date=e.target.value;save();renderPanel()};
@@ -4032,17 +4033,42 @@ function approvalConfig(t){
 }
 function addOperationsExamples(t){
  const cols=t.meta.cols||(t.meta.cols=[]),by=new Map(cols.map(c=>[c.name,c]));let n=0;
- const ensure=c=>{let o=by.get(c.name);if(!o){o={...c};cols.push(o);by.set(c.name,o);n++}return o};
+ const snap=v=>v===undefined?{exists:false}:{exists:true,value:cloneUndo(v)};
+ if(!t.meta._electronicApprovalBackup){
+  t.meta._electronicApprovalBackup={autoNo:snap(t.meta.autoNo),alert:snap(t.meta.alert),approval:snap(t.meta.approval)};
+ }
+ const ensure=c=>{let o=by.get(c.name);if(!o){o={...c,_electronicApprovalAdded:true};cols.push(o);by.set(c.name,o);n++}return o};
  const due=ensure({name:'due_date',label:'완료예정일·납기',type:'date'});
- const st=ensure({name:'status',label:'승인상태',type:'text'});st.flow='작성 > 검토 > 확인 > 승인 > 완료 | 반려';
+ const st=ensure({name:'status',label:'승인상태',type:'text'});
+ if(!st._electronicApprovalAdded&&!st._electronicApprovalPrevFlow){
+  st._electronicApprovalPrevFlow=Object.prototype.hasOwnProperty.call(st,'flow')?{exists:true,value:st.flow}:{exists:false};
+ }
+ st.flow='작성 > 검토 > 확인 > 승인 > 완료 | 반려';
  ensure({name:'requested_by',label:'작성자',type:'text'});ensure({name:'written_at',label:'작성일',type:'date'});
  ensure({name:'reviewed_by',label:'검토자',type:'text'});ensure({name:'reviewed_at',label:'검토일',type:'date'});
  ensure({name:'confirmed_by',label:'확인자',type:'text'});ensure({name:'confirmed_at',label:'확인일',type:'date'});
  ensure({name:'approved_by',label:'승인자',type:'text'});ensure({name:'approved_at',label:'승인일',type:'date'});ensure({name:'reject_reason',label:'반려사유',type:'text'});
- const raw=String(t.name||'DOC').replace(/[^A-Za-z0-9]/g,'').toUpperCase();t.meta.autoNo={enabled:true,prefix:(raw.slice(0,3)||'DOC'),date:'YYMMDD',digits:3,sep:'-'};t.meta.alert={enabled:true,dateCol:due.name,days:3};
- const old=t.meta.approval||{},oldAs=old.assignees||{};t.meta.approval={enabled:true,lock:!!old.lock,routeTemplate:old.routeTemplate||'STD_APPROVAL',assignees:{writer:oldAs.writer||'',reviewer:oldAs.reviewer||'',confirmer:oldAs.confirmer||'',approver:oldAs.approver||''}};
- $('stat').textContent=`⚙ 운영기능 예제를 적용했습니다 — 작성→검토→확인→승인 Workflow · 담당자 지정 · 자동번호(${autoNoPreview(t)}) · ${due.label||due.name} 3일 전 알림.`;
+ const raw=String(t.name||'DOC').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+ t.meta.autoNo={enabled:true,prefix:(raw.slice(0,3)||'DOC'),date:'YYMMDD',digits:3,sep:'-'};
+ t.meta.alert={enabled:true,dateCol:due.name,days:3};
+ const old=t.meta.approval||{},oldAs=old.assignees||{};
+ t.meta.approval={enabled:true,lock:!!old.lock,routeTemplate:old.routeTemplate||'STD_APPROVAL',assignees:{writer:oldAs.writer||'',reviewer:oldAs.reviewer||'',confirmer:oldAs.confirmer||'',approver:oldAs.approver||''}};
+ $('stat').textContent=`전자결재적용 완료 — 결재용 컬럼 ${n}개 자동 추가 · 작성→검토→확인→승인 Workflow · 자동번호(${autoNoPreview(t)}) · ${due.label||due.name} 3일 전 알림.`;
 }
+function removeOperationsExamples(t){
+ const b=t.meta._electronicApprovalBackup;
+ if(!b){$('stat').textContent='전자결재적용 기록이 없습니다 — 사용자가 직접 만든 컬럼과 설정은 삭제하지 않았습니다.';return}
+ const cols=t.meta.cols||(t.meta.cols=[]);let removed=0,restored=0;
+ t.meta.cols=cols.filter(c=>{if(c&&c._electronicApprovalAdded){removed++;return false}return true});
+ for(const c of t.meta.cols){
+  if(c&&c._electronicApprovalPrevFlow){const p=c._electronicApprovalPrevFlow;if(p.exists)c.flow=p.value;else delete c.flow;delete c._electronicApprovalPrevFlow;restored++}
+ }
+ const restore=(key,s)=>{if(s&&s.exists)t.meta[key]=cloneUndo(s.value);else delete t.meta[key]};
+ restore('autoNo',b.autoNo);restore('alert',b.alert);restore('approval',b.approval);
+ delete t.meta._electronicApprovalBackup;
+ $('stat').textContent=`전자결재적용해제 완료 — 자동 추가 컬럼 ${removed}개 삭제${restored?` · 기존 상태흐름 ${restored}개 원상복구`:''} · 적용 전 자동번호·기한알림·결재 설정으로 복원했습니다.`;
+}
+
 function addCalcExamples(t){
  const cols=t.meta.cols||(t.meta.cols=[]),by=new Map(cols.map(c=>[c.name,c]));
  const need=[
@@ -4580,7 +4606,7 @@ function validateDesign(show){
    if(!['text','num','date','bool'].includes(c.type))push('error',`테이블 '${tn}' 의 컬럼 '${cn}' 형 '${c.type}' 을 지원하지 않습니다.`,'node',t.id);
    if(c.formula!==undefined||c.calc){const fx=String(c.formula||'').trim();if(!fx)push('error',`테이블 '${tn}' 의 계산 컬럼 '${cn}' 에 계산식이 없습니다.`,'node',t.id,'ƒx 계산식에 예: qty * unit_price 처럼 입력하세요.');if(c.pk)push('error',`계산 컬럼 '${tn}.${cn}' 은 기본키(🔑)로 사용할 수 없습니다.`,'node',t.id);const names=new Set(cols.map(x=>x.name));for(const ref of calcFormulaRefs(fx))if(!names.has(ref))push('error',`계산식 '${tn}.${cn}' 이 존재하지 않는 컬럼 '${ref}' 을 참조합니다.`,'node',t.id);if(calcFormulaRefs(fx).includes(cn))push('error',`계산식 '${tn}.${cn}' 이 자기 자신을 참조합니다.`,'node',t.id);}
   }
-  const ap=approvalConfig(t);if(ap.enabled){const names=new Set(cols.map(c=>c.name));const fl=flowOf(t);if(!fl)push('error',`테이블 '${tn}' 의 결재 담당자 기능이 켜져 있지만 상태 Workflow가 없습니다.`,'node',t.id,'status 컬럼에 작성 > 검토 > 확인 > 승인 > 완료 순서를 지정하세요.');for(const r of ap.roles)if(!names.has(r.col))push('error',`결재 단계 '${r.step}'의 담당자 컬럼 '${r.col}' 이 없습니다.`,'node',t.id,'[⚙ 운영기능 예제]를 다시 적용하거나 해당 컬럼을 추가하세요.');const ut=D.nodes.find(n=>n.type==='table'&&n.name==='users');if(!ut)push('error',`테이블 '${tn}' 은 결재 기능을 사용하지만 사용자정보(users)가 없습니다.`,'node',t.id,'[설계 › 👥 사용자·권한관리 기준정보 추가]를 실행하세요.');else{const un=new Set((ut.meta.cols||[]).map(c=>c.name));if(!un.has('user_key'))push('error',`사용자정보(users)에 user_key 컬럼이 없습니다.`,'node',ut.id);for(const p of ['can_review','can_confirm','can_approve'])if(!un.has(p))push('warning',`users.${p}가 없어 결재권한 필터가 적용되지 않습니다.`,'node',ut.id,'기준정보 팩을 적용하면 자동 추가됩니다.')}if(ap.routeTemplate&&!D.nodes.some(n=>n.type==='table'&&n.name==='approval_route_templates'))push('warning',`결재선 템플릿 '${ap.routeTemplate}' 을 사용하지만 approval_route_templates 테이블이 없습니다.`,'node',t.id,'기준정보 팩을 추가하거나 템플릿 코드를 비우세요.');}
+  const ap=approvalConfig(t);if(ap.enabled){const names=new Set(cols.map(c=>c.name));const fl=flowOf(t);if(!fl)push('error',`테이블 '${tn}' 의 결재 담당자 기능이 켜져 있지만 상태 Workflow가 없습니다.`,'node',t.id,'status 컬럼에 작성 > 검토 > 확인 > 승인 > 완료 순서를 지정하세요.');for(const r of ap.roles)if(!names.has(r.col))push('error',`결재 단계 '${r.step}'의 담당자 컬럼 '${r.col}' 이 없습니다.`,'node',t.id,'[전자결재적용]을 다시 실행하거나 해당 컬럼을 추가하세요.');const ut=D.nodes.find(n=>n.type==='table'&&n.name==='users');if(!ut)push('error',`테이블 '${tn}' 은 결재 기능을 사용하지만 사용자정보(users)가 없습니다.`,'node',t.id,'[설계 › 👥 사용자·권한관리 기준정보 추가]를 실행하세요.');else{const un=new Set((ut.meta.cols||[]).map(c=>c.name));if(!un.has('user_key'))push('error',`사용자정보(users)에 user_key 컬럼이 없습니다.`,'node',ut.id);for(const p of ['can_review','can_confirm','can_approve'])if(!un.has(p))push('warning',`users.${p}가 없어 결재권한 필터가 적용되지 않습니다.`,'node',ut.id,'기준정보 팩을 적용하면 자동 추가됩니다.')}if(ap.routeTemplate&&!D.nodes.some(n=>n.type==='table'&&n.name==='approval_route_templates'))push('warning',`결재선 템플릿 '${ap.routeTemplate}' 을 사용하지만 approval_route_templates 테이블이 없습니다.`,'node',t.id,'기준정보 팩을 추가하거나 템플릿 코드를 비우세요.');}
   const pkc=cols.find(c=>c.pk),an=autoNoConfig(t),ac=alertConfig(t);
   if(an.enabled&&pkc&&pkc.type!=='text')push('warning',`테이블 '${tn}' 자동번호는 text 기본키에서만 적용됩니다.`,'node',t.id,'기본키 형식을 text로 바꾸거나 자동번호를 끄세요.');
   if(ac.enabled){const dc=cols.find(c=>c.name===ac.dateCol);if(!ac.dateCol)push('warning',`테이블 '${tn}' 기한 알림의 기준 날짜 컬럼이 선택되지 않았습니다.`,'node',t.id);else if(!dc)push('error',`테이블 '${tn}' 기한 알림이 없는 컬럼 '${ac.dateCol}' 을 참조합니다.`,'node',t.id);else if(dc.type!=='date')push('warning',`기한 알림 기준 '${tn}.${ac.dateCol}' 은 date 형식을 권장합니다.`,'node',t.id);}
