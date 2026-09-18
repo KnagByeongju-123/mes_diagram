@@ -1099,6 +1099,7 @@ function renderPanel(){
     <td><button class="x" data-del="${i}">×</button></td></tr>
     ${(c.formula!==undefined||c.calc)?`<tr><td colspan="8" style="background:#f3f7fb;padding:5px 6px"><div style="display:grid;grid-template-columns:auto 1fr 52px 54px auto;gap:5px;align-items:center"><b style="color:#2f6fb5">ƒx</b><input data-i="${i}" data-k="formula" value="${esc(c.formula||'')}" placeholder="예: qty * unit_price  /  IF(plan_qty == 0, 0, result_qty / plan_qty * 100)" style="border:1px solid #b9cce2;background:#fff"><input data-i="${i}" data-k="unit" value="${esc(c.unit||'')}" placeholder="단위"><input data-i="${i}" data-k="decimals" type="number" min="0" max="8" value="${esc(c.decimals??'')}" placeholder="소수"><label class="ck" title="체크하면 계산 결과도 DB 컬럼에 저장"><input type="checkbox" data-i="${i}" data-k="calcStore" ${c.calcStore?'checked':''}>DB</label></div><div style="font-size:10.8px;color:#6b7686;margin-top:3px">사용: + − ×(*) ÷(/) %, 비교(>, &lt;, ==), IF(), ROUND(), MIN(), MAX(), ABS(), COALESCE(), TODAY(), DAYS(시작일,종료일)</div></td></tr>`:''}
     ${(FLOW_COL.test(c.name)||c.flow)?`<tr><td colspan="8" style="background:#f7f9fb;padding:2px 6px 5px"><span style="font-size:11px;color:#8a94a6">⇢ 상태흐름</span> <input data-i="${i}" data-k="flow" value="${esc(c.flow||'')}" placeholder="대기 > 승인 > 발주 > 입고완료 | 취소, 보류  (비우면 라벨 괄호 안 순서)" style="width:calc(100% - 70px);border:1px solid #dbe3ea;background:#fff">${parseFlow(c)?`<div style="font-size:11px;color:#2e7d5b;margin-top:2px">→ ${parseFlow(c).steps.join(' › ')}${parseFlow(c).ends.length?' · 종료: '+parseFlow(c).ends.join(', '):''}</div>`:''}</td></tr>`:''}`).join('')}</tbody></table></div>
+   ${basicColumnAssistantHtml(n)}
    <div class="acts"><button class="btn" id="addCol">＋ 컬럼</button><button class="btn" id="addStd">＋ 기본 컬럼 (비고·수정일)</button><button class="btn" id="addCalcEx">ƒx 계산식 예제</button><button class="btn" id="autoColNames" title="중분류 → 화면 → 라벨의 영문 약자를 조합해 컬럼명을 자동으로 만듭니다">⚡ 자동칼럼명</button><button class="btn" id="autoKeyReq" title="라벨과 컬럼명을 보고 기본키(🔑)와 필수(✱) 항목을 자동으로 선택합니다. 자동선택 뒤에도 직접 수정할 수 있습니다.">⚡ 키·필수 자동선택</button><button class="btn primary" onclick="openPaste()">📋 항목 붙여넣기</button><button class="btn" onclick="sampleOne()">⇩ 실제 데이터 1건</button><span class="msg" id="smpMsg" style="font-size:11.5px;color:#8a94a6"></span></div>
    <div style="font-size:11px;color:#8a94a6;line-height:1.55">계산식은 같은 행의 <b>컬럼명</b>을 사용합니다. 예: <code>amount = qty * unit_price</code>, <code>defect_rate = IF(total_qty == 0, 0, defect_qty / total_qty * 100)</code>. 기본은 화면 계산이며, ƒx 행의 <b>DB</b>를 체크한 경우에만 계산값 컬럼을 DB에도 생성·저장합니다.</div></div>
    <section class="src" style="margin-top:2px"><h4>⚙ 운영 자동화</h4>
@@ -1146,6 +1147,9 @@ function renderPanel(){
   if($('f_apikey'))$('f_apikey').oninput=e=>{n.meta.apikey=e.target.value.trim()};
   $('addStd').onclick=()=>{for(const c of [{name:'remark',label:'비고',type:'text'},{name:'updated_at',label:'수정일',type:'date'}])if(!n.meta.cols.some(x=>x.name===c.name))n.meta.cols.push(c);renderPanel();render()};
   $('addCalcEx').onclick=()=>{addCalcExamples(n);renderPanel();render()};
+  if($('autoBasicCols'))$('autoBasicCols').onclick=()=>{addRecommendedBasicColumns(n);renderPanel();render()};
+  if($('addManualBasicCol'))$('addManualBasicCol').onclick=()=>{const v=$('manualBasicCol')?.value||'';addManualBasicColumn(n,v);renderPanel();render()};
+  if($('manualBasicCol'))$('manualBasicCol').onchange=e=>updateManualBasicHint(n,e.target.value);
   $('autoColNames').onclick=()=>{autoColumnNames(n);renderPanel();render()};
   if($('autoKeyReq'))$('autoKeyReq').onclick=()=>{autoKeyRequired(n);renderPanel();render()};
   $('addOpsEx').onclick=()=>{addOperationsExamples(n);renderPanel();render()};
@@ -1323,6 +1327,229 @@ function autoKeyRequired(t){
  save();
  const reqCount=cols.filter(c=>c.req).length;
  $('stat').textContent=`⚡ 키·필수 자동선택 완료 · ${pkMsg} · 필수 ${reqCount}개${added?` (${added}개 자동 추가)`:''} · 자동선택 후 직접 수정 가능`;
+}
+
+
+/* ═══════════════ 기본 칼럼 도우미 ═══════════════
+   1) 자동: 연결된 중분류·화면명·화면종류를 읽어 일반적으로 필요한 칼럼을 추천/추가한다.
+   2) 수동: 현재 설계의 전체 모듈에 있는 테이블 칼럼을 드롭다운으로 모아 현재 테이블에 복사한다.
+   - 기존 칼럼은 지우지 않는다.
+   - 같은 라벨/같은 이름은 중복 추가하지 않는다.
+   - 다른 모듈 칼럼을 가져와도 이름은 현재 중분류 → 화면 → 라벨 기준으로 다시 만든다. */
+const BASIC_COL_LIBRARY={
+ record_no:{label:'관리번호',type:'text',sample:'REC-001',req:true,pk:true},
+ work_no:{label:'작업번호',type:'text',sample:'W-001',req:true,pk:true},
+ work_date:{label:'작업일자',type:'date',sample:'2026-09-19',req:true},
+ worker:{label:'작업자',type:'text',sample:'홍길동',req:true},
+ process:{label:'공정',type:'text',sample:'PRESS',req:true},
+ equipment:{label:'설비',type:'text',sample:'300T-01',req:true},
+ item_no:{label:'품번',type:'text',sample:'A-100',req:true},
+ item_name:{label:'품명',type:'text',sample:'BRACKET'},
+ plan_qty:{label:'계획수량',type:'num',sample:'1000'},
+ result_qty:{label:'실적수량',type:'num',sample:'980',req:true},
+ good_qty:{label:'양품수량',type:'num',sample:'970'},
+ defect_qty:{label:'불량수량',type:'num',sample:'10'},
+ qty:{label:'수량',type:'num',sample:'100',req:true},
+ status:{label:'상태',type:'text',sample:'진행'},
+ remark:{label:'비고',type:'text',sample:''},
+ updated_at:{label:'수정일',type:'date',sample:'2026-09-19'},
+ created_at:{label:'등록일',type:'date',sample:'2026-09-19'},
+ insp_no:{label:'검사번호',type:'text',sample:'INSP-001',req:true,pk:true},
+ insp_date:{label:'검사일자',type:'date',sample:'2026-09-19',req:true},
+ inspector:{label:'검사자',type:'text',sample:'김검사',req:true},
+ insp_qty:{label:'검사수량',type:'num',sample:'100',req:true},
+ lot_no:{label:'LOT',type:'text',sample:'L260919-01'},
+ judgement:{label:'판정',type:'text',sample:'OK',req:true},
+ defect_type:{label:'불량유형',type:'text',sample:'찍힘'},
+ die_no:{label:'금형번호',type:'text',sample:'DIE-001',req:true,pk:true},
+ check_date:{label:'점검일자',type:'date',sample:'2026-09-19',req:true},
+ checker:{label:'점검자',type:'text',sample:'홍점검',req:true},
+ hit_count:{label:'누적타수',type:'num',sample:'125000'},
+ die_status:{label:'금형상태',type:'text',sample:'정상'},
+ problem:{label:'이상내용',type:'text',sample:''},
+ action:{label:'조치내용',type:'text',sample:''},
+ next_due:{label:'다음점검일',type:'date',sample:'2026-10-19'},
+ order_no:{label:'수주번호',type:'text',sample:'ORD-001',req:true,pk:true},
+ order_date:{label:'수주일자',type:'date',sample:'2026-09-19',req:true},
+ customer:{label:'고객사',type:'text',sample:'A사',req:true},
+ due_date:{label:'납기일',type:'date',sample:'2026-09-30',req:true},
+ unit_price:{label:'단가',type:'num',sample:'2500'},
+ amount:{label:'금액',type:'num',sample:'250000'},
+ ship_no:{label:'출하번호',type:'text',sample:'SHIP-001',req:true,pk:true},
+ ship_date:{label:'출하일자',type:'date',sample:'2026-09-19',req:true},
+ destination:{label:'납품처',type:'text',sample:'A공장'},
+ vehicle_no:{label:'차량번호',type:'text',sample:'12가3456'},
+ po_no:{label:'발주번호',type:'text',sample:'PO-001',req:true,pk:true},
+ po_date:{label:'발주일자',type:'date',sample:'2026-09-19',req:true},
+ vendor:{label:'거래처',type:'text',sample:'B사',req:true},
+ material_code:{label:'자재코드',type:'text',sample:'MAT-001',req:true},
+ material_name:{label:'자재명',type:'text',sample:'SPCC 1.0T'},
+ txn_no:{label:'입출고번호',type:'text',sample:'TXN-001',req:true,pk:true},
+ txn_date:{label:'입출고일자',type:'date',sample:'2026-09-19',req:true},
+ warehouse:{label:'창고',type:'text',sample:'원자재창고'},
+ location:{label:'위치',type:'text',sample:'A-01'},
+ unit:{label:'단위',type:'text',sample:'EA'},
+ equipment_no:{label:'설비번호',type:'text',sample:'EQ-001',req:true,pk:true},
+ equipment_name:{label:'설비명',type:'text',sample:'300T PRESS',req:true},
+ result:{label:'결과',type:'text',sample:'정상'},
+ risk_no:{label:'평가번호',type:'text',sample:'RA-001',req:true,pk:true},
+ eval_date:{label:'평가일자',type:'date',sample:'2026-09-19',req:true},
+ work_name:{label:'작업명',type:'text',sample:'금형 교체',req:true},
+ hazard:{label:'유해위험요인',type:'text',sample:'협착',req:true},
+ risk_before:{label:'현재위험도',type:'num',sample:'9',req:true},
+ countermeasure:{label:'개선대책',type:'text',sample:'안전블록 사용',req:true},
+ risk_after:{label:'개선후위험도',type:'num',sample:'3'},
+ owner:{label:'담당자',type:'text',sample:'홍길동',req:true},
+ done_date:{label:'완료일',type:'date',sample:'2026-09-25'},
+ emp_no:{label:'사번',type:'text',sample:'E001',req:true,pk:true},
+ emp_name:{label:'성명',type:'text',sample:'홍길동',req:true},
+ department:{label:'부서',type:'text',sample:'생산팀',req:true},
+ position:{label:'직위',type:'text',sample:'주임'},
+ join_date:{label:'입사일',type:'date',sample:'2020-01-01'},
+ phone:{label:'연락처',type:'text',sample:'010-0000-0000'},
+ active:{label:'사용여부',type:'bool',sample:'true'},
+ category:{label:'구분',type:'text',sample:'에너지'},
+ target:{label:'목표',type:'num',sample:'100'},
+ result_value:{label:'실적값',type:'num',sample:'95'},
+ title:{label:'제목',type:'text',sample:'업무 제목',req:true},
+ user_key:{label:'사용자키',type:'text',sample:'U0001',req:true,pk:true},
+ user_name:{label:'사용자명',type:'text',sample:'홍길동',req:true}
+};
+const BASIC_PROFILE={
+ production:{name:'생산',keys:['work_no','work_date','item_no','process','equipment','worker','plan_qty','result_qty','good_qty','defect_qty','status','remark']},
+ quality:{name:'품질·검사',keys:['insp_no','insp_date','item_no','lot_no','process','inspector','insp_qty','defect_qty','judgement','defect_type','status','remark']},
+ die:{name:'금형',keys:['die_no','item_no','check_date','checker','hit_count','die_status','problem','action','next_due','remark']},
+ order:{name:'수주·영업',keys:['order_no','order_date','customer','item_no','item_name','qty','due_date','unit_price','amount','status','remark']},
+ shipping:{name:'출하',keys:['ship_no','ship_date','customer','item_no','item_name','qty','destination','vehicle_no','status','remark']},
+ purchase:{name:'구매·발주',keys:['po_no','po_date','vendor','item_no','material_code','material_name','qty','unit_price','amount','due_date','status','remark']},
+ material:{name:'자재·재고·물류',keys:['txn_no','txn_date','material_code','material_name','lot_no','warehouse','location','qty','unit','status','remark']},
+ equipment:{name:'설비·보전',keys:['equipment_no','equipment_name','check_date','checker','result','problem','action','next_due','status','remark']},
+ safety:{name:'안전·위험성평가',keys:['risk_no','eval_date','process','work_name','hazard','risk_before','countermeasure','risk_after','owner','due_date','done_date','status','remark']},
+ hr:{name:'인사·사용자',keys:['emp_no','emp_name','department','position','join_date','phone','active','remark']},
+ esg:{name:'ESG·환경',keys:['eval_date','category','title','target','result_value','unit','judgement','owner','status','remark']},
+ permission:{name:'사용자·권한',keys:['user_key','user_name','department','active','remark']},
+ common:{name:'공통 업무',keys:['record_no','work_date','title','owner','status','remark']}
+};
+function basicColNorm(s){return String(s||'').toLowerCase().replace(/[\s_\-·.()\[\]\/]/g,'')}
+function tableContextAll(t){
+ const screens=D.edges.filter(e=>e.kind==='uses'&&e.to===t.id).map(e=>N(e.from)).filter(x=>x?.type==='screen');
+ const sections=[],modules=[];
+ for(const scr of screens){
+  const sec=D.edges.filter(e=>e.kind==='contains'&&e.to===scr.id).map(e=>N(e.from)).find(x=>x?.type==='section')||null;
+  let mod=null;if(sec)mod=D.edges.filter(e=>e.kind==='contains'&&e.to===sec.id).map(e=>N(e.from)).find(x=>x?.type==='module')||null;
+  else mod=D.edges.filter(e=>e.kind==='contains'&&e.to===scr.id).map(e=>N(e.from)).find(x=>x?.type==='module')||null;
+  if(sec&&!sections.some(x=>x.id===sec.id))sections.push(sec);if(mod&&!modules.some(x=>x.id===mod.id))modules.push(mod);
+ }
+ return{screens,sections,modules};
+}
+function recommendedBasicColumns(t){
+ const a=tableContextAll(t),ctx=autoColumnContext(t);
+ const text=[...a.modules.map(x=>x.name),...a.sections.map(x=>x.name),...a.screens.map(x=>x.name),t?.name||''].join(' ');
+ const kinds=a.screens.map(x=>x.meta?.kind||'');let id='common';
+ if(/권한|사용자|계정/.test(text)||kinds.includes('perm'))id='permission';
+ else if(/품질|검사|불량|측정|검측/.test(text))id='quality';
+ else if(/금형|다이|die|몰드|mold/i.test(text))id='die';
+ else if(/위험성|안전|재해|유해|산업안전/.test(text))id='safety';
+ else if(/출하|납품|배송/.test(text))id='shipping';
+ else if(/구매|발주|협력사/.test(text))id='purchase';
+ else if(/수주|영업|견적|고객/.test(text))id='order';
+ else if(/자재|재고|입고|출고|창고|물류/.test(text))id='material';
+ else if(/설비|보전|보수|정비/.test(text))id='equipment';
+ else if(/인사|사원|근태|교육|직원/.test(text))id='hr';
+ else if(/ESG|환경|에너지|탄소|폐기물/i.test(text))id='esg';
+ else if(/생산|작업|실적|공정/.test(text))id='production';
+ let keys=[...BASIC_PROFILE[id].keys];
+ if(kinds.includes('check'))keys=[...keys.slice(0,-2),'check_date','checker','judgement','action','status','remark'];
+ if(kinds.includes('board'))keys=[...keys,'owner','due_date','status'];
+ keys=[...new Set(keys.filter(k=>BASIC_COL_LIBRARY[k]))];
+ const path=`${ctx.mod?.name||a.modules[0]?.name||'공통'} → ${ctx.sec?.name||a.sections[0]?.name||'미분류'} → ${ctx.scr?.name||a.screens[0]?.name||'연결 화면 없음'}`;
+ return{id,profile:BASIC_PROFILE[id].name,keys,path};
+}
+function makeBasicColumnName(t,label,fallback){
+ const ctx=autoColumnContext(t),sec=autoAbbrText(ctx.sec?.name||ctx.mod?.name||'공통','section')||'com',scr0=autoAbbrText(ctx.scr?.name||t.name||'화면','screen')||'scr';
+ const secTok=new Set(sec.split('_').filter(Boolean));let scr=scr0.split('_').filter(x=>x&&!secTok.has(x));if(!scr.length)scr=['scr'];
+ let fld=autoAbbrText(label,'label');
+ if(!fld&&fallback&&/^[a-z_][a-z0-9_]*$/i.test(fallback))fld=String(fallback).toLowerCase().split('_').slice(-2).join('_');
+ if(!fld)fld='field';
+ const seen=new Set(),parts=[...sec.split('_'),...scr,...fld.split('_')].filter(x=>x&&!seen.has(x)&&(seen.add(x),true));
+ let base=parts.join('_').replace(/_+/g,'_').replace(/^_+|_+$/g,'').toLowerCase();if(!/^[a-z_]/.test(base))base='f_'+base;base=base.slice(0,60).replace(/_+$/,'')||'field';
+ const used=new Set((t.meta?.cols||[]).map(c=>String(c.name||'').toLowerCase()));let name=base,i=2;while(used.has(name))name=(base.slice(0,56)+'_'+i++);return name;
+}
+function hasBasicColumn(t,def){
+ const ln=basicColNorm(def.label),nn=basicColNorm(def.name);
+ return (t.meta?.cols||[]).some(c=>basicColNorm(c.label)===ln||(nn&&basicColNorm(c.name)===nn));
+}
+function addBasicColumnDef(t,def){
+ if(!t||!def)return false;t.meta.cols=t.meta.cols||[];
+ const d={...def};if(hasBasicColumn(t,d))return false;
+ const c={name:makeBasicColumnName(t,d.label,d.name),label:d.label||d.name||'항목',type:d.type||'text'};
+ if(d.sample!==undefined)c.sample=d.sample;if(d.req)c.req=true;if(d.unit)c.unit=d.unit;if(d.decimals!==undefined)c.decimals=d.decimals;
+ if(d.flow)c.flow=d.flow;if(d.pk&&!t.meta.cols.some(x=>x.pk)){c.pk=true;c.req=true}
+ t.meta.cols.push(c);return true;
+}
+function addRecommendedBasicColumns(t){
+ const r=recommendedBasicColumns(t);let added=0;
+ for(const k of r.keys)if(addBasicColumnDef(t,BASIC_COL_LIBRARY[k]))added++;
+ save();
+ $('stat').textContent=`🧩 기본 칼럼 자동추가 · ${r.profile}형 · ${added}개 추가${added?'':' (이미 모두 있음)'} · 기존 칼럼은 유지 · 기준: ${r.path}`;
+}
+function allModuleColumnSources(current){
+ const rows=[];for(const t of D.nodes.filter(x=>x.type==='table'&&x.id!==current.id)){
+  const ctx=autoColumnContext(t),mod=ctx.mod?.name||'미연결/공통',sec=ctx.sec?.name||'미분류',scr=ctx.scr?.name||'화면 없음';
+  (t.meta?.cols||[]).forEach((c,i)=>{if(c.formula!==undefined||c.calc)return;const label=String(c.label||c.name||'').trim();if(!label)return;rows.push({table:t,index:i,col:c,mod,sec,scr})});
+ }
+ const curMod=autoColumnContext(current).mod?.name||'';
+ rows.sort((a,b)=>(a.mod===curMod?-1:0)-(b.mod===curMod?-1:0)||a.mod.localeCompare(b.mod,'ko')||a.sec.localeCompare(b.sec,'ko')||a.scr.localeCompare(b.scr,'ko')||String(a.col.label||a.col.name).localeCompare(String(b.col.label||b.col.name),'ko'));
+ return rows;
+}
+function builtinModuleColumnSources(){
+ const rows=[];
+ /* 모듈 보관함의 기본 모듈(BUILTIN) 전체를 수동선택 원천으로 사용한다. */
+ for(let bi=0;bi<BUILTIN.length;bi++){
+  const pack=BUILTIN[bi],nodes=pack?.data?.nodes||[],edges=pack?.data?.edges||[];
+  for(let ti=0;ti<nodes.length;ti++){
+   const t=nodes[ti];if(t?.type!=='table')continue;
+   const use=edges.find(e=>e[1]===ti&&e[2]==='uses'),scr=use?nodes[use[0]]:null;
+   const c1=scr?edges.find(e=>e[1]===use[0]&&e[2]==='contains'):null,sec=c1?nodes[c1[0]]:null;
+   const c2=sec?edges.find(e=>e[1]===c1[0]&&e[2]==='contains'):null,mod=c2?nodes[c2[0]]:null;
+   (t.meta?.cols||[]).forEach((c,ci)=>{if(c.formula!==undefined||c.calc)return;const label=String(c.label||c.name||'').trim();if(!label)return;rows.push({bi,ti,ci,col:c,pack,table:t,mod:mod?.name||pack.name,sec:sec?.name||pack.cat||'기본 모듈',scr:scr?.name||'연결 화면 없음'})});
+  }
+ }
+ return rows;
+}
+function basicManualOptions(t){
+ const r=recommendedBasicColumns(t),parts=['<option value="">수동으로 추가할 칼럼 선택…</option>'];
+ parts.push(`<optgroup label="★ 현재 화면 추천 — ${esc(r.profile)}">${r.keys.map(k=>{const c=BASIC_COL_LIBRARY[k];return `<option value="rec:${k}">${esc(c.label)} · ${c.type==='num'?'숫자':c.type==='date'?'날짜':c.type==='bool'?'체크':'문자'}</option>`}).join('')}</optgroup>`);
+ const all=Object.entries(BASIC_COL_LIBRARY).filter(([k])=>!r.keys.includes(k));
+ parts.push(`<optgroup label="공통 기본 칼럼 전체">${all.map(([k,c])=>`<option value="rec:${k}">${esc(c.label)} · ${c.type==='num'?'숫자':c.type==='date'?'날짜':c.type==='bool'?'체크':'문자'}</option>`).join('')}</optgroup>`);
+ const built=builtinModuleColumnSources(),bgroups=new Map();for(const x of built){const g=`${x.pack.cat} · ${x.pack.name}`;if(!bgroups.has(g))bgroups.set(g,[]);bgroups.get(g).push(x)}
+ for(const [g,arr] of bgroups){parts.push(`<optgroup label="📚 기본 모듈 · ${esc(g)}">${arr.map(x=>`<option value="lib:${x.bi}:${x.ti}:${x.ci}">${esc(x.sec)} › ${esc(x.scr)} › ${esc(x.col.label||x.col.name)} (${esc(x.table.name)})</option>`).join('')}</optgroup>`)}
+ const rows=allModuleColumnSources(t),groups=new Map();for(const x of rows){if(!groups.has(x.mod))groups.set(x.mod,[]);groups.get(x.mod).push(x)}
+ for(const [mod,arr] of groups){parts.push(`<optgroup label="🧩 현재 설계 · ${esc(mod)}">${arr.map(x=>`<option value="src:${x.table.id}:${x.index}">${esc(x.sec)} › ${esc(x.scr)} › ${esc(x.col.label||x.col.name)} (${esc(x.table.name)})</option>`).join('')}</optgroup>`)}
+ return parts.join('');
+}
+function basicColumnAssistantHtml(t){
+ const r=recommendedBasicColumns(t),labels=r.keys.slice(0,9).map(k=>BASIC_COL_LIBRARY[k].label).join(' · ')+(r.keys.length>9?' …':'');
+ return `<section class="src" style="margin-top:2px;background:#f9fbff"><h4>🧩 기본 칼럼 도우미</h4>
+  <div style="font-size:11.5px;color:#4a5568;line-height:1.6"><b>자동판정:</b> ${esc(r.profile)}형 · ${esc(r.path)}<br><span style="color:#8a94a6">추천: ${esc(labels)}</span></div>
+  <div class="acts"><button class="btn primary" id="autoBasicCols" title="현재 중분류·화면의 성격을 보고 없는 기본 칼럼만 추가합니다">⚡ 추천 칼럼 자동추가</button></div>
+  <div class="f"><label>수동 선택 — 현재 화면 추천 + 공통 기본 칼럼 + <b>모듈 보관함 전체 + 현재 설계 전체</b></label><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px"><select id="manualBasicCol">${basicManualOptions(t)}</select><button class="btn" id="addManualBasicCol" type="button">＋ 선택 칼럼 추가</button></div><div id="manualBasicHint" style="font-size:11px;color:#8a94a6;line-height:1.5">모듈 보관함과 현재 설계의 모든 테이블에서 선택할 수 있습니다. 계산식 칼럼은 안전을 위해 목록에서 제외하며, 가져온 칼럼명은 현재 중분류 → 화면 → 라벨 기준으로 다시 만듭니다.</div></div>
+ </section>`;
+}
+function resolveManualBasicChoice(v){
+ if(!v)return null;if(v.startsWith('rec:')){const key=v.slice(4),c=BASIC_COL_LIBRARY[key];return c?{def:{...c},source:'기본 칼럼'}:null}
+ if(v.startsWith('src:')){const p=v.split(':'),t=N(p[1]),i=Number(p[2]),c=t?.meta?.cols?.[i];if(!c)return null;const ctx=autoColumnContext(t);return{def:{name:c.name,label:c.label||c.name,type:c.type||'text',sample:c.sample||'',req:!!c.req,pk:!!c.pk,unit:c.unit,decimals:c.decimals,flow:c.flow},source:`현재 설계 · ${ctx.mod?.name||'공통'} → ${ctx.sec?.name||'미분류'} → ${ctx.scr?.name||t.name}`}}
+ if(v.startsWith('lib:')){const p=v.split(':'),bi=Number(p[1]),ti=Number(p[2]),ci=Number(p[3]),pack=BUILTIN[bi],t=pack?.data?.nodes?.[ti],c=t?.meta?.cols?.[ci];if(!c)return null;return{def:{name:c.name,label:c.label||c.name,type:c.type||'text',sample:c.sample||'',req:!!c.req,pk:!!c.pk,unit:c.unit,decimals:c.decimals,flow:c.flow},source:`모듈 보관함 · ${pack.cat} → ${pack.name} → ${t.name}`}}
+ return null;
+}
+function addManualBasicColumn(t,v){
+ const x=resolveManualBasicChoice(v);if(!x){$('stat').textContent='🧩 추가할 칼럼을 드롭다운에서 먼저 선택하세요.';return}
+ const ok=addBasicColumnDef(t,x.def);if(ok){save();$('stat').textContent=`🧩 수동 칼럼 추가: ${x.def.label||x.def.name} · 출처: ${x.source} · 현재 화면 기준 칼럼명으로 등록됨`}
+ else $('stat').textContent=`🧩 '${x.def.label||x.def.name}' 항목은 이미 있어 추가하지 않았습니다.`;
+}
+function updateManualBasicHint(t,v){
+ const el=$('manualBasicHint');if(!el)return;const x=resolveManualBasicChoice(v);if(!x){el.textContent='모듈 보관함과 현재 설계의 모든 테이블에서 선택할 수 있습니다. 계산식 칼럼은 안전을 위해 목록에서 제외하며, 가져온 칼럼명은 현재 중분류 → 화면 → 라벨 기준으로 다시 만듭니다.';return}
+ const d=x.def;el.innerHTML=`선택: <b>${esc(d.label||d.name)}</b> · 형식 ${d.type==='num'?'숫자':d.type==='date'?'날짜':d.type==='bool'?'체크':'문자'}${d.req?' · 필수':''}${d.pk?' · 기본키 후보':''} · 출처: ${esc(x.source)}`;
 }
 
 /* ═══════════════ 자동정렬 (계층: 대메뉴 → 중분류 → 화면 → 테이블) ═══════════════ */
