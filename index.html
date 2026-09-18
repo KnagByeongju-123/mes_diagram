@@ -380,7 +380,7 @@ work_date, 일자, date"></textarea></div>
    module : {icon,desc,homeType:'auto'|'cards'|'erp'|'dashboard'}
    section: {icon}
    screen : {file,kind:'input'|'status'|'other'}
-   table  : {cols:[{name,label,type:'text'|'num'|'date'|'bool',pk,req,sample,formula,unit,decimals,calcStore}]} // formula가 있으면 자동 계산
+   table  : {cols:[{name,label,type:'text'|'num'|'date'|'bool',pk,req,sample,formula,unit,decimals,calcStore}], autoNo:{enabled,prefix,date,digits,sep}, alert:{enabled,dateCol,days}} // formula/운영기능
  edges: {id,from,to,kind:'contains'|'uses'|'ref'|'flow',label}
 */
 const TYPE={module:{name:'대메뉴',color:'#3f5f7d',w:170},section:{name:'중분류',color:'#6b8bb5',w:160},screen:{name:'화면',color:'#2e7d5b',w:190},table:{name:'테이블',color:'#7a4fb8',w:210}};
@@ -727,7 +727,7 @@ function renderPanel(){
    <label class="ck" style="padding:4px 0"><input id="f_lock" type="checkbox" ${n.meta.locked?'checked':''}>이 화면은 직접 수정함 — 다시 생성해도 덮어쓰지 않기</label>
    <div class="f"><label>사용 테이블 (자동: "사용" 연결)</label><div style="color:#4a5568">${D.edges.filter(e=>e.from===n.id&&e.kind==='uses').map(e=>esc(N(e.to)?.name)).join(', ')||'<span style="color:#8a94a6">없음 — 오른쪽 ○ 를 테이블로 끌어 연결</span>'}</div></div>
    ${originPanelHtml(n)}`}
- if(n.type==='table'){const cols=n.meta.cols||(n.meta.cols=[]);
+ if(n.type==='table'){const cols=n.meta.cols||(n.meta.cols=[]),pk0=cols.find(c=>c.pk)||cols[0],auto=autoNoConfig(n),al=alertConfig(n),dateCols=cols.filter(c=>c.type==='date'&&!c.formula);
   h+=`<div class="f"><label>컬럼 (🔑 = 기본키, ✱ = 필수, ƒx = 자동 계산)</label><div class="cols"><table><thead><tr><th>컬럼명</th><th>라벨</th><th>예시</th><th>형</th><th title="계산식">ƒx</th><th>🔑</th><th>✱</th><th></th></tr></thead><tbody>
    ${cols.map((c,i)=>`<tr><td><input data-i="${i}" data-k="name" value="${esc(c.name)}"></td><td><input data-i="${i}" data-k="label" value="${esc(c.label||'')}"></td>
     <td><input data-i="${i}" data-k="sample" value="${esc(c.sample||'')}" placeholder="예시값" style="color:#2e7d5b" ${c.formula!==undefined||c.calc?'disabled title="계산값은 수식으로 자동 생성"':''}></td>
@@ -739,6 +739,16 @@ function renderPanel(){
     ${(FLOW_COL.test(c.name)||c.flow)?`<tr><td colspan="8" style="background:#f7f9fb;padding:2px 6px 5px"><span style="font-size:11px;color:#8a94a6">⇢ 상태흐름</span> <input data-i="${i}" data-k="flow" value="${esc(c.flow||'')}" placeholder="대기 > 승인 > 발주 > 입고완료 | 취소, 보류  (비우면 라벨 괄호 안 순서)" style="width:calc(100% - 70px);border:1px solid #dbe3ea;background:#fff">${parseFlow(c)?`<div style="font-size:11px;color:#2e7d5b;margin-top:2px">→ ${parseFlow(c).steps.join(' › ')}${parseFlow(c).ends.length?' · 종료: '+parseFlow(c).ends.join(', '):''}</div>`:''}</td></tr>`:''}`).join('')}</tbody></table></div>
    <div class="acts"><button class="btn" id="addCol">＋ 컬럼</button><button class="btn" id="addStd">＋ 기본 컬럼 (비고·수정일)</button><button class="btn" id="addCalcEx">ƒx 계산식 예제</button><button class="btn primary" onclick="openPaste()">📋 항목 붙여넣기</button><button class="btn" onclick="sampleOne()">⇩ 실제 데이터 1건</button><span class="msg" id="smpMsg" style="font-size:11.5px;color:#8a94a6"></span></div>
    <div style="font-size:11px;color:#8a94a6;line-height:1.55">계산식은 같은 행의 <b>컬럼명</b>을 사용합니다. 예: <code>amount = qty * unit_price</code>, <code>defect_rate = IF(total_qty == 0, 0, defect_qty / total_qty * 100)</code>. 기본은 화면 계산이며, ƒx 행의 <b>DB</b>를 체크한 경우에만 계산값 컬럼을 DB에도 생성·저장합니다.</div></div>
+   <section class="src" style="margin-top:2px"><h4>⚙ 운영 자동화</h4>
+    <div class="acts"><button class="btn primary" id="addOpsEx">⚙ 운영기능 예제</button><span style="font-size:11.5px;color:#8a94a6">승인 Workflow · 자동번호 · 납기알림 기본 예제를 한 번에 추가합니다.</span></div>
+    <div style="display:grid;gap:7px">
+     <div style="border-top:1px solid #e5e9ee;padding-top:7px"><label class="ck"><input id="f_auto_enable" type="checkbox" ${auto.enabled?'checked':''} ${pk0?.type!=='text'?'disabled':''}><b>자동번호</b> — 기본키가 비어 있으면 자동 채번</label>
+      <div class="row3" style="margin-top:5px"><div class="f"><label>접두어</label><input id="f_auto_prefix" value="${esc(auto.prefix)}" placeholder="PO"></div><div class="f"><label>날짜형식</label><select id="f_auto_date"><option value="NONE" ${auto.date==='NONE'?'selected':''}>없음</option><option value="YYMM" ${auto.date==='YYMM'?'selected':''}>YYMM</option><option value="YYMMDD" ${auto.date==='YYMMDD'?'selected':''}>YYMMDD</option><option value="YYYYMMDD" ${auto.date==='YYYYMMDD'?'selected':''}>YYYYMMDD</option><option value="YYYY" ${auto.date==='YYYY'?'selected':''}>YYYY</option></select></div><div class="f"><label>일련번호 자리</label><input id="f_auto_digits" type="number" min="1" max="8" value="${auto.digits}"></div></div>
+      <div style="font-size:11px;color:#6b7686;margin-top:3px">예: <b>${esc(autoNoPreview(n))}</b>${pk0?.type!=='text'?' · 자동번호는 text 기본키에서 사용합니다.':''}</div></div>
+     <div style="border-top:1px solid #e5e9ee;padding-top:7px"><label class="ck"><input id="f_alert_enable" type="checkbox" ${al.enabled?'checked':''}><b>기한 알림</b> — 등록/조회/대시보드에서 임박·초과 표시</label>
+      <div class="row2" style="margin-top:5px"><div class="f"><label>기준 날짜 컬럼</label><select id="f_alert_date"><option value="">선택 안 함</option>${dateCols.map(c=>`<option value="${esc(c.name)}" ${al.dateCol===c.name?'selected':''}>${esc(c.label||c.name)} (${esc(c.name)})</option>`).join('')}</select></div><div class="f"><label>몇 일 전부터 알림</label><input id="f_alert_days" type="number" min="0" max="365" value="${al.days}"></div></div></div>
+    </div>
+   </section>
    <div class="row2"><div class="f"><label>Supabase 주소 (프로젝트 ref 또는 URL)</label><input id="f_host" value="${esc(n.meta.host||'')}" placeholder="abcd1234 또는 https://abcd1234.supabase.co"></div>
     <div class="f"><label>anon / publishable 키</label><input id="f_apikey" value="${esc(n.meta.apikey||'')}" placeholder="sb_publishable_..."></div></div>`}
  const outs=D.edges.filter(e=>e.from===n.id),ins=D.edges.filter(e=>e.to===n.id);
@@ -768,6 +778,14 @@ function renderPanel(){
   if($('f_apikey'))$('f_apikey').oninput=e=>{n.meta.apikey=e.target.value.trim()};
   $('addStd').onclick=()=>{for(const c of [{name:'remark',label:'비고',type:'text'},{name:'updated_at',label:'수정일',type:'date'}])if(!n.meta.cols.some(x=>x.name===c.name))n.meta.cols.push(c);renderPanel();render()};
   $('addCalcEx').onclick=()=>{addCalcExamples(n);renderPanel();render()};
+  $('addOpsEx').onclick=()=>{addOperationsExamples(n);renderPanel();render()};
+  if($('f_auto_enable'))$('f_auto_enable').onchange=e=>{const a=n.meta.autoNo||(n.meta.autoNo={});a.enabled=e.target.checked;save();renderPanel()};
+  if($('f_auto_prefix'))$('f_auto_prefix').oninput=e=>{const a=n.meta.autoNo||(n.meta.autoNo={});a.prefix=e.target.value.trim().toUpperCase();save()};
+  if($('f_auto_date'))$('f_auto_date').onchange=e=>{const a=n.meta.autoNo||(n.meta.autoNo={});a.date=e.target.value;save();renderPanel()};
+  if($('f_auto_digits'))$('f_auto_digits').onchange=e=>{const a=n.meta.autoNo||(n.meta.autoNo={});a.digits=Math.max(1,Math.min(8,Number(e.target.value)||3));save();renderPanel()};
+  if($('f_alert_enable'))$('f_alert_enable').onchange=e=>{const a=n.meta.alert||(n.meta.alert={});a.enabled=e.target.checked;save();renderPanel()};
+  if($('f_alert_date'))$('f_alert_date').onchange=e=>{const a=n.meta.alert||(n.meta.alert={});a.dateCol=e.target.value;save()};
+  if($('f_alert_days'))$('f_alert_days').onchange=e=>{const a=n.meta.alert||(n.meta.alert={});a.days=Math.max(0,Math.min(365,Number(e.target.value)||0));save();renderPanel()};
  }
 }
 function flipEdge(){const e=D.edges.find(x=>x.id===sel.edge);[e.from,e.to]=[e.to,e.from];render();renderPanel()}
@@ -1040,14 +1058,18 @@ function newDesign(withSkeleton){
  const tbl=addNode('table','new_table',{cols:[
    {name:'doc_no',label:'번호',type:'text',pk:true,req:true},
    {name:'work_date',label:'일자 (언제)',type:'date',req:true},
+   {name:'due_date',label:'완료예정일·납기',type:'date'},
    {name:'place_code',label:'장소·설비 (어디서)',type:'text'},
    {name:'worker',label:'담당자 (누가)',type:'text'},
    {name:'item_code',label:'품번 (무엇을)',type:'text',req:true},
    {name:'item_name',label:'품명',type:'text'},
    {name:'method',label:'방법·구분 (어떻게)',type:'text'},
    {name:'qty',label:'수량 (얼마나)',type:'num'},
+   {name:'status',label:'승인상태',type:'text',flow:'작성 > 검토 > 승인 > 완료 | 반려'},
+   {name:'approved_at',label:'승인일',type:'date'},
+   {name:'reject_reason',label:'반려사유',type:'text'},
    {name:'remark',label:'비고',type:'text'},
-   {name:'updated_at',label:'수정일시',type:'date'}]},0,0);
+   {name:'updated_at',label:'수정일시',type:'date'}],autoNo:{enabled:true,prefix:'DOC',date:'YYMMDD',digits:3,sep:'-'},alert:{enabled:true,dateCol:'due_date',days:3}},0,0);
  addEdge(mod.id,sec.id,'contains','포함');
  addEdge(sec.id,inp.id,'contains','포함');
  addEdge(sec.id,sta.id,'contains','포함');
@@ -1063,25 +1085,25 @@ function loadSample(){
  const mod=(n,icon,desc)=>M[n]=addNode('module',n,{icon,desc},0,0);
  const sec=(m,n,icon)=>{S[n]=addNode('section',n,{icon},0,0);addEdge(M[m].id,S[n].id,'contains')};
  const scr=(s,n,file,kind)=>{SC[n]=addNode('screen',n,{file,kind},0,0);addEdge(S[s].id,SC[n].id,'contains')};
- const tbl=(n,cols)=>T[n]=addNode('table',n,{cols},0,0);
- mod('영업관리','▣','수주 · 출하');sec('영업관리','수주','▣');scr('수주','수주등록','sample_input.html','input');scr('수주','수주현황','sample_status.html','status');
+ const tbl=(n,cols,meta={})=>T[n]=addNode('table',n,{...meta,cols},0,0);
+ mod('영업관리','▣','수주 · 출하');sec('영업관리','수주','▣');scr('수주','수주등록','sample_input.html','input');scr('수주','수주현황','sample_status.html','status');scr('수주','수주 대시보드','sample_dashboard.html','dash');
  sec('영업관리','출하','⇪');scr('출하','출하등록','shipment_input.html','input');scr('출하','출하현황','shipment_status.html','status');
  mod('생산관리','⚙','계획 · 실적');sec('생산관리','실적','⚙');scr('실적','생산실적등록','prod_result_input.html','input');scr('실적','생산실적현황','prod_result_status.html','status');
  mod('기준정보','▦','거래처 · 품목 · 사용자');sec('기준정보','공통','⚙');scr('공통','거래처관리','vendor_management.html','input');scr('공통','품목관리','item_management.html','input');scr('공통','사용자정보','user_information.html','other');
- tbl('sample_orders',[{name:'order_no',label:'수주번호',type:'text',pk:true,req:true},{name:'order_date',label:'수주일',type:'date',req:true},{name:'due_date',label:'납기일',type:'date'},{name:'customer_name',label:'거래처',type:'text',req:true},{name:'item_name',label:'품목',type:'text',req:true},{name:'status',label:'상태',type:'text'},{name:'qty',label:'수량',type:'num',sample:'10'},{name:'unit_price',label:'단가',type:'num',sample:'2500'},{name:'amount',label:'금액',type:'num',formula:'qty * unit_price',unit:'원',decimals:0},{name:'remark',label:'비고',type:'text'}]);
+ tbl('sample_orders',[{name:'order_no',label:'수주번호',type:'text',pk:true,req:true},{name:'order_date',label:'수주일',type:'date',req:true},{name:'due_date',label:'납기일',type:'date'},{name:'customer_name',label:'거래처',type:'text',req:true},{name:'item_name',label:'품목',type:'text',req:true},{name:'status',label:'승인상태',type:'text',flow:'작성 > 검토 > 승인 > 완료 | 반려'},{name:'qty',label:'수량',type:'num',sample:'10'},{name:'unit_price',label:'단가',type:'num',sample:'2500'},{name:'amount',label:'금액',type:'num',formula:'qty * unit_price',unit:'원',decimals:0},{name:'approved_at',label:'승인일',type:'date'},{name:'reject_reason',label:'반려사유',type:'text'},{name:'remark',label:'비고',type:'text'}],{autoNo:{enabled:true,prefix:'ORD',date:'YYMMDD',digits:3,sep:'-'},alert:{enabled:true,dateCol:'due_date',days:3}});
  tbl('shipments',[{name:'ship_no',label:'출하번호',type:'text',pk:true,req:true},{name:'ship_date',label:'출하일',type:'date',req:true},{name:'order_no',label:'수주번호',type:'text',req:true},{name:'customer_name',label:'거래처',type:'text'},{name:'item_name',label:'품목',type:'text'},{name:'qty',label:'출하수량',type:'num'},{name:'remark',label:'비고',type:'text'}]);
  tbl('prod_results',[{name:'result_no',label:'실적번호',type:'text',pk:true,req:true},{name:'work_date',label:'작업일',type:'date',req:true},{name:'order_no',label:'수주번호',type:'text'},{name:'item_name',label:'품목',type:'text'},{name:'worker',label:'작업자',type:'text'},{name:'good_qty',label:'양품',type:'num',sample:'980'},{name:'defect_qty',label:'불량',type:'num',sample:'20'},{name:'total_qty',label:'총생산수량',type:'num',formula:'good_qty + defect_qty',unit:'EA',decimals:0},{name:'defect_rate',label:'불량률',type:'num',formula:'IF(total_qty == 0, 0, defect_qty / total_qty * 100)',unit:'%',decimals:2},{name:'remark',label:'비고',type:'text'}]);
  tbl('vendors',[{name:'vendor_code',label:'거래처코드',type:'text',pk:true,req:true},{name:'vendor_name',label:'거래처명',type:'text',req:true},{name:'vendor_type',label:'구분',type:'text'},{name:'phone',label:'전화',type:'text'},{name:'is_active',label:'사용',type:'bool'}]);
  tbl('items',[{name:'item_code',label:'품목코드',type:'text',pk:true,req:true},{name:'item_name',label:'품목명',type:'text',req:true},{name:'spec',label:'규격',type:'text'},{name:'unit',label:'단위',type:'text'},{name:'unit_price',label:'단가',type:'num'}]);
  tbl('users',[{name:'user_key',label:'사용자키',type:'text',pk:true},{name:'user_id',label:'아이디',type:'text'},{name:'name',label:'이름',type:'text'},{name:'role',label:'권한',type:'text'}]);
  const use=(s,t,l)=>addEdge(SC[s].id,T[t].id,'uses',l);
- use('수주등록','sample_orders','저장/수정');use('수주현황','sample_orders','조회');use('출하등록','shipments','저장');use('출하현황','shipments','조회');use('생산실적등록','prod_results','저장');use('생산실적현황','prod_results','조회');
+ use('수주등록','sample_orders','저장/수정');use('수주현황','sample_orders','조회');use('수주 대시보드','sample_orders','KPI·기한알림');use('출하등록','shipments','저장');use('출하현황','shipments','조회');use('생산실적등록','prod_results','저장');use('생산실적현황','prod_results','조회');
  use('거래처관리','vendors','');use('품목관리','items','');use('사용자정보','users','');use('수주등록','vendors','거래처 목록');use('수주등록','items','품목 목록');
  addEdge(T.shipments.id,T.sample_orders.id,'ref','order_no → sample_orders.order_no');addEdge(T.prod_results.id,T.sample_orders.id,'ref','order_no');
  addEdge(T.sample_orders.id,T.vendors.id,'ref','customer_name → vendor_name');addEdge(T.sample_orders.id,T.items.id,'ref','item_name → item_name');
  addEdge(SC['수주등록'].id,SC['출하등록'].id,'flow','수주 완료 후 출하');addEdge(SC['수주등록'].id,SC['생산실적등록'].id,'flow','수주 → 생산');
  select(null);autoLayout();
- LAST_IMPORT=D.nodes.filter(n=>!__before.has(n.id)).map(n=>n.id);updateImpBtn();
+ LAST_IMPORT=D.nodes.map(n=>n.id);updateImpBtn();
 }
 
 
@@ -3164,6 +3186,25 @@ function calcApplyRow(row,cols){
 function calcFormat(v,c,withUnit=true){if(v===null||v===undefined||v==='')return '';let s='';if(c?.type==='num'){const d=c.decimals===''||c.decimals===undefined?null:Math.max(0,Math.min(8,Number(c.decimals)||0));s=Number(v).toLocaleString('ko-KR',d==null?{}:{minimumFractionDigits:d,maximumFractionDigits:d})}else if(c?.type==='bool')s=v?'✓':'';else s=String(v);if(withUnit&&c?.unit&&s!=='')s+=c.unit==='%'?'%':' '+c.unit;return s}
 function calcFormulaRefs(src){const z=String(src||'').replace(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g,' '),out=[];for(const m of z.matchAll(/[A-Za-z_][A-Za-z0-9_]*/g)){const id=m[0],rest=z.slice(m.index+id.length);if(/^\s*\(/.test(rest))continue;if(!['TRUE','FALSE','NULL'].includes(id.toUpperCase())&&!out.includes(id))out.push(id)}return out}
 function calcRuntimeJs(){return [calcEvalFormula,calcApplyRow,calcFormat].map(f=>f.toString()).join('\n')}
+function autoNoConfig(t){
+ const cols=t?.meta?.cols||[],pk=cols.find(c=>c.pk)||cols[0]||{},a=t?.meta?.autoNo||{};
+ const raw=String(t?.name||pk.name||'DOC').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+ return{enabled:a.enabled!==undefined?!!a.enabled:pk.type==='text',prefix:String(a.prefix!==undefined?a.prefix:(raw.slice(0,3)||'DOC')).toUpperCase(),date:a.date||'YYMMDD',digits:Math.max(1,Math.min(8,Number(a.digits)||3)),sep:a.sep===undefined?'-':String(a.sep)};
+}
+function autoNoPreview(t){const a=autoNoConfig(t),d=new Date(),y=String(d.getFullYear()),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');let ds=a.date==='YYYYMMDD'?y+m+dd:a.date==='YYMMDD'?y.slice(-2)+m+dd:a.date==='YYMM'?y.slice(-2)+m:a.date==='YYYY'?y:'';const parts=[a.prefix,ds].filter(Boolean),base=parts.join(a.sep);return (base?base+a.sep:'')+String(1).padStart(a.digits,'0')}
+function alertConfig(t){
+ const cols=t?.meta?.cols||[],a=t?.meta?.alert||{},def=cols.find(c=>c.type==='date'&&/due|deadline|next_|eta|planned|plan_date|_due/i.test(c.name));
+ return{enabled:a.enabled!==undefined?!!a.enabled:!!def,dateCol:a.dateCol||def?.name||'',days:Math.max(0,Math.min(365,Number(a.days??3)||0))};
+}
+function addOperationsExamples(t){
+ const cols=t.meta.cols||(t.meta.cols=[]),by=new Map(cols.map(c=>[c.name,c]));let n=0;
+ const ensure=c=>{let o=by.get(c.name);if(!o){o={...c};cols.push(o);by.set(c.name,o);n++}return o};
+ const due=ensure({name:'due_date',label:'완료예정일·납기',type:'date'});
+ const st=ensure({name:'status',label:'승인상태',type:'text'});if(!parseFlow(st)){st.flow='작성 > 검토 > 승인 > 완료 | 반려';n++}
+ ensure({name:'requested_by',label:'작성자',type:'text'});ensure({name:'reviewed_by',label:'검토자',type:'text'});ensure({name:'approved_by',label:'승인자',type:'text'});ensure({name:'approved_at',label:'승인일',type:'date'});ensure({name:'reject_reason',label:'반려사유',type:'text'});
+ const raw=String(t.name||'DOC').replace(/[^A-Za-z0-9]/g,'').toUpperCase();t.meta.autoNo={enabled:true,prefix:(raw.slice(0,3)||'DOC'),date:'YYMMDD',digits:3,sep:'-'};t.meta.alert={enabled:true,dateCol:due.name,days:3};
+ $('stat').textContent=`⚙ 운영기능 예제를 적용했습니다 — 승인 Workflow · 자동번호(${autoNoPreview(t)}) · ${due.label||due.name} 3일 전 알림.`;
+}
 function addCalcExamples(t){
  const cols=t.meta.cols||(t.meta.cols=[]),by=new Map(cols.map(c=>[c.name,c]));
  const need=[
@@ -3206,7 +3247,11 @@ function flowRender(){const el=$('f_'+FLOW.col),b=$('flowbar');if(!el||!b)return
   +(i>=0&&i<FLOW.steps.length-1?' <button class="btn sm primary" onclick="flowTo(FLOW.steps['+(i+1)+'])">→ 다음: '+esc(FLOW.steps[i+1])+'</button>':i<0&&!FLOW.ends.includes(v)?' <button class="btn sm primary" onclick="flowTo(FLOW.steps[0])">→ 시작: '+esc(FLOW.steps[0])+'</button>':'')
   +(i>0?' <button class="btn sm" onclick="flowTo(FLOW.steps['+(i-1)+'])">↩ 이전</button>':'')
   +(FLOW.ends.length?'<span class="end">'+FLOW.ends.map(e=>'<button class="btn sm warn" onclick="flowTo(\\''+esc(e)+'\\')">'+esc(e)+'</button>').join('')+'</span>':'');}
-function flowTo(v){const el=$('f_'+FLOW.col);if(!el)return;if(FLOW.ends.includes(v)&&!confirm(v+' 처리할까요?'))return;el.value=v;flowRender();if(typeof sel!=='undefined'&&sel!=null)save();}
+function flowTo(v){const el=$('f_'+FLOW.col);if(!el)return;
+ if(FLOW.ends.includes(v)&&!confirm(v+' 처리할까요?'))return;
+ if(/반려|취소|보류/i.test(v)){const rr=$('f_reject_reason');if(rr){const why=prompt(v+' 사유를 입력하세요.',rr.value||'');if(why===null)return;rr.value=why}}
+ el.value=v;const ap=$('f_approved_at');if(ap&&/승인|완료/i.test(v)&&!ap.value)ap.value=new Date().toISOString().slice(0,10);
+ flowRender();if(typeof sel!=='undefined'&&sel!=null)save();}
 (function(){const _pick=window.pick,_clear=window.clearForm,_save=window.save,_cell=window.cell;
  if(_pick)window.pick=function(){_pick.apply(this,arguments);flowRender()};
  if(_clear)window.clearForm=function(){_clear.apply(this,arguments);const el=$('f_'+FLOW.col);if(el&&!el.value)el.value=FLOW.steps[0];flowRender()};
@@ -3688,6 +3733,9 @@ function validateDesign(show){
    if(!['text','num','date','bool'].includes(c.type))push('error',`테이블 '${tn}' 의 컬럼 '${cn}' 형 '${c.type}' 을 지원하지 않습니다.`,'node',t.id);
    if(c.formula!==undefined||c.calc){const fx=String(c.formula||'').trim();if(!fx)push('error',`테이블 '${tn}' 의 계산 컬럼 '${cn}' 에 계산식이 없습니다.`,'node',t.id,'ƒx 계산식에 예: qty * unit_price 처럼 입력하세요.');if(c.pk)push('error',`계산 컬럼 '${tn}.${cn}' 은 기본키(🔑)로 사용할 수 없습니다.`,'node',t.id);const names=new Set(cols.map(x=>x.name));for(const ref of calcFormulaRefs(fx))if(!names.has(ref))push('error',`계산식 '${tn}.${cn}' 이 존재하지 않는 컬럼 '${ref}' 을 참조합니다.`,'node',t.id);if(calcFormulaRefs(fx).includes(cn))push('error',`계산식 '${tn}.${cn}' 이 자기 자신을 참조합니다.`,'node',t.id);}
   }
+  const pkc=cols.find(c=>c.pk),an=autoNoConfig(t),ac=alertConfig(t);
+  if(an.enabled&&pkc&&pkc.type!=='text')push('warning',`테이블 '${tn}' 자동번호는 text 기본키에서만 적용됩니다.`,'node',t.id,'기본키 형식을 text로 바꾸거나 자동번호를 끄세요.');
+  if(ac.enabled){const dc=cols.find(c=>c.name===ac.dateCol);if(!ac.dateCol)push('warning',`테이블 '${tn}' 기한 알림의 기준 날짜 컬럼이 선택되지 않았습니다.`,'node',t.id);else if(!dc)push('error',`테이블 '${tn}' 기한 알림이 없는 컬럼 '${ac.dateCol}' 을 참조합니다.`,'node',t.id);else if(dc.type!=='date')push('warning',`기한 알림 기준 '${tn}.${ac.dateCol}' 은 date 형식을 권장합니다.`,'node',t.id);}
   const used=D.edges.some(e=>(e.to===t.id&&e.kind==='uses')||(e.from===t.id&&e.kind==='ref')||(e.to===t.id&&e.kind==='ref'));
   if(!used)push('warning',`테이블 '${tn}' 이(가) 어떤 화면/테이블과도 연결되어 있지 않습니다.`,'node',t.id);
  }
@@ -3844,7 +3892,7 @@ function dashRoles(ts){
  const actual=nums.find(c=>c!==target&&/actual|result|count|done|prod|good_qty|^qty$/i.test(c.name))||(target?nums.find(c=>c!==target):null);
  const bad=nums.find(c=>/ng|defect|fail|error|stop|down/i.test(c.name))||null;
  const texts=cols.filter(c=>c.type==='text'&&![key,group,status].includes(c));
- const due=find(/due|deadline|next_|eta|planned|plan_date|_due/i,c=>c.type==='date')||null;
+ const ac=alertConfig(main),due=(ac.enabled&&ac.dateCol?cols.find(c=>c.name===ac.dateCol):null)||find(/due|deadline|next_|eta|planned|plan_date|_due/i,c=>c.type==='date')||null;
  /* 상태값 후보: 라벨 괄호 안 (가동/정지) 같은 표기에서 뽑는다 */
  let statusVals=[];if(status){const m=String(status.label||'').match(/\(([^)]+)\)/);if(m)statusVals=m[1].split(/[\/·,]/).map(x=>x.trim()).filter(Boolean)}
  /* 로그 테이블: 두 번째 이후 테이블 중 시각 컬럼이 있는 것 */
@@ -3852,7 +3900,7 @@ function dashRoles(ts){
  let lf=null;if(log){const lc=colsOf(log);const lk=lc.find(c=>c.name===key.name)||lc.find(c=>/code|machine|_no$|_id$|name/i.test(c.name)&&!c.pk)||lc[0];
   lf={key:lk.name,time:(lc.find(c=>c.type==='date'||/_at$|time/i.test(c.name))||{}).name||null,text:(lc.find(c=>/msg|message|event|detail|reason|content|action|remark|memo/i.test(c.name))||lc.find(c=>c.type==='text'&&c!==lk)||{}).name||null}}
  return{main,cols,status,key,group,time,nums,target,actual,bad,texts,due,statusVals,log,lf,keyLabel:key&&key.label,
-  f:{key:key.name,status:status?status.name:null,group:group?group.name:null,time:time?time.name:null,target:target?target.name:null,actual:actual?actual.name:null,bad:bad?bad.name:null,due:due?due.name:null}};
+  f:{key:key.name,status:status?status.name:null,group:group?group.name:null,time:time?time.name:null,target:target?target.name:null,actual:actual?actual.name:null,bad:bad?bad.name:null,due:due?due.name:null,alertDays:ac.days}};
 }
 function dashScreen(s,ts,loc){
  const R=dashRoles(ts);if(!R.main)return blankScreen(s,loc);const f=R.f;
@@ -3915,7 +3963,8 @@ tbody tr{cursor:pointer}
 <script>
 const ROWS=[],LOGS=[];window.ROWS=ROWS;window.LOGS=LOGS;
 const F=${JSON.stringify(f)},LF=${JSON.stringify(R.lf)};
-const COLS=${JSON.stringify(tblCols.map(c=>({n:c.name,l:c.label||c.name,t:c.type})))};
+const CM=${JSON.stringify(R.cols)};${calcRuntimeJs()}
+const COLS=${JSON.stringify(tblCols.map(c=>({n:c.name,l:c.label||c.name,t:c.type,formula:c.formula||'',unit:c.unit||'',decimals:c.decimals})))};
 const NUMS=${JSON.stringify(R.nums.map(c=>({n:c.name,l:c.label||c.name})))};
 const GOOD=/가동|정상|양호|완료|OK|RUN|정상가동|승인|입고|합격/i,BAD=/정지|비가동|NG|고장|알람|지연|불량|STOP|반려|취소|미점검|초과|경고/i,WARN=/점검|대기|보류|IDLE|임박|진행|검토|수리|예정/i;
 const cls=v=>{v=String(v??'');return BAD.test(v)?'ng':GOOD.test(v)?'ok':WARN.test(v)?'warn':''};
@@ -3931,21 +3980,21 @@ async function reload(){
    ${R.log?`try{const ls=await MESDB.table('${R.log.name}').select('select=*&order=${R.lf.time||R.lf.key}.desc&limit=300',{fresh:true});LOGS.length=0;LOGS.push(...ls)}catch(e){}`:''}
    dot.classList.remove('off')}catch(e){dot.classList.add('off');msg('갱신 실패: '+e.message.slice(0,80))}}
  render();lastUpd.textContent=new Date().toLocaleTimeString('ko-KR');}
-const isDue=r=>F.due&&r[F.due]&&new Date(r[F.due])<=new Date(Date.now()+3*864e5);
+const dayDiff=v=>{if(!v)return null;const a=new Date(new Date().toISOString().slice(0,10)),b=new Date(v);return Number.isFinite(+b)?Math.ceil((b-a)/864e5):null};const dueState=r=>{const d=F.due?dayDiff(r[F.due]):null;return d==null?'':d<0?'over':d<=Number(F.alertDays||0)?'soon':''};const isDue=r=>!!dueState(r);
 function render(){
- const all=ROWS;const st=F.status;
+ const all=ROWS;all.forEach(r=>calcApplyRow(r,CM));const st=F.status;
  /* KPI */
  let h='<div class="st"><div class="l">전체</div><div class="v">'+all.length+'</div></div>';
  if(st){const vals=[...new Set(all.map(r=>r[st]).filter(v=>v!=null&&v!==''))];
   for(const v of vals)h+='<div class="st '+cls(v)+'"><div class="l">'+esc(v)+'</div><div class="v">'+all.filter(r=>r[st]===v).length+'</div></div>'}
- if(F.due){const n=all.filter(isDue).length;if(n)h+='<div class="st warn"><div class="l">⏰ 3일 이내</div><div class="v">'+n+'</div></div>'}
+ if(F.due){const ov=all.filter(r=>dueState(r)==='over').length,so=all.filter(r=>dueState(r)==='soon').length;if(ov)h+='<div class="st ng"><div class="l">⛔ 기한 초과</div><div class="v">'+ov+'</div></div>';if(so)h+='<div class="st warn"><div class="l">⏰ '+Number(F.alertDays||0)+'일 이내</div><div class="v">'+so+'</div></div>'}
  for(const c of NUMS.slice(0,3)){const sum=all.reduce((a,r)=>a+(Number(r[c.n])||0),0);h+='<div class="st '+(c.n===F.bad?'ng':'sum')+'"><div class="l">'+esc(c.l)+' 합계</div><div class="v">'+fmt(sum)+'</div></div>'}
  if(F.target&&F.actual){const t=all.reduce((a,r)=>a+(Number(r[F.target])||0),0),a=all.reduce((a2,r)=>a2+(Number(r[F.actual])||0),0);if(t)h+='<div class="st sum"><div class="l">달성률</div><div class="v">'+Math.round(a/t*100)+'%</div></div>'}
  stats.innerHTML=h;
  /* 알림 */
  const al=all.filter(r=>(st&&cls(r[st])==='ng')||isDue(r));
  alertBox.classList.toggle('on',!!al.length);
- alertT.textContent='⚠ 확인 필요 '+al.length+'건'+(F.due?' (불량 상태 · 기한 3일 이내)':'');
+ alertT.textContent='⚠ 확인 필요 '+al.length+'건'+(F.due?' (이상 상태 · 기한 초과/ '+Number(F.alertDays||0)+'일 이내)':'');
  alertL.innerHTML=al.slice(0,30).map(r=>'<span class="it" onclick="openRow(\\''+esc(String(r[F.key]))+'\\')">'+esc(r[F.key])+(st?' · '+esc(r[st]):'')+(isDue(r)?' · '+esc(r[F.due]):'')+'</span>').join('');
  /* 그룹 */
  const gk=F.group;const groups={};for(const r of all){const g=gk?(r[gk]||'(미지정)'):'';(groups[g]??=[]).push(r)}
@@ -3958,7 +4007,7 @@ function render(){
    +NUMS.slice(0,2).map(c=>'<span class="s">'+esc(c.l)+' '+fmt(rows.reduce((a,r)=>a+(Number(r[c.n])||0),0))+'</span>').join('')+'</div>';
   const tb='<div class="tablewrap"><table><thead><tr>'+COLS.map(c=>'<th'+(c.t==='num'?' class="r"':'')+'>'+esc(c.l)+'</th>').join('')+(F.target&&F.actual?'<th>달성</th>':'')+'</tr></thead><tbody>'
    +rows.map(r=>{const bad=st&&cls(r[st])==='ng';let tr='<tr class="'+(bad?'dim':'')+'" onclick="openRow(\\''+esc(String(r[F.key]))+'\\')">';
-    for(const c of COLS){const v=r[c.n];tr+='<td'+(c.t==='num'?' class="r"':'')+'>'+(c.n===st?'<span class="badge '+cls(v)+'">'+esc(v||'-')+'</span>':c.t==='num'?fmt(v):esc(v??''))+'</td>'}
+    for(const c of COLS){const v=r[c.n],cv=c.formula?calcFormat(v,{type:c.t,unit:c.unit,decimals:c.decimals},true):(c.t==='num'?fmt(v):esc(v??''));tr+='<td'+(c.t==='num'?' class="r"':'')+'>'+(c.n===st?'<span class="badge '+cls(v)+'">'+esc(v||'-')+'</span>':c.formula?esc(cv):cv)+'</td>'}
     if(F.target&&F.actual){const t=Number(r[F.target])||0,a=Number(r[F.actual])||0,p=t?Math.min(100,Math.round(a/t*100)):0;tr+='<td><span class="prog"><i class="'+(p>=80?'':p>=50?'md':'lo')+'" style="width:'+p+'%"></i></span>'+(t?p+'%':'-')+'</td>'}
     return tr+'</tr>'}).join('')+'</tbody></table></div>';
   return '<div class="cg">'+hd+tb+'</div>'}).join('')||'<div class="empty">표시할 자료가 없습니다.</div>';
@@ -3966,7 +4015,7 @@ function render(){
 function pick(g){cur=g;render()}
 function openRow(k){const r=ROWS.find(x=>String(x[F.key])===k);if(!r)return;
  dT.textContent=(F.group&&r[F.group]?r[F.group]+' · ':'')+k;
- let h='<div class="kv">'+COLS.map(c=>'<span class="k">'+esc(c.l)+'</span><span>'+(c.n===F.status?'<span class="badge '+cls(r[c.n])+'">'+esc(r[c.n]||'-')+'</span>':esc(c.t==='num'?fmt(r[c.n]):(r[c.n]??'-')))+'</span>').join('')+'</div>';
+ calcApplyRow(r,CM);let h='<div class="kv">'+COLS.map(c=>'<span class="k">'+esc(c.l)+'</span><span>'+(c.n===F.status?'<span class="badge '+cls(r[c.n])+'">'+esc(r[c.n]||'-')+'</span>':c.formula?esc(calcFormat(r[c.n],{type:c.t,unit:c.unit,decimals:c.decimals},true)):esc(c.t==='num'?fmt(r[c.n]):(r[c.n]??'-')))+'</span>').join('')+'</div>';
  if(LF){const ev=LOGS.filter(l=>String(l[LF.key])===k||String(l[LF.key])===String(r[LF.key])).slice(0,20);
   h+='<div class="ev"><h4>최근 이벤트 '+ev.length+'건</h4>'+(ev.length?ev.map(l=>'<div class="row"><span class="tm">'+esc(LF.time?String(l[LF.time]).slice(0,16).replace('T',' '):'')+'</span><span>'+esc(LF.text?l[LF.text]:JSON.stringify(l))+'</span></div>').join(''):'<div style="color:#8a94a6;font-size:11.5px">이벤트 없음</div>')+'</div>'}
  dB.innerHTML=h;dlg.classList.add('on')}
@@ -4069,7 +4118,7 @@ const F=${JSON.stringify(f)},PK=${JSON.stringify(R.pk?R.pk.name:null)},PKNUM=${J
 const META=${JSON.stringify(R.meta.map(c=>c.name))},LIST=${JSON.stringify(listCols.map(c=>c.name))};
 const T=${JSON.stringify(Object.fromEntries(colsOf(t).map(c=>[c.name,c.type])))};
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{const d=new Date(),z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
 function msg(t){message.textContent=t}
 function boot(){
  ${R.meta.map(c=>c.type==='date'?`if($('m_${c.name}'))$('m_${c.name}').value=today();`:'').join('')}
@@ -4507,7 +4556,7 @@ const PROC={MC:'머시닝',GR:'연마',HT:'열처리',WE:'와이어',LA:'레이�
 const D2S={'발주':'out','입고':'in','입고확정':'done'},S2K={out:'출고',in:'입고',done:'완료',req:'요청',next:'다음'};
 let curJob=null,curVen='',PICK=new Set();
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const today=()=>new Date().toISOString().slice(0,10);function msg(t){message.textContent=t}
+const today=()=>{const d=new Date(),z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};function msg(t){message.textContent=t}
 const stepCode=x=>String((x&&typeof x==='object')?(x.process_code||x.code||''):x||'');
 const stepsOf=p=>{let v=p[F.steps];if(typeof v==='string'){try{v=JSON.parse(v)}catch(e){v=v.split(/[,>→]/).map(x=>x.trim()).filter(Boolean)}}return Array.isArray(v)?v.map(stepCode):[]};
 const lineOf=(job,part,i)=>LINES.find(l=>l[F.ljob]===job&&l[F.lpart]===part&&Number(l[F.lstep])===i+1);
@@ -4651,7 +4700,7 @@ const F=${JSON.stringify(cols.map(c=>c.name))},T=${JSON.stringify(Object.fromEnt
 const HEAD=${JSON.stringify(head.map(c=>c.name))},ITEMS=${JSON.stringify(items.map(c=>c.name))},LIST=${JSON.stringify(listCols.map(c=>c.name))};
 const REQ=${JSON.stringify(head.filter(c=>c.req&&!c.pk).map(c=>c.name))},NGC=${JSON.stringify(ngCol?ngCol.name:null)},RESC=${JSON.stringify(resCol?resCol.name:null)};
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('ko-KR');const today=()=>new Date().toISOString().slice(0,10);
+const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('ko-KR');const today=()=>{const d=new Date(),z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
 const nowT=()=>new Date().toTimeString().slice(0,5);
 function msg(t){message.textContent=t}
 function paint(){for(const k of ITEMS){const el=document.querySelector('.item[data-k="'+k+'"]');if(!el)continue;
@@ -4690,17 +4739,17 @@ window.MES={search:render,save,setMessage:msg};clearForm();
 `;
 }
 function inputScreen(s,t,loc,lookups){
- const cols=colsOf(t),pk=cols.find(c=>c.pk)||cols[0];
+ const cols=colsOf(t),pk=cols.find(c=>c.pk)||cols[0],auto=autoNoConfig(t),al=alertConfig(t);
  const field=c=>c.formula?`<input id="f_${c.name}" class="field" readonly data-calc="1" title="계산식: ${esc(c.formula)}" style="background:#f3f7fb;color:#2f6fb5;font-weight:600">`:c.type==='bool'?`<div class="check"><input id="f_${c.name}" type="checkbox"></div>`:`<input id="f_${c.name}" class="field${c.req?' req':''}" ${c.type==='num'?'type="number"':c.type==='date'?'type="date"':''}${lookups.length&&/name$/.test(c.name)?` list="dl_${c.name}" autocomplete="off"`:''}>`;
  const dls=cols.filter(c=>!c.formula&&lookups.length&&/name$/.test(c.name)).map(c=>`<datalist id="dl_${c.name}"></datalist>`).join('');
  return `<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${s.name}</title>
-<script src="app_config.js"><\/script><link rel="stylesheet" href="mes_screen.css"><style>.body{grid-template-rows:auto minmax(0,1fr)}input[data-calc]{border-color:#b9cce2}</style></head>
+<script src="app_config.js"><\/script><link rel="stylesheet" href="mes_screen.css"><style>.body{grid-template-rows:auto minmax(0,1fr)}input[data-calc]{border-color:#b9cce2}.duealert{display:none;padding:6px 9px;border:1px solid #f0c36d;background:#fff8e8;color:#8a5a00;font-weight:600}.duealert.on{display:block}.duealert.over{border-color:#e5a09a;background:#fff0ee;color:#a3261d}</style></head>
 <body><div class="screen">
   <div class="title"><h1>${s.name}</h1><small>${loc}</small></div>
   <div class="body">
     <section class="panel"><div class="cap">${s.name} 입력 <span class="right" id="modeTxt">신규</span></div>
-      <div class="formgrid" style="border-left:0;border-top:0">
+      ${al.enabled&&al.dateCol?'<div id="dueAlert" class="duealert"></div>':''}<div class="formgrid" style="border-left:0;border-top:0">
 ${cols.map(c=>`        <div class="lab">${c.label||c.name}${c.formula?' <span title="자동 계산" style="color:#2f6fb5">ƒx</span>':''}</div>${field(c)}`).join('\n')}
       </div>${dls}
       <div class="actions"><button class="btn primary" onclick="save()">▤ 저장</button><button class="btn" onclick="clearForm()">✕ 신규</button><button class="btn warn" onclick="remove()">✖ 삭제</button><button class="btn" onclick="exportCsv()">▤ EXCEL</button></div>
@@ -4709,28 +4758,31 @@ ${cols.map(c=>`        <div class="lab">${c.label||c.name}${c.formula?' <span ti
       <div class="tablewrap"><table><thead><tr>${cols.map(c=>`<th${c.type==='num'?' class="r"':''}>${c.label||c.name}${c.unit?` (${c.unit})`:''}</th>`).join('')}</tr></thead><tbody id="tbody"></tbody></table></div>
     </section>
   </div>
-  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">${pk.label||pk.name}를 비우고 저장하면 자동 채번됩니다.${cols.some(c=>c.formula)?' · ƒx 항목은 입력값에 따라 자동 계산됩니다.':''}</span></footer>
+  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">${auto.enabled?(pk.label||pk.name)+'를 비우면 '+autoNoPreview(t)+' 형식으로 자동 채번됩니다.':(pk.label||pk.name)+'는 직접 입력합니다.'}${cols.some(c=>c.formula)?' · ƒx 자동 계산':''}${al.enabled&&al.dateCol?' · 기한 '+al.days+'일 전 알림':''}</span></footer>
 </div>
 <script>
 const rows=[];window.rows=rows;let sel=null;
-const CM=${JSON.stringify(cols)},CMAP=Object.fromEntries(CM.map(c=>[c.name,c])),F=CM.map(c=>c.name),CALC=CM.filter(c=>c.formula).map(c=>c.name),T=Object.fromEntries(CM.map(c=>[c.name,c.type])),PK='${pk.name}',REQ=CM.filter(c=>c.req&&!c.pk&&!c.formula).map(c=>c.name);
+const CM=${JSON.stringify(cols)},CMAP=Object.fromEntries(CM.map(c=>[c.name,c])),F=CM.map(c=>c.name),CALC=CM.filter(c=>c.formula).map(c=>c.name),T=Object.fromEntries(CM.map(c=>[c.name,c.type])),PK='${pk.name}',REQ=CM.filter(c=>c.req&&!c.pk&&!c.formula).map(c=>c.name),AUTO=${JSON.stringify(auto)},ALERT=${JSON.stringify(al)};
 ${calcRuntimeJs()}
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('ko-KR');const today=()=>new Date().toISOString().slice(0,10);
+const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('ko-KR');const today=()=>{const d=new Date(),z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
 function msg(t){message.textContent=t}
 function cell(r,f){calcApplyRow(r,CM);const c=CMAP[f],v=r[f];return c.formula?esc(calcFormat(v,c,true)):T[f]==='num'?fmt(v):T[f]==='bool'?(v?'✓':''):esc(v)}
 function readForm(base){const o={...(base||{})};for(const f of F){const c=CMAP[f];if(c.formula)continue;const el=$('f_'+f);if(!el)continue;o[f]=T[f]==='bool'?el.checked:T[f]==='num'?(el.value===''?'':Number(el.value)):el.value}return calcApplyRow(o,CM)}
-function syncCalc(o){o=o?calcApplyRow(o,CM):readForm();for(const f of CALC){const el=$('f_'+f);if(el)el.value=calcFormat(o[f],CMAP[f],true)}return o}
+function dueState(o){if(!ALERT.enabled||!ALERT.dateCol||!o?.[ALERT.dateCol])return null;const a=new Date(today()),b=new Date(o[ALERT.dateCol]);if(!Number.isFinite(+b))return null;const d=Math.ceil((b-a)/864e5);return{days:d,kind:d<0?'over':d<=ALERT.days?'soon':'ok'}}
+function renderDue(o){const el=$('dueAlert');if(!el)return;const z=dueState(o);el.className='duealert'+(z&&z.kind!=='ok'?' on'+(z.kind==='over'?' over':''):'');if(z&&z.kind==='over')el.textContent='⛔ 기한 '+Math.abs(z.days)+'일 초과';else if(z&&z.kind==='soon')el.textContent='⏰ 기한까지 '+z.days+'일 남았습니다.';else el.textContent=''}
+function syncCalc(o){o=o?calcApplyRow(o,CM):readForm();for(const f of CALC){const el=$('f_'+f);if(el)el.value=calcFormat(o[f],CMAP[f],true)}renderDue(o);return o}
 function render(){rows.forEach(r=>calcApplyRow(r,CM));const q=($('q').value||'').trim().toLowerCase();
  const view=rows.filter(r=>!q||F.some(f=>String(r[f]??'').toLowerCase().includes(q))).sort((a,b)=>String(b[PK]).localeCompare(String(a[PK])));
  tbody.innerHTML=view.length?view.map(r=>'<tr class="'+(r[PK]===sel?'sel':'')+'" onclick="pick(\\''+esc(String(r[PK]))+'\\')">'+F.map(f=>'<td'+(T[f]==='num'?' class="r"':'')+'>'+cell(r,f)+'</td>').join('')+'</tr>').join('')
   :'<tr><td colspan="'+F.length+'" class="empty">등록된 자료가 없습니다.</td></tr>';countText.textContent=view.length+'건'}
 function pick(k){const r=rows.find(x=>String(x[PK])===k);if(!r)return;calcApplyRow(r,CM);sel=r[PK];F.forEach(f=>{const el=$('f_'+f);if(!el)return;const c=CMAP[f];if(c.formula)el.value=calcFormat(r[f],c,true);else if(T[f]==='bool')el.checked=!!r[f];else el.value=r[f]??''});modeTxt.textContent='수정: '+k;render();msg(k+' 을(를) 불러왔습니다.')}
-function clearForm(){sel=null;F.forEach(f=>{const el=$('f_'+f),c=CMAP[f];if(!el||c.formula)return;if(T[f]==='bool')el.checked=false;else el.value=T[f]==='date'?today():''});syncCalc();modeTxt.textContent='신규';render();msg('새 자료를 입력하세요.');$('f_'+PK)?.focus()}
-function nextNo(){const p='${(pk.name.split('_')[0]||'no').slice(0,2).toUpperCase()}-'+today().slice(2).replaceAll('-','')+'-';const n=rows.filter(r=>String(r[PK]).startsWith(p)).map(r=>Number(String(r[PK]).slice(p.length))||0);return p+String((n.length?Math.max(...n):0)+1).padStart(3,'0')}
+function clearForm(){sel=null;F.forEach(f=>{const el=$('f_'+f),c=CMAP[f];if(!el||c.formula)return;if(T[f]==='bool')el.checked=false;else el.value=T[f]==='date'&&!/due|deadline|approved|reviewed|closed|completed|next_|updated_at/i.test(f)?today():''});syncCalc();modeTxt.textContent='신규';render();msg('새 자료를 입력하세요.');$('f_'+PK)?.focus()}
+function autoDate(){const z=today().replaceAll('-','');return AUTO.date==='YYYYMMDD'?z:AUTO.date==='YYMMDD'?z.slice(2):AUTO.date==='YYMM'?z.slice(2,6):AUTO.date==='YYYY'?z.slice(0,4):''}
+function nextNo(){if(!AUTO.enabled)return '';const base=[AUTO.prefix,autoDate()].filter(Boolean).join(AUTO.sep),p=base?base+AUTO.sep:'';const n=rows.filter(r=>String(r[PK]).startsWith(p)).map(r=>Number(String(r[PK]).slice(p.length))||0);return p+String((n.length?Math.max(...n):0)+1).padStart(AUTO.digits,'0')}
 function save(){
  for(const f of REQ){const el=$('f_'+f);if(el&&T[f]!=='bool'&&!String(el.value).trim())return msg((el.previousElementSibling?.textContent||f)+' 은(는) 필수입니다.')}
- const no=String($('f_'+PK).value||'').trim()||nextNo();const o=readForm();o[PK]=no;calcApplyRow(o,CM);
+ let no=String($('f_'+PK).value||'').trim();if(!no){if(AUTO.enabled)no=nextNo();else return msg((CMAP[PK]?.label||PK)+' 을(를) 입력하세요.')}const o=readForm();o[PK]=no;calcApplyRow(o,CM);
  if(sel&&sel!==no){const i=rows.findIndex(r=>r[PK]===sel);if(i>=0)rows.splice(i,1)}
  const i=rows.findIndex(r=>r[PK]===no);if(i>=0)rows[i]=o;else rows.push(o);sel=no;$('f_'+PK).value=no;syncCalc(o);modeTxt.textContent='수정: '+no;render();msg(no+' 저장했습니다.')}
 function remove(){if(!sel)return msg('삭제할 행을 목록에서 선택하세요.');if(!confirm(sel+' 을(를) 삭제할까요?'))return;const i=rows.findIndex(r=>r[PK]===sel);if(i>=0)rows.splice(i,1);const k=sel;clearForm();msg(k+' 삭제했습니다.')}
@@ -4747,11 +4799,11 @@ window.MES={search:render,save,setMessage:msg};clearForm();
 `;
 }
 function statusScreen(s,t,loc){
- const cols=colsOf(t),pk=cols.find(c=>c.pk)||cols[0],dateCol=cols.find(c=>c.type==='date'&&!c.formula),textCols=cols.filter(c=>c.type==='text'&&!c.pk&&!c.formula).slice(0,3),numCols=cols.filter(c=>c.type==='num');
+ const cols=colsOf(t),pk=cols.find(c=>c.pk)||cols[0],dateCol=cols.find(c=>c.type==='date'&&!c.formula),textCols=cols.filter(c=>c.type==='text'&&!c.pk&&!c.formula).slice(0,3),numCols=cols.filter(c=>c.type==='num'),al=alertConfig(t);
  return `<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${s.name}</title>
 <script src="app_config.js"><\/script><link rel="stylesheet" href="mes_screen.css"><style>.body{grid-template-rows:auto minmax(0,1fr)}tfoot td{position:sticky;bottom:0;background:#eef2f5;font-weight:700;border-top:1px solid var(--line)}
-.dl{display:grid;grid-template-columns:90px 1fr 90px 1fr;border:1px solid var(--line);border-right:0;border-bottom:0}.dl>*{border-right:1px solid #d6dde3;border-bottom:1px solid #d6dde3;padding:5px 8px;min-width:0}.dl .lab{justify-content:flex-start}</style></head>
+.dl{display:grid;grid-template-columns:90px 1fr 90px 1fr;border:1px solid var(--line);border-right:0;border-bottom:0}.dl>*{border-right:1px solid #d6dde3;border-bottom:1px solid #d6dde3;padding:5px 8px;min-width:0}.dl .lab{justify-content:flex-start}tbody tr.due td{background:#fff8e8}tbody tr.over td{background:#fff0ee;color:#9b2c23}</style></head>
 <body><div class="screen">
   <div class="title"><h1>${s.name}</h1><small>${loc}</small></div>
   <div class="body">
@@ -4769,18 +4821,19 @@ function statusScreen(s,t,loc){
 <div class="modal-bg" id="dlg"><div class="modal"><div class="t">상세 <span class="x" onclick="dlg.classList.remove('on')">×</span></div><div class="bd"><div class="dl" id="dlBody"></div></div><div class="bt"><button class="btn" onclick="dlg.classList.remove('on')">닫기</button></div></div></div>
 <script>
 const data=[];window.data=data;let view=[],sel=-1;
-const CM=${JSON.stringify(cols)},CMAP=Object.fromEntries(CM.map(c=>[c.name,c])),F=CM.map(c=>c.name),L=Object.fromEntries(CM.map(c=>[c.name,c.label||c.name])),T=Object.fromEntries(CM.map(c=>[c.name,c.type])),PK='${pk.name}',DC=${dateCol?`'${dateCol.name}'`:'null'},TC=${JSON.stringify(textCols.map(c=>c.name))},NC=${JSON.stringify(numCols.map(c=>c.name))};
+const CM=${JSON.stringify(cols)},CMAP=Object.fromEntries(CM.map(c=>[c.name,c])),F=CM.map(c=>c.name),L=Object.fromEntries(CM.map(c=>[c.name,c.label||c.name])),T=Object.fromEntries(CM.map(c=>[c.name,c.type])),PK='${pk.name}',DC=${dateCol?`'${dateCol.name}'`:'null'},TC=${JSON.stringify(textCols.map(c=>c.name))},NC=${JSON.stringify(numCols.map(c=>c.name))},ALERT=${JSON.stringify(al)};
 ${calcRuntimeJs()}
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('ko-KR');
 function msg(t){message.textContent=t}
 function cell(r,f){calcApplyRow(r,CM);const c=CMAP[f],v=r[f];return c.formula?esc(calcFormat(v,c,true)):T[f]==='num'?fmt(v):T[f]==='bool'?(v?'✓':''):esc(v)}
+function dueState(r){if(!ALERT.enabled||!ALERT.dateCol||!r?.[ALERT.dateCol])return '';const a=new Date(new Date().toISOString().slice(0,10)),b=new Date(r[ALERT.dateCol]);if(!Number.isFinite(+b))return '';const d=Math.ceil((b-a)/864e5);return d<0?'over':d<=ALERT.days?'due':''}
 function search(){data.forEach(r=>calcApplyRow(r,CM));const f=DC?$('q_from').value:'',t=DC?$('q_to').value:'',pkq=$('q_pk').value.trim().toLowerCase();
  view=data.filter(r=>(!f||(r[DC]||'')>=f)&&(!t||(r[DC]||'')<=t)&&(!pkq||String(r[PK]??'').toLowerCase().includes(pkq))&&TC.every(c=>{const q=$('q_'+c).value.trim().toLowerCase();return !q||String(r[c]??'').toLowerCase().includes(q)}))
   .sort((a,b)=>DC?String(b[DC]).localeCompare(String(a[DC])):String(b[PK]).localeCompare(String(a[PK])));sel=-1;render();msg('조회결과 '+view.length+'건')}
 function resetQ(){document.querySelectorAll('.filters input').forEach(i=>i.value='');search()}
-function render(){view.forEach(r=>calcApplyRow(r,CM));tbody.innerHTML=view.length?view.map((r,i)=>'<tr class="'+(i===sel?'sel':'')+'" onclick="pick('+i+')"><td class="c">'+(i+1)+'</td>'+F.map(f=>'<td'+(T[f]==='num'?' class="r"':'')+'>'+cell(r,f)+'</td>').join('')+'</tr>').join('')
+function render(){view.forEach(r=>calcApplyRow(r,CM));tbody.innerHTML=view.length?view.map((r,i)=>'<tr class="'+(i===sel?'sel ':'')+dueState(r)+'" onclick="pick('+i+')"><td class="c">'+(i+1)+'</td>'+F.map(f=>'<td'+(T[f]==='num'?' class="r"':'')+'>'+cell(r,f)+'</td>').join('')+'</tr>').join('')
   :'<tr><td colspan="'+(F.length+1)+'" class="empty">조회 결과가 없습니다.</td></tr>';
- NC.forEach(c=>{const el=$('t_'+c);if(el)el.textContent=calcFormat(view.reduce((s,r)=>s+(Number(r[c])||0),0),CMAP[c],!!CMAP[c]?.unit)});countText.textContent=view.length+'건'}
+ NC.forEach(c=>{const el=$('t_'+c);if(el)el.textContent=calcFormat(view.reduce((s,r)=>s+(Number(r[c])||0),0),CMAP[c],!!CMAP[c]?.unit)});const an=view.filter(r=>dueState(r)).length;countText.textContent=view.length+'건'+(an?' · ⏰ '+an+'건':'')}
 function pick(i){sel=i;render();const r=view[i];dlBody.innerHTML=F.map(f=>'<div class="lab">'+L[f]+(CMAP[f].formula?' ƒx':'')+'</div><div>'+cell(r,f)+'</div>').join('');dlg.classList.add('on')}
 function delRow(){if(sel<0)return msg('삭제할 행을 선택하세요.');const r=view[sel];dlg.classList.remove('on');if(!confirm(r[PK]+' 을(를) 삭제할까요?'))return;const i=data.findIndex(x=>x[PK]===r[PK]);if(i>=0)data.splice(i,1);search();msg(r[PK]+' 삭제했습니다.')}
 function exportCsv(){data.forEach(r=>calcApplyRow(r,CM));const csv='\\ufeff'+[F.map(f=>L[f]),...view.map(r=>F.map(f=>r[f]))].map(a=>a.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='${slug(s.name)}.csv';a.click()}
@@ -4796,7 +4849,7 @@ window.MES={search,exportCsv,setMessage:msg};render();
 /* ── 헤더 + 명세 화면 (전표형) ─────────────────────────────────────
    위: 헤더 입력폼(부모 테이블)  가운데: 명세 그리드(자식 테이블, 행 추가/삭제)  아래: 전표 목록 */
 function masterDetailScreen(scr,parent,child,edge,loc,lookups){
- const P=colsOf(parent),C=colsOf(child);
+ const P=colsOf(parent),C=colsOf(child),auto=autoNoConfig(parent),al=alertConfig(parent);
  const lk=linkCol(parent,child,edge);
  const pk=(P.find(c=>c.pk)||P[0]).name;
  const CC=C.filter(c=>c.name!==lk.child&&!c.pk);           /* 명세 그리드에 보일 컬럼 */
@@ -4810,12 +4863,12 @@ function masterDetailScreen(scr,parent,child,edge,loc,lookups){
 <style>.body{grid-template-rows:auto minmax(120px,1fr) minmax(0,1fr)}
 .grid td{padding:2px}.grid input,.grid select{width:100%;height:24px;border:1px solid #cfd6df;border-radius:3px;padding:0 5px;background:#fff}
 .grid input:focus{outline:0;border-color:var(--blue)}.grid td.x{width:28px;text-align:center}
-.grid .del{color:#b03a34;border:0;background:none;font-size:14px}.grid input[readonly],input[data-calc]{background:#f3f7fb;color:#2f6fb5;font-weight:600;border-color:#b9cce2}</style></head>
+.grid .del{color:#b03a34;border:0;background:none;font-size:14px}.grid input[readonly],input[data-calc]{background:#f3f7fb;color:#2f6fb5;font-weight:600;border-color:#b9cce2}.duealert{display:none;padding:6px 9px;border:1px solid #f0c36d;background:#fff8e8;color:#8a5a00;font-weight:600}.duealert.on{display:block}.duealert.over{border-color:#e5a09a;background:#fff0ee;color:#a3261d}</style></head>
 <body><div class="screen">
   <div class="title"><h1>${scr.name}</h1><small>${loc}</small></div>
   <div class="body">
     <section class="panel"><div class="cap">헤더 정보 <span class="right" id="modeTxt">신규</span></div>
-      <div class="formgrid" style="border-left:0;border-top:0">
+      ${al.enabled&&al.dateCol?'<div id="dueAlert" class="duealert"></div>':''}<div class="formgrid" style="border-left:0;border-top:0">
 ${P.map(c=>`        <div class="lab">${c.label||c.name}${c.formula?' <span title="자동 계산" style="color:#2f6fb5">ƒx</span>':''}</div>${field(c)}`).join('\n')}
       </div>
       <div class="actions"><button class="btn primary" onclick="save()">▤ 저장</button><button class="btn" onclick="clearForm()">✕ 신규</button><button class="btn warn" onclick="remove()">✖ 삭제</button><button class="btn" onclick="exportCsv()">▤ EXCEL</button></div>
@@ -4836,20 +4889,22 @@ ${P.map(c=>`        <div class="lab">${c.label||c.name}${c.formula?' <span title
       </table></div>
     </section>
   </div>
-  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">헤더를 입력하고 명세 행을 추가한 뒤 [저장]. ${P.find(c=>c.pk)?.label||pk} 를 비우면 자동 채번됩니다.${[...P,...C].some(c=>c.formula)?' · ƒx 항목은 자동 계산됩니다.':''}</span></footer>
+  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">헤더를 입력하고 명세 행을 추가한 뒤 [저장]. ${auto.enabled?(P.find(c=>c.pk)?.label||pk)+'를 비우면 '+autoNoPreview(parent)+' 형식으로 자동 채번됩니다.':(P.find(c=>c.pk)?.label||pk)+'는 직접 입력합니다.'}${[...P,...C].some(c=>c.formula)?' · ƒx 자동 계산':''}${al.enabled&&al.dateCol?' · 기한 '+al.days+'일 전 알림':''}</span></footer>
 </div>
 <script>
 const rows=[];window.rows=rows;const lines=[];window.lines=lines;let sel=null,draft=[];
-const PM=${JSON.stringify(P)},PMAP=Object.fromEntries(PM.map(c=>[c.name,c])),PF=PM.map(c=>c.name),PT=Object.fromEntries(PM.map(c=>[c.name,c.type])),PCALC=PM.filter(c=>c.formula).map(c=>c.name),PK='${pk}';
+const PM=${JSON.stringify(P)},PMAP=Object.fromEntries(PM.map(c=>[c.name,c])),PF=PM.map(c=>c.name),PT=Object.fromEntries(PM.map(c=>[c.name,c.type])),PCALC=PM.filter(c=>c.formula).map(c=>c.name),PK='${pk}',AUTO=${JSON.stringify(auto)},ALERT=${JSON.stringify(al)};
 const CM=${JSON.stringify(C)},CMAP=Object.fromEntries(CM.map(c=>[c.name,c])),CF=${JSON.stringify(CC.map(c=>c.name))},CT=Object.fromEntries(CM.map(c=>[c.name,c.type])),LINK='${lk.child}',CKEY='${ckey}';
 const CREQ=PM.filter(c=>c.req&&!c.pk&&!c.formula).map(c=>c.name);
 ${calcRuntimeJs()}
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('ko-KR');const today=()=>new Date().toISOString().slice(0,10);
+const fmt=n=>(n===''||n==null)?'':Number(n).toLocaleString('ko-KR');const today=()=>{const d=new Date(),z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
 function msg(t){message.textContent=t}
 function cell(r,f,T,M){const c=M[f],v=r[f];return c?.formula?esc(calcFormat(v,c,true)):T[f]==='num'?fmt(v):T[f]==='bool'?(v?'✓':''):esc(v)}
 function readHead(base){const o={...(base||{})};for(const f of PF){const c=PMAP[f];if(c.formula)continue;const el=$('f_'+f);if(!el)continue;o[f]=PT[f]==='bool'?el.checked:PT[f]==='num'?(el.value===''?'':Number(el.value)):el.value}return calcApplyRow(o,PM)}
-function syncHead(o){o=o?calcApplyRow(o,PM):readHead();for(const f of PCALC){const el=$('f_'+f);if(el)el.value=calcFormat(o[f],PMAP[f],true)}return o}
+function dueState(o){if(!ALERT.enabled||!ALERT.dateCol||!o?.[ALERT.dateCol])return null;const a=new Date(today()),b=new Date(o[ALERT.dateCol]);if(!Number.isFinite(+b))return null;const d=Math.ceil((b-a)/864e5);return{days:d,kind:d<0?'over':d<=ALERT.days?'soon':'ok'}}
+function renderDue(o){const el=$('dueAlert');if(!el)return;const z=dueState(o);el.className='duealert'+(z&&z.kind!=='ok'?' on'+(z.kind==='over'?' over':''):'');if(z&&z.kind==='over')el.textContent='⛔ 기한 '+Math.abs(z.days)+'일 초과';else if(z&&z.kind==='soon')el.textContent='⏰ 기한까지 '+z.days+'일 남았습니다.';else el.textContent=''}
+function syncHead(o){o=o?calcApplyRow(o,PM):readHead();for(const f of PCALC){const el=$('f_'+f);if(el)el.value=calcFormat(o[f],PMAP[f],true)}renderDue(o);return o}
 
 /* ── 명세 그리드 ── */
 function renderLines(){
@@ -4886,16 +4941,17 @@ function pick(k){
  draft=lines.filter(l=>String(l[LINK])===String(sel)).map(l=>{const o={};for(const f of CF)o[f]=l[f];o.__k=l[CKEY];calcApplyRow(o,CM);return o});
  modeTxt.textContent='수정: '+k;renderLines();renderList();msg(k+' 을(를) 불러왔습니다. (명세 '+draft.length+'행)');
 }
-function clearForm(){sel=null;PF.forEach(f=>{const el=$('f_'+f),c=PMAP[f];if(!el||c.formula)return;if(PT[f]==='bool')el.checked=false;else el.value=PT[f]==='date'?today():''});
+function clearForm(){sel=null;PF.forEach(f=>{const el=$('f_'+f),c=PMAP[f];if(!el||c.formula)return;if(PT[f]==='bool')el.checked=false;else el.value=PT[f]==='date'&&!/due|deadline|approved|reviewed|closed|completed|next_|updated_at/i.test(f)?today():''});
  syncHead();draft=[];modeTxt.textContent='신규';renderLines();renderList();msg('새 전표를 입력하세요.');$('f_'+PK)?.focus()}
-function nextNo(){const p='${pref}-'+today().slice(2).replaceAll('-','')+'-';const n=rows.filter(r=>String(r[PK]).startsWith(p)).map(r=>Number(String(r[PK]).slice(p.length))||0);
- return p+String((n.length?Math.max(...n):0)+1).padStart(3,'0')}
+function autoDate(){const z=today().replaceAll('-','');return AUTO.date==='YYYYMMDD'?z:AUTO.date==='YYMMDD'?z.slice(2):AUTO.date==='YYMM'?z.slice(2,6):AUTO.date==='YYYY'?z.slice(0,4):''}
+function nextNo(){if(!AUTO.enabled)return '';const base=[AUTO.prefix,autoDate()].filter(Boolean).join(AUTO.sep),p=base?base+AUTO.sep:'';const n=rows.filter(r=>String(r[PK]).startsWith(p)).map(r=>Number(String(r[PK]).slice(p.length))||0);
+ return p+String((n.length?Math.max(...n):0)+1).padStart(AUTO.digits,'0')}
 function nextLineKey(base,i){return base+'-'+String(i+1).padStart(2,'0')}
 
 function save(){
  for(const f of CREQ){const el=$('f_'+f);if(el&&PT[f]!=='bool'&&!String(el.value).trim())return msg((el.previousElementSibling?.textContent||f)+' 은(는) 필수입니다.')}
  if(!draft.length)return msg('명세를 한 행 이상 입력하세요.');
- const no=String($('f_'+PK).value||'').trim()||nextNo();
+ let no=String($('f_'+PK).value||'').trim();if(!no){if(AUTO.enabled)no=nextNo();else return msg((PMAP[PK]?.label||PK)+' 을(를) 입력하세요.')}
  const head=readHead();head[PK]=no;calcApplyRow(head,PM);
  if(sel&&sel!==no){const i=rows.findIndex(r=>r[PK]===sel);if(i>=0)rows.splice(i,1);
   for(let i=lines.length-1;i>=0;i--)if(String(lines[i][LINK])===String(sel))lines.splice(i,1)}
