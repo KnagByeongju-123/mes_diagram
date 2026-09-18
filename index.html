@@ -170,6 +170,8 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
     <button onclick="fitAll()">⤢ 전체 보기</button>
   </div></div>
 
+  <div class="dd"><button class="tb line" onclick="ddToggle(this)" id="skinBtn" title="생성/미리보기 화면의 CSS 테마">🎨 테마 ▾</button><div class="menu" id="skinMenu"></div></div>
+
   <div class="dd"><button class="tb line" onclick="ddToggle(this)">가져오기 ▾</button><div class="menu">
     <button onclick="openCrawl()">🌐 웹 사이트 · GitHub · 파일에서 가져오기</button>
     <button onclick="importJson()">⇧ 설계 JSON 파일 열기</button>
@@ -383,7 +385,7 @@ function render(){
   const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','node'+(sel&&sel.node===n.id?' sel':''));g.setAttribute('transform',`translate(${n.x},${n.y})`);g.dataset.id=n.id;
   let body='';
   if(n.type==='table'){const cols=n.meta.cols||[];body=cols.length?cols.map((c,i)=>`<text class="col${c.pk?' pk':''}" x="10" y="${44+i*17}">${c.pk?'🔑 ':''}${esc(c.name)}<tspan fill="#8a94a6"> ${esc(c.label||'')}</tspan><tspan fill="#b0b8c4" font-size="10"> ${c.type}</tspan>${c.sample?`<tspan fill="#2e7d5b" font-size="10.5"> ${esc(c.sample)}</tspan>`:''}</text>`).join(''):`<text class="sub" x="10" y="44">컬럼 없음 — 우측에서 추가</text>`}
-  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':n.meta.kind==='board'?'보드':n.meta.kind==='perm'?'권한관리':n.meta.kind==='paste'?'붙여넣기':n.meta.kind==='dash'?'대시보드':'기타'}${detailOf(n)?' · 헤더+명세':''}</text>`;
+  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':n.meta.kind==='board'?'보드':n.meta.kind==='perm'?'권한관리':n.meta.kind==='paste'?'붙여넣기':n.meta.kind==='dash'?'대시보드':'기타'}${detailOf(n)?' · 헤더+명세':''}${n.meta.skin&&typeof SKIN!=='undefined'&&SKIN[n.meta.skin]?' · 🎨'+SKIN[n.meta.skin].name.replace(/^mm /,''):''}</text>`;
   else body=`<text class="sub" x="10" y="38">${esc(n.meta.desc||n.meta.icon||'')}</text>`;
   g.innerHTML=`<rect class="box" width="${w}" height="${h}"/><rect class="head" width="${w}" height="26" fill="${t.color}"/><rect width="${w}" height="8" y="18" fill="${t.color}"/>
    <text class="title" x="10" y="18">${esc(n.name)}</text><text class="title" x="${w-8}" y="18" text-anchor="end" font-size="10" opacity=".7">${esc(n.type==='table'&&n.meta.host?String(n.meta.host).slice(0,14):t.name)}</text>${body}
@@ -504,6 +506,7 @@ function renderPanel(){
  if(n.type==='section'){h+=`<div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div>`}
  if(n.type==='screen'){h+=`<div class="row2"><div class="f"><label>파일명</label><input id="f_file" value="${esc(n.meta.file||'')}" placeholder="order_input.html"></div>
    <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="perm" ${n.meta.kind==='perm'?'selected':''}>권한관리 (사용자+메뉴별 4권한 트리)</option><option value="paste" ${n.meta.kind==='paste'?'selected':''}>엑셀 붙여넣기 등록 (대량 품목)</option><option value="dash" ${n.meta.kind==='dash'?'selected':''}>대시보드 (KPI·알림·그룹별 상태표·자동갱신)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
+   <div class="f"><label>화면 CSS 테마 (이 화면만)</label><select id="f_skin"><option value="">설계 전체 테마 따름 — ${esc(SKIN[skinId()].name)}</option>${Object.entries(SKIN).map(([k,v])=>`<option value="${k}" ${n.meta.skin===k?'selected':''}>${esc(v.name)}</option>`).join('')}</select></div>
    <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewScreen()">▶ 화면 미리보기</button></div>
    <label class="ck" style="padding:4px 0"><input id="f_lock" type="checkbox" ${n.meta.locked?'checked':''}>이 화면은 직접 수정함 — 다시 생성해도 덮어쓰지 않기</label>
    <div class="f"><label>사용 테이블 (자동: "사용" 연결)</label><div style="color:#4a5568">${D.edges.filter(e=>e.from===n.id&&e.kind==='uses').map(e=>esc(N(e.to)?.name)).join(', ')||'<span style="color:#8a94a6">없음 — 오른쪽 ○ 를 테이블로 끌어 연결</span>'}</div></div>`}
@@ -528,6 +531,8 @@ function renderPanel(){
  if($('f_file'))$('f_file').oninput=e=>{n.meta.file=e.target.value.trim();render()};
  if($('f_kind'))$('f_kind').onchange=e=>{n.meta.kind=e.target.value;render()};
  if($('f_lock'))$('f_lock').onchange=e=>{n.meta.locked=e.target.checked;render()};
+ if($('f_skin'))$('f_skin').onchange=e=>{const v=e.target.value;if(v)n.meta.skin=v;else delete n.meta.skin;save();
+  if(pvDlg.classList.contains('on')&&pvNode===n)previewScreen(n.id)};
  if(n.type==='table'){
   P.querySelectorAll('.cols [data-k]').forEach(el=>{const ev=el.type==='checkbox'||el.tagName==='SELECT'?'change':'input';
    el.addEventListener(ev,()=>{const c=n.meta.cols[+el.dataset.i];c[el.dataset.k]=el.type==='checkbox'?el.checked:el.value.trim();render()})});
@@ -1266,84 +1271,84 @@ const BUILTIN=[
   /* 0 대시보드 */
   {type:'module',name:'대시보드',meta:{icon:'▦',desc:'통합 현황 · 설비가동 · 업무현황 · 게시판'},dx:0,dy:0},
   {type:'section',name:'현황판',meta:{icon:'▦'},dx:210,dy:0},
-  {type:'screen',name:'통합 대시보드',meta:{file:'mes_main.html',kind:'dash'},dx:420,dy:0},
-  {type:'screen',name:'설비 가동현황',meta:{file:'counter_dashboard.html',kind:'dash'},dx:420,dy:70},
-  {type:'screen',name:'인원별 업무현황',meta:{file:'work_status.html',kind:'status'},dx:420,dy:140},
-  {type:'screen',name:'수정요청 게시판',meta:{file:'board.html',kind:'board'},dx:420,dy:210},
+  {type:'screen',name:'통합 대시보드',meta:{file:'mes_main.html',kind:'dash',skin:'mm-erp'},dx:420,dy:0},
+  {type:'screen',name:'설비 가동현황',meta:{file:'counter_dashboard.html',kind:'dash',skin:'mm-dark'},dx:420,dy:70},
+  {type:'screen',name:'인원별 업무현황',meta:{file:'work_status.html',kind:'status',skin:'mm-dark'},dx:420,dy:140},
+  {type:'screen',name:'수정요청 게시판',meta:{file:'board.html',kind:'board',skin:'mm-card'},dx:420,dy:210},
   /* 6 영업/수주 */
   {type:'module',name:'영업/수주',meta:{icon:'▣',desc:'수주 · 납기 · 고객사 · 단가 · 출하'},dx:0,dy:380},
   {type:'section',name:'수주',meta:{icon:'▣'},dx:210,dy:380},
-  {type:'screen',name:'수주등록',meta:{file:'order_input.html',kind:'input'},dx:420,dy:380},
-  {type:'screen',name:'수주현황',meta:{file:'order_status.html',kind:'status'},dx:420,dy:450},
-  {type:'screen',name:'납기현황',meta:{file:'delivery_plan_status.html',kind:'status'},dx:420,dy:520},
-  {type:'screen',name:'고객사관리',meta:{file:'customer_management.html',kind:'input'},dx:420,dy:590},
-  {type:'screen',name:'단가관리',meta:{file:'unit_price_management.html',kind:'status'},dx:420,dy:660},
+  {type:'screen',name:'수주등록',meta:{file:'order_input.html',kind:'input',skin:'mm-erp'},dx:420,dy:380},
+  {type:'screen',name:'수주현황',meta:{file:'order_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:450},
+  {type:'screen',name:'납기현황',meta:{file:'delivery_plan_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:520},
+  {type:'screen',name:'고객사관리',meta:{file:'customer_management.html',kind:'input',skin:'mm-erp'},dx:420,dy:590},
+  {type:'screen',name:'단가관리',meta:{file:'unit_price_management.html',kind:'status',skin:'mm-erp'},dx:420,dy:660},
   {type:'section',name:'출하',meta:{icon:'🚚'},dx:210,dy:730},
-  {type:'screen',name:'출하계획',meta:{file:'ship_plan_status.html',kind:'status'},dx:420,dy:730},
-  {type:'screen',name:'출하실적',meta:{file:'ship_result_status.html',kind:'status'},dx:420,dy:800},
+  {type:'screen',name:'출하계획',meta:{file:'ship_plan_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:730},
+  {type:'screen',name:'출하실적',meta:{file:'ship_result_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:800},
   /* 16 생산관리 */
   {type:'module',name:'생산관리',meta:{icon:'⚙',desc:'생산계획 · 작업지시 · 생산일보 · OEE · 외주 · LOT추적'},dx:0,dy:940},
   {type:'section',name:'생산계획',meta:{icon:'▤'},dx:210,dy:940},
-  {type:'screen',name:'생산계획',meta:{file:'prod_plan_status.html',kind:'status'},dx:420,dy:940},
-  {type:'screen',name:'작업지시',meta:{file:'work_order_status.html',kind:'status'},dx:420,dy:1010},
+  {type:'screen',name:'생산계획',meta:{file:'prod_plan_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:940},
+  {type:'screen',name:'작업지시',meta:{file:'work_order_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:1010},
   {type:'section',name:'생산실적',meta:{icon:'⚙'},dx:210,dy:1080},
-  {type:'screen',name:'생산일보',meta:{file:'production_report.html',kind:'input'},dx:420,dy:1080},
-  {type:'screen',name:'생산현황',meta:{file:'prod_status.html',kind:'status'},dx:420,dy:1150},
-  {type:'screen',name:'설비종합효율(OEE)',meta:{file:'oee_status.html',kind:'dash'},dx:420,dy:1220},
+  {type:'screen',name:'생산일보',meta:{file:'production_report.html',kind:'input',skin:'mm-dark'},dx:420,dy:1080},
+  {type:'screen',name:'생산현황',meta:{file:'prod_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:1150},
+  {type:'screen',name:'설비종합효율(OEE)',meta:{file:'oee_status.html',kind:'dash',skin:'mm-erp'},dx:420,dy:1220},
   {type:'section',name:'외주관리',meta:{icon:'↔'},dx:210,dy:1290},
-  {type:'screen',name:'외주발주',meta:{file:'osp_order_status.html',kind:'status'},dx:420,dy:1290},
-  {type:'screen',name:'외주출고',meta:{file:'osp_issue_status.html',kind:'status'},dx:420,dy:1360},
-  {type:'screen',name:'외주입고',meta:{file:'osp_receipt_status.html',kind:'status'},dx:420,dy:1430},
-  {type:'screen',name:'외주재고',meta:{file:'osp_stock_status.html',kind:'status'},dx:420,dy:1500},
-  {type:'screen',name:'LOT 추적',meta:{file:'lot_trace_status.html',kind:'status'},dx:420,dy:1570},
-  {type:'screen',name:'LOT 계보도',meta:{file:'lot_tree_status.html',kind:'status'},dx:420,dy:1640},
+  {type:'screen',name:'외주발주',meta:{file:'osp_order_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:1290},
+  {type:'screen',name:'외주출고',meta:{file:'osp_issue_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:1360},
+  {type:'screen',name:'외주입고',meta:{file:'osp_receipt_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:1430},
+  {type:'screen',name:'외주재고',meta:{file:'osp_stock_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:1500},
+  {type:'screen',name:'LOT 추적',meta:{file:'lot_trace_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:1570},
+  {type:'screen',name:'LOT 계보도',meta:{file:'lot_tree_status.html',kind:'status',skin:'mm-erp'},dx:420,dy:1640},
   /* 31 품질관리 */
   {type:'module',name:'품질관리',meta:{icon:'✓',desc:'수입/공정/출하검사 · 부적합 · 8D · 개선활동 · 파레토'},dx:700,dy:0},
   {type:'section',name:'검사',meta:{icon:'✓'},dx:910,dy:0},
-  {type:'screen',name:'수입검사',meta:{file:'incoming_inspection.html',kind:'input'},dx:1120,dy:0},
-  {type:'screen',name:'공정검사',meta:{file:'process_inspection.html',kind:'input'},dx:1120,dy:70},
-  {type:'screen',name:'출하검사',meta:{file:'outgoing_inspection.html',kind:'input'},dx:1120,dy:140},
+  {type:'screen',name:'수입검사',meta:{file:'incoming_inspection.html',kind:'input',skin:'mm-erp'},dx:1120,dy:0},
+  {type:'screen',name:'공정검사',meta:{file:'process_inspection.html',kind:'input',skin:'mm-erp'},dx:1120,dy:70},
+  {type:'screen',name:'출하검사',meta:{file:'outgoing_inspection.html',kind:'input',skin:'mm-erp'},dx:1120,dy:140},
   {type:'section',name:'부적합',meta:{icon:'⚠'},dx:910,dy:210},
-  {type:'screen',name:'부적합 등록',meta:{file:'ncr_input.html',kind:'input'},dx:1120,dy:210},
-  {type:'screen',name:'8D 보고서',meta:{file:'capa_8d_input.html',kind:'input'},dx:1120,dy:280},
-  {type:'screen',name:'개선활동 보고',meta:{file:'improvement_report.html',kind:'input'},dx:1120,dy:350},
+  {type:'screen',name:'부적합 등록',meta:{file:'ncr_input.html',kind:'input',skin:'mm-erp'},dx:1120,dy:210},
+  {type:'screen',name:'8D 보고서',meta:{file:'capa_8d_input.html',kind:'input',skin:'mm-erp'},dx:1120,dy:280},
+  {type:'screen',name:'개선활동 보고',meta:{file:'improvement_report.html',kind:'input',skin:'mm-dark'},dx:1120,dy:350},
   {type:'section',name:'품질현황',meta:{icon:'📈'},dx:910,dy:420},
-  {type:'screen',name:'품질현황',meta:{file:'quality_status.html',kind:'status'},dx:1120,dy:420},
-  {type:'screen',name:'불량 파레토',meta:{file:'defect_pareto_status.html',kind:'dash'},dx:1120,dy:490},
+  {type:'screen',name:'품질현황',meta:{file:'quality_status.html',kind:'status',skin:'mm-erp'},dx:1120,dy:420},
+  {type:'screen',name:'불량 파레토',meta:{file:'defect_pareto_status.html',kind:'dash',skin:'mm-erp'},dx:1120,dy:490},
   /* 43 자재/재고 */
   {type:'module',name:'자재/재고',meta:{icon:'📦',desc:'원자재 입출고 · 원자재/재공/제품 재고'},dx:700,dy:630},
   {type:'section',name:'입출고',meta:{icon:'📦'},dx:910,dy:630},
-  {type:'screen',name:'원자재 입고',meta:{file:'material_in_status.html',kind:'input'},dx:1120,dy:630},
-  {type:'screen',name:'자재 출고',meta:{file:'material_out_status.html',kind:'input'},dx:1120,dy:700},
-  {type:'screen',name:'원자재 재고',meta:{file:'stock_raw_status.html',kind:'status'},dx:1120,dy:770},
-  {type:'screen',name:'재공 재고',meta:{file:'stock_wip_status.html',kind:'status'},dx:1120,dy:840},
-  {type:'screen',name:'제품 재고',meta:{file:'stock_fg_status.html',kind:'status'},dx:1120,dy:910},
+  {type:'screen',name:'원자재 입고',meta:{file:'material_in_status.html',kind:'input',skin:'mm-erp'},dx:1120,dy:630},
+  {type:'screen',name:'자재 출고',meta:{file:'material_out_status.html',kind:'input',skin:'mm-erp'},dx:1120,dy:700},
+  {type:'screen',name:'원자재 재고',meta:{file:'stock_raw_status.html',kind:'status',skin:'mm-erp'},dx:1120,dy:770},
+  {type:'screen',name:'재공 재고',meta:{file:'stock_wip_status.html',kind:'status',skin:'mm-erp'},dx:1120,dy:840},
+  {type:'screen',name:'제품 재고',meta:{file:'stock_fg_status.html',kind:'status',skin:'mm-erp'},dx:1120,dy:910},
   /* 50 금형관리 */
   {type:'module',name:'금형관리',meta:{icon:'🔧',desc:'금형부품재고(본사/1공장/원영) · 발주 · 금형수리 · 금형개발'},dx:1400,dy:0},
   {type:'section',name:'금형부품재고',meta:{icon:'🔧'},dx:1610,dy:0},
-  {type:'screen',name:'금형부품 재고(본사)',meta:{file:'head_moldpart_input.html',kind:'input'},dx:1820,dy:0},
-  {type:'screen',name:'금형부품 재고(1공장)',meta:{file:'first_factory_input.html',kind:'input'},dx:1820,dy:70},
-  {type:'screen',name:'금형부품 재고(원영)',meta:{file:'wonyoung_factory_input.html',kind:'input'},dx:1820,dy:140},
-  {type:'screen',name:'발주 / 외주현황',meta:{file:'purchase_order.html',kind:'input'},dx:1820,dy:210},
+  {type:'screen',name:'금형부품 재고(본사)',meta:{file:'head_moldpart_input.html',kind:'input',skin:'mm-dark'},dx:1820,dy:0},
+  {type:'screen',name:'금형부품 재고(1공장)',meta:{file:'first_factory_input.html',kind:'input',skin:'mm-dark'},dx:1820,dy:70},
+  {type:'screen',name:'금형부품 재고(원영)',meta:{file:'wonyoung_factory_input.html',kind:'input',skin:'mm-dark'},dx:1820,dy:140},
+  {type:'screen',name:'발주 / 외주현황',meta:{file:'purchase_order.html',kind:'input',skin:'mm-card'},dx:1820,dy:210},
   {type:'section',name:'금형수리',meta:{icon:'🛠'},dx:1610,dy:280},
-  {type:'screen',name:'수리의뢰',meta:{file:'mold_repair_request.html',kind:'input'},dx:1820,dy:280},
-  {type:'screen',name:'수리진행',meta:{file:'mold_repair_complete.html',kind:'input'},dx:1820,dy:350},
-  {type:'screen',name:'수리 이력조회·보고서',meta:{file:'mold_repair_report.html',kind:'status'},dx:1820,dy:420},
+  {type:'screen',name:'수리의뢰',meta:{file:'mold_repair_request.html',kind:'input',skin:'mm-dark'},dx:1820,dy:280},
+  {type:'screen',name:'수리진행',meta:{file:'mold_repair_complete.html',kind:'input',skin:'mm-dark'},dx:1820,dy:350},
+  {type:'screen',name:'수리 이력조회·보고서',meta:{file:'mold_repair_report.html',kind:'status',skin:'mm-dark'},dx:1820,dy:420},
   {type:'section',name:'금형개발',meta:{icon:'🧪'},dx:1610,dy:490},
-  {type:'screen',name:'Tryout 보고서',meta:{file:'tryout_report.html',kind:'input'},dx:1820,dy:490},
-  {type:'screen',name:'금형마스터',meta:{file:'mold_master.html',kind:'input'},dx:1820,dy:560},
-  {type:'screen',name:'금형 타발수명',meta:{file:'mold_life_status.html',kind:'status'},dx:1820,dy:630},
+  {type:'screen',name:'Tryout 보고서',meta:{file:'tryout_report.html',kind:'input',skin:'mm-dark'},dx:1820,dy:490},
+  {type:'screen',name:'금형마스터',meta:{file:'mold_master.html',kind:'input',skin:'mm-card'},dx:1820,dy:560},
+  {type:'screen',name:'금형 타발수명',meta:{file:'mold_life_status.html',kind:'status',skin:'mm-erp'},dx:1820,dy:630},
   /* 64 기준정보 */
   {type:'module',name:'기준정보',meta:{icon:'▥',desc:'품목 · 공정 · 설비 · 거래처 · 공통코드 · 보안'},dx:1400,dy:770},
   {type:'section',name:'마스터',meta:{icon:'▥'},dx:1610,dy:770},
-  {type:'screen',name:'품목정보',meta:{file:'item_master.html',kind:'input'},dx:1820,dy:770},
-  {type:'screen',name:'공정정보',meta:{file:'process_master.html',kind:'input'},dx:1820,dy:840},
-  {type:'screen',name:'설비정보',meta:{file:'machine_master.html',kind:'input'},dx:1820,dy:910},
-  {type:'screen',name:'거래처관리',meta:{file:'vendor_master.html',kind:'input'},dx:1820,dy:980},
-  {type:'screen',name:'공통코드',meta:{file:'code_master.html',kind:'input'},dx:1820,dy:1050},
+  {type:'screen',name:'품목정보',meta:{file:'item_master.html',kind:'input',skin:'mm-erp'},dx:1820,dy:770},
+  {type:'screen',name:'공정정보',meta:{file:'process_master.html',kind:'input',skin:'mm-erp'},dx:1820,dy:840},
+  {type:'screen',name:'설비정보',meta:{file:'machine_master.html',kind:'input',skin:'mm-erp'},dx:1820,dy:910},
+  {type:'screen',name:'거래처관리',meta:{file:'vendor_master.html',kind:'input',skin:'mm-erp'},dx:1820,dy:980},
+  {type:'screen',name:'공통코드',meta:{file:'code_master.html',kind:'input',skin:'mm-erp'},dx:1820,dy:1050},
   {type:'section',name:'시스템',meta:{icon:'🛡'},dx:1610,dy:1120},
-  {type:'screen',name:'보안 마스터',meta:{file:'security_master.html',kind:'input'},dx:1820,dy:1120},
-  {type:'screen',name:'카운터 생성기',meta:{file:'counter_generator.html',kind:'other'},dx:1820,dy:1190}],
+  {type:'screen',name:'보안 마스터',meta:{file:'security_master.html',kind:'input',skin:'mm-dark'},dx:1820,dy:1120},
+  {type:'screen',name:'카운터 생성기',meta:{file:'counter_generator.html',kind:'other',skin:'mm-dark'},dx:1820,dy:1190}],
   edges:[[0,1,'contains',''],[1,2,'contains',''],[1,3,'contains',''],[1,4,'contains',''],[1,5,'contains',''],
    [6,7,'contains',''],[7,8,'contains',''],[7,9,'contains',''],[7,10,'contains',''],[7,11,'contains',''],[7,12,'contains',''],
    [6,13,'contains',''],[13,14,'contains',''],[13,15,'contains',''],
@@ -1363,10 +1368,10 @@ const BUILTIN=[
 
  {cat:'mm 통합 MES',name:'mm 금형부품 재고 (공장별)',desc:'본사/1공장/원영 공장별 재고 테이블 — 입출고 이력 · 위치 QR · 월보고/발주/폐기 보고서 (mm_main)',data:{nodes:[
   {type:'section',name:'금형부품재고',meta:{icon:'🔧'},dx:0,dy:0},
-  {type:'screen',name:'공장 허브',meta:{file:'head_moldpart.html',kind:'other'},dx:210,dy:0},
-  {type:'screen',name:'금형부품 재고조회·입출고',meta:{file:'head_moldpart_input.html',kind:'input'},dx:210,dy:70},
-  {type:'screen',name:'위치(랙) QR 생성',meta:{file:'head_mold_QR.html',kind:'other'},dx:210,dy:140},
-  {type:'screen',name:'금형부품 재고 보고서',meta:{file:'head_mold_report.html',kind:'status'},dx:210,dy:210},
+  {type:'screen',name:'공장 허브',meta:{file:'head_moldpart.html',kind:'other',skin:'mm-dark'},dx:210,dy:0},
+  {type:'screen',name:'금형부품 재고(본사)',meta:{file:'head_moldpart_input.html',kind:'input',skin:'mm-dark'},dx:210,dy:70},
+  {type:'screen',name:'위치(랙) QR 생성',meta:{file:'head_mold_QR.html',kind:'other',skin:'mm-dark'},dx:210,dy:140},
+  {type:'screen',name:'금형부품 재고 보고서',meta:{file:'head_mold_report.html',kind:'status',skin:'mm-dark'},dx:210,dy:210},
   {type:'table',name:'press_inventory_items',meta:{host:'공장별 press_/f1_/f2_/f3_/wy_ 접두사',cols:[COL('id','ID','num',1),COL('name','품명','text',0,1),COL('category','분류','text',0,1),COL('spec','규격/모델'),COL('unit','단위(EA)'),COL('stock','현재고','num'),COL('min_stock','안전재고','num'),COL('price','단가(원)','num'),COL('location','위치(랙) — QR 대상'),COL('vendor','거래처'),COL('memo','비고'),COL('photo','사진(base64)'),COL('created_at','등록일','date'),COL('updated_at','수정일','date')]},dx:470,dy:0},
   {type:'table',name:'press_inventory_history',meta:{host:'공장별 접두사 동일',cols:[COL('id','ID','num',1),COL('item_id','품목ID','num',0,1),COL('item_name','품명'),COL('item_spec','규격(본사만)'),COL('type','구분(in 입고/out 출고)','text',0,1),COL('qty','수량','num',0,1),COL('worker','작업자(본사만)'),COL('memo','비고([이동]/[복사]/[취소처리])'),COL('cancelled','취소됨','bool'),COL('deleted','삭제됨','bool'),COL('created_at','일시','date')]},dx:470,dy:170},
   {type:'table',name:'reports',meta:{host:'본사 reports · 1공장 f1_reports · 원영 wy_reports',cols:[COL('id','ID','num',1),COL('doc_type','양식(report 월보고/purchase 발주/disposal 폐기)','text',0,1),COL('title','제목','text',0,1),COL('author','작성자'),COL('dept','부서'),COL('content','내용(JSON: items/reason)'),COL('comment','의견'),COL('footer_left','푸터 좌'),COL('footer_center','푸터 중'),COL('footer_right','푸터 우'),COL('created_at','작성일','date')]},dx:470,dy:390}],
@@ -1377,12 +1382,12 @@ const BUILTIN=[
 
  {cat:'mm 통합 MES',name:'mm 구매의뢰 · 발주(외주)',desc:'구매의뢰(PR) → 분할발주(PO) → 상태추적 → 진행보고서 PDF · 기초DB 카테고리/옵션 (purchase_order.html)',data:{nodes:[
   {type:'section',name:'구매/외주',meta:{icon:'◆'},dx:0,dy:0},
-  {type:'screen',name:'구매의뢰 등록·조회',meta:{file:'purchase_order.html',kind:'input'},dx:210,dy:0},
-  {type:'screen',name:'발주처리(분할발주)',meta:{file:'purchase_order.html#po',kind:'input'},dx:210,dy:70},
-  {type:'screen',name:'발주현황',meta:{file:'purchase_order.html#status',kind:'status'},dx:210,dy:140},
-  {type:'screen',name:'발주 진행보고서',meta:{file:'purchase_order.html#report',kind:'status'},dx:210,dy:210},
-  {type:'screen',name:'발주 분석',meta:{file:'purchase_order.html#analysis',kind:'dash'},dx:210,dy:280},
-  {type:'screen',name:'기초DB 관리',meta:{file:'purchase_order.html#settings',kind:'input'},dx:210,dy:350},
+  {type:'screen',name:'발주 / 외주현황',meta:{file:'purchase_order.html',kind:'input',skin:'mm-card'},dx:210,dy:0},
+  {type:'screen',name:'발주처리(분할발주)',meta:{file:'purchase_order.html#po',kind:'input',skin:'mm-card'},dx:210,dy:70},
+  {type:'screen',name:'발주현황',meta:{file:'purchase_order.html#status',kind:'status',skin:'mm-card'},dx:210,dy:140},
+  {type:'screen',name:'발주 진행보고서',meta:{file:'purchase_order.html#report',kind:'status',skin:'mm-card'},dx:210,dy:210},
+  {type:'screen',name:'발주 분석',meta:{file:'purchase_order.html#analysis',kind:'dash',skin:'mm-card'},dx:210,dy:280},
+  {type:'screen',name:'기초DB 관리',meta:{file:'purchase_order.html#settings',kind:'input',skin:'mm-card'},dx:210,dy:350},
   {type:'table',name:'pr_orders',meta:{cols:[COL('id','ID(수정금지)','num',1),COL('pr_no','구매의뢰번호'),COL('pr_date','구매의뢰일자','date'),COL('due_date','납기요청일자','date'),COL('status','진행상태(대기/검토중/승인/발주진행/완료/보류/취소)'),COL('category','구분','text',0,1),COL('customer','고객사','text',0,1),COL('request_type','의뢰품명'),COL('product_no','기종명'),COL('mold_no','금형제번'),COL('part_name','금형부품명칭','text',0,1),COL('part_no','금형부품번호'),COL('location','위치(상형/하형/다이/펀치)'),COL('detail','세부(좌/우/전/후/상/하)'),COL('unit1','치수단위1'),COL('dim1','치수1'),COL('unit2','치수단위2'),COL('dim2','치수2'),COL('unit3','치수단위3'),COL('dim3','치수3'),COL('unit4','치수단위4'),COL('dim4','치수4'),COL('qty','구매의뢰수량','num',0,1),COL('qty_unit','단위(EA/SET)'),COL('requester','구매의뢰자'),COL('approver','승인자'),COL('reviewer','검토자'),COL('review_date','검토일자','date'),COL('note','기타사항'),COL('photos','부품사진(JSON·최대4)'),COL('created_at','생성일시','date')]},dx:470,dy:0},
   {type:'table',name:'pr_purchases',meta:{cols:[COL('id','ID','num',1),COL('pr_order_id','구매의뢰ID','num',0,1),COL('po_no','발주번호'),COL('po_date','발주일자','date'),COL('delivery_date','입고예정일','date'),COL('vendor_outsource','외주업체(현재 위치)','text',0,1),COL('purchase_type','발주종류(공정)','text',0,1),COL('qty','발주수량','num',0,1),COL('qty_unit','단위'),COL('unit_price','단가','num'),COL('total_price','합계금액','num'),COL('status','상태(발주/입고대기/일부입고/입고완료/취소)','text',0,1),COL('note','비고'),COL('created_at','생성일시','date')]},dx:470,dy:540},
   {type:'table',name:'master_categories',meta:{cols:[COL('id','ID','num',1),COL('category_key','카테고리 키','text',0,1),COL('category_label','카테고리명','text',0,1),COL('sort_order','정렬순서','num'),COL('created_at','생성일시','date')]},dx:470,dy:790},
@@ -1401,9 +1406,9 @@ const BUILTIN=[
 
  {cat:'mm 통합 MES',name:'mm 금형수리 (의뢰 → 진행 → 보고서)',desc:'현장 수리의뢰(사진·긴급도) → 수리진행/완료(사용부품·비용) → 이력·리드타임·A4 보고서 (mm_mold_repair)',data:{nodes:[
   {type:'section',name:'금형수리',meta:{icon:'🛠'},dx:0,dy:0},
-  {type:'screen',name:'수리의뢰',meta:{file:'mold_repair_request.html',kind:'input'},dx:210,dy:0},
-  {type:'screen',name:'수리진행·완료',meta:{file:'mold_repair_complete.html',kind:'input'},dx:210,dy:70},
-  {type:'screen',name:'수리 이력조회·보고서',meta:{file:'mold_repair_report.html',kind:'status'},dx:210,dy:140},
+  {type:'screen',name:'수리의뢰',meta:{file:'mold_repair_request.html',kind:'input',skin:'mm-dark'},dx:210,dy:0},
+  {type:'screen',name:'수리진행',meta:{file:'mold_repair_complete.html',kind:'input',skin:'mm-dark'},dx:210,dy:70},
+  {type:'screen',name:'수리 이력조회·보고서',meta:{file:'mold_repair_report.html',kind:'status',skin:'mm-dark'},dx:210,dy:140},
   {type:'table',name:'mm_mold_repair',meta:{cols:[COL('id','ID','num',1),COL('repair_no','의뢰번호(MR-YYMMDD-###)','text',0,1),COL('mold_code','금형코드(재질-두께T-폭W-P피치)'),COL('mold_name','금형명'),COL('item_code','품번(매핑기종)'),COL('item_name','품명(고객사/매핑)'),COL('request_date','의뢰일','date',0,1),COL('request_user_id','의뢰자ID'),COL('request_user','의뢰자'),COL('request_dept','의뢰부서'),COL('machine_code','발생설비'),COL('shot_count','현재 SHOT수','num'),COL('defect_type','불량유형(파손/마모/치수/기타)'),COL('defect_part','발생부위'),COL('defect_desc','현상 상세'),COL('defect_photos','의뢰사진(JSON·최대5)'),COL('urgency','긴급도(urgent/normal/low)'),COL('status','상태(requested/in_progress/completed/cancelled)','text',0,1),COL('repair_start_dt','수리시작','date'),COL('repair_end_dt','수리완료','date'),COL('repair_user_id','수리자ID'),COL('repair_user','수리자'),COL('repair_type','수리유형(분해수리/부품교체/연마/용접/기타)'),COL('repair_action','조치내용'),COL('cause_analysis','원인 분석'),COL('prevention','재발방지 대책'),COL('parts_used','사용부품(JSON: 부품명/수량/비용)'),COL('repair_cost','총 수리비용','num'),COL('repair_photos','수리사진(JSON·최대5)'),COL('updated_at','수정일시','date')]},dx:470,dy:0},
   {type:'table',name:'mm_mold_master',meta:{cols:[COL('id','ID','num',1),COL('material','재질','text',0,1),COL('thick','두께(mm)','num',0,1),COL('width','폭(mm)','num',0,1),COL('pitch','피치','num',0,1),COL('code','조합코드'),COL('mapping','매핑 기종'),COL('mold_no','금형재번'),COL('model_code','기종 코드'),COL('vendor','고객사')]},dx:470,dy:560},
   {type:'table',name:'mm_user_pin',meta:{cols:[COL('id','ID','num',1),COL('name','이름'),COL('factory','공장'),COL('dept','부서'),COL('position','직위'),COL('pin_hash','PIN 해시(SHA-256)'),COL('blocked','차단','bool')]},dx:470,dy:760}],
@@ -1416,16 +1421,16 @@ const BUILTIN=[
 
  {cat:'mm 통합 MES',name:'mm 금형마스터',desc:'재질·두께·폭·피치 조합코드 관리, 매핑기종·금형재번·고객사, 엑셀 일괄등록 (mold_master.html)',data:{nodes:[
   {type:'section',name:'금형개발',meta:{icon:'🧪'},dx:0,dy:0},
-  {type:'screen',name:'금형마스터',meta:{file:'mold_master.html',kind:'input'},dx:210,dy:0},
+  {type:'screen',name:'금형마스터',meta:{file:'mold_master.html',kind:'input',skin:'mm-card'},dx:210,dy:0},
   {type:'table',name:'mm_mold_master',meta:{cols:[COL('id','ID','num',1),COL('material','재질','text',0,1),COL('thick','두께(mm)','num',0,1),COL('width','폭(mm)','num',0,1),COL('pitch','피치','num',0,1),COL('code','조합코드(재질-두께T-폭W-P피치)'),COL('mapping','매핑 기종(쉼표 구분)'),COL('mold_no','금형재번'),COL('model_code','기종 코드'),COL('density','비중','num'),COL('usage_g','소요량(g)','num'),COL('vendor','고객사'),COL('memo','메모')]},dx:470,dy:0}],
   edges:[[0,1,'contains',''],[1,2,'uses','등록·수정·삭제 · 엑셀/CSV 일괄등록(code 중복제거)']]}},
 
  {cat:'mm 통합 MES',name:'mm Tryout · 개선활동 (IATF)',desc:'금형 Tryout 차수별 기록(FMEA·관리계획서 플래그) → 개선활동 전/후 사진과 효과 → PDF 보고서',data:{nodes:[
   {type:'section',name:'보고서',meta:{icon:'📈'},dx:0,dy:0},
-  {type:'screen',name:'Tryout 보고서',meta:{file:'tryout_report.html',kind:'input'},dx:210,dy:0},
-  {type:'screen',name:'Tryout PDF 출력',meta:{file:'tryout_pdf.html',kind:'other'},dx:210,dy:70},
-  {type:'screen',name:'개선활동 보고',meta:{file:'improvement_report.html',kind:'input'},dx:210,dy:140},
-  {type:'screen',name:'개선 전후 PDF',meta:{file:'improvement_pdf.html',kind:'other'},dx:210,dy:210},
+  {type:'screen',name:'Tryout 보고서',meta:{file:'tryout_report.html',kind:'input',skin:'mm-dark'},dx:210,dy:0},
+  {type:'screen',name:'Tryout PDF 출력',meta:{file:'tryout_pdf.html',kind:'other',skin:'mm-dark'},dx:210,dy:70},
+  {type:'screen',name:'개선활동 보고',meta:{file:'improvement_report.html',kind:'input',skin:'mm-dark'},dx:210,dy:140},
+  {type:'screen',name:'개선 전후 PDF',meta:{file:'improvement_pdf.html',kind:'other',skin:'mm-dark'},dx:210,dy:210},
   {type:'table',name:'tryout_logs',meta:{cols:[COL('id','ID','num',1),COL('log_date','날짜','date',0,1),COL('mold_no','금형재번','text',0,1),COL('stage','차수(1차/2차/3차/양산전/기타)','text',0,1),COL('status','상태(진행중/완료/보류/문제발생)','text',0,1),COL('work_done','오늘 한 작업'),COL('issues','문제점·이슈'),COL('next_plan','다음 작업·계획'),COL('failure_category','이슈 분류(치수불량/표면결함/조립불량 등)'),COL('measurement_target','측정 항목·측정값'),COL('fmea_flag','FMEA 검토 필요','bool'),COL('cp_flag','관리계획서 반영','bool'),COL('photos','사진(JSON·30KB 압축)'),COL('author','작성자'),COL('dept','부서'),COL('created_at','등록일시','date')]},dx:470,dy:0},
   {type:'table',name:'improvement_logs',meta:{cols:[COL('id','ID','num',1),COL('source_log_id','원본 Tryout ID','num'),COL('improve_date','실시일','date',0,1),COL('mold_no','금형재번 / 개선대상([공정] 형태)'),COL('stage','차수'),COL('status','상태(진행중/검증중/완료)','text',0,1),COL('problem_category','문제 분류'),COL('problem_desc','문제 상세','text',0,1),COL('before_photos','개선 전 사진(JSON·최대3)'),COL('improvement_action','개선 내용','text',0,1),COL('after_photos','개선 후 사진(JSON·최대3)'),COL('effect_qualitative','정성적 효과'),COL('effect_quantitative','정량적 효과'),COL('fmea_update','FMEA 반영 완료','bool'),COL('cp_update','관리계획서 반영 완료','bool'),COL('author','작성자'),COL('dept','부서'),COL('memo','비고'),COL('created_at','등록일시','date')]},dx:470,dy:320},
   {type:'table',name:'mm_mold_master',meta:{cols:[COL('id','ID','num',1),COL('mold_no','금형재번'),COL('vendor','고객사'),COL('material','재질'),COL('model_code','기종 코드')]},dx:470,dy:680}],
@@ -1438,9 +1443,9 @@ const BUILTIN=[
 
  {cat:'mm 통합 MES',name:'mm 생산일보 · 설비 카운터',desc:'ESP32 타발 카운터(shot_count) 자동집계 + 호기별 작업조 생산일보(정지·불량·소재LOT) + 가동현황 대시보드',data:{nodes:[
   {type:'section',name:'생산실적',meta:{icon:'⚙'},dx:0,dy:0},
-  {type:'screen',name:'생산일보',meta:{file:'production_report.html',kind:'input'},dx:210,dy:0},
-  {type:'screen',name:'설비 가동현황',meta:{file:'counter_dashboard.html',kind:'dash'},dx:210,dy:70},
-  {type:'screen',name:'카운터 생성기',meta:{file:'counter_generator.html',kind:'other'},dx:210,dy:140},
+  {type:'screen',name:'생산일보',meta:{file:'production_report.html',kind:'input',skin:'mm-dark'},dx:210,dy:0},
+  {type:'screen',name:'설비 가동현황',meta:{file:'counter_dashboard.html',kind:'dash',skin:'mm-dark'},dx:210,dy:70},
+  {type:'screen',name:'카운터 생성기',meta:{file:'counter_generator.html',kind:'other',skin:'mm-dark'},dx:210,dy:140},
   {type:'table',name:'pr_report',meta:{cols:[COL('report_date','작업일자','date',1),COL('shift','작업조','text',1),COL('machine','호기','text',1),COL('line','라인'),COL('worker','작업자'),COL('customer','고객사'),COL('mold','금형'),COL('item_code','품번'),COL('item_name','품명'),COL('run_min','가동(분)','num'),COL('stop_min','정지(분)','num'),COL('prod_qty','생산수','num'),COL('spm','SPM','num'),COL('stops','정지내역(JSON)'),COL('defects','불량내역(JSON)'),COL('defect_qty','불량수','num'),COL('actual_qty','실제수량','num'),COL('remark','비고'),COL('updated_at','수정일시','date')]},dx:470,dy:0},
   {type:'table',name:'shot_count',meta:{cols:[COL('id','ID','num',1),COL('machine_code','설비코드(MAC_GPIO)','text',0,1),COL('shot_count','누적 카운트','num'),COL('shot_interval_ms','타점 간격(ms)','num'),COL('detected_at','감지 시각','date'),COL('esp32_mac','보드 MAC'),COL('esp32_ip','보드 IP'),COL('created_at','수신 시각','date')]},dx:470,dy:390},
   {type:'table',name:'daily_baseline',meta:{cols:[COL('machine_code','설비코드','text',1),COL('baseline_date','기준 일자','date',1),COL('baseline_count','기준 카운트(제로세팅)','num'),COL('created_at','등록일시','date')]},dx:470,dy:570},
@@ -1461,15 +1466,15 @@ const BUILTIN=[
 
  {cat:'mm 통합 MES',name:'mm 인원별 업무현황',desc:'모바일에서 입력하면 PC에 실시간 공유 — 일자×사용자 1행, 공장/부서별 카드, 진행률, 엑셀 (work_status.html)',data:{nodes:[
   {type:'section',name:'업무',meta:{icon:'👥'},dx:0,dy:0},
-  {type:'screen',name:'인원별 업무현황',meta:{file:'work_status.html',kind:'status'},dx:210,dy:0},
+  {type:'screen',name:'인원별 업무현황',meta:{file:'work_status.html',kind:'status',skin:'mm-dark'},dx:210,dy:0},
   {type:'table',name:'mm_work_status',meta:{cols:[COL('work_date','일자','date',1),COL('user_id','사용자ID','text',1),COL('user_name','이름'),COL('factory','공장'),COL('dept','부서'),COL('position','직위'),COL('status','근무 상태'),COL('content','업무 내용'),COL('progress','진행률(0/25/50/75/100)','num'),COL('note','비고·특이사항'),COL('updated_by','수정자'),COL('updated_at','최종수정','date')]},dx:470,dy:0},
   {type:'table',name:'mm_user_pin',meta:{cols:[COL('id','ID','num',1),COL('name','이름'),COL('factory','공장'),COL('dept','부서'),COL('position','직위'),COL('blocked','차단','bool')]},dx:470,dy:250}],
   edges:[[0,1,'contains',''],[1,2,'uses','upsert(일자,사용자) · updated_at 증분동기화'],[1,3,'uses','인원 목록'],[2,3,'ref','user_id → mm_user_pin.id']]}},
 
  {cat:'mm 통합 MES',name:'mm PIN 보안 · 접속이력',desc:'4자리 PIN 로그인(SHA-256·5회 실패 60초 잠금·7일 세션) + 접속 위치/기기 이력 · 차단 · ntfy 푸시 알림',data:{nodes:[
   {type:'section',name:'시스템',meta:{icon:'🛡'},dx:0,dy:0},
-  {type:'screen',name:'PIN 로그인 · 모바일 허브',meta:{file:'index.html',kind:'other'},dx:210,dy:0},
-  {type:'screen',name:'보안 마스터',meta:{file:'security_master.html',kind:'input'},dx:210,dy:70},
+  {type:'screen',name:'PIN 로그인 · 모바일 허브',meta:{file:'index.html',kind:'other',skin:'mm-dark'},dx:210,dy:0},
+  {type:'screen',name:'보안 마스터',meta:{file:'security_master.html',kind:'input',skin:'mm-dark'},dx:210,dy:70},
   {type:'table',name:'mm_user_pin',meta:{cols:[COL('id','ID','num',1),COL('name','이름','text',0,1),COL('factory','공장'),COL('dept','부서'),COL('position','직위'),COL('pin_hash','PIN 해시(SHA-256)','text',0,1),COL('blocked','차단 여부','bool'),COL('blocked_at','차단 일시','date'),COL('blocked_reason','차단 사유'),COL('pin_changed_at','PIN 변경 일시','date')]},dx:470,dy:0},
   {type:'table',name:'mm_user_location',meta:{cols:[COL('id','ID','num',1),COL('user_id','사용자ID','text',0,1),COL('user_name','이름'),COL('factory','공장'),COL('dept','부서'),COL('lat','위도','num'),COL('lng','경도','num'),COL('ip','IP'),COL('city','도시'),COL('region','지역'),COL('country','국가'),COL('org','통신사·조직'),COL('device_info','기기정보(UA + page:화면)'),COL('error_code','오류코드(blocked_attempt)'),COL('recorded_at','기록 시각','date')]},dx:470,dy:220},
   {type:'table',name:'common_code',meta:{cols:[COL('code_group','코드 그룹(mm_security_cfg)','text',1),COL('code_value','코드 값(JSON: ntfyTopic/alertBlocked/alertPinFail)')]},dx:470,dy:520}],
@@ -1481,7 +1486,7 @@ const BUILTIN=[
 
  {cat:'mm 통합 MES',name:'mm 수정요청 게시판',desc:'수정요청 · 버그신고 · 공지 — PIN 없이 사용, 댓글(JSONB) · 상태관리 (board.html)',data:{nodes:[
   {type:'section',name:'업무',meta:{icon:'💬'},dx:0,dy:0},
-  {type:'screen',name:'수정요청 게시판',meta:{file:'board.html',kind:'board'},dx:210,dy:0},
+  {type:'screen',name:'수정요청 게시판',meta:{file:'board.html',kind:'board',skin:'mm-card'},dx:210,dy:0},
   {type:'table',name:'board_post',meta:{cols:[COL('id','ID','num',1),COL('category','분류(수정요청/버그/개선/공지/기타)'),COL('title','제목','text',0,1),COL('content','내용'),COL('author','작성자(기본 익명)'),COL('status','상태(대기/진행/완료/보류)'),COL('replies','댓글(JSONB 배열)'),COL('created_at','작성일시','date')]},dx:470,dy:0}],
   edges:[[0,1,'contains',''],[1,2,'uses','글 등록·수정·삭제 · 댓글 · 상태변경']]}}
 ];
@@ -1920,6 +1925,176 @@ tr.dirty td:first-child{box-shadow:inset 3px 0 0 #f2a93b}
   .actions .btn{flex:1 1 30%}
 }
 `;
+/* ═══════════════ 화면 스킨 (mes_screen.css 테마) ═══════════════
+   PV_CSS(기본 뼈대) 뒤에 덧씌우는 CSS. 클래스 규약(.screen/.title/.body/.panel/.cap/
+   .filters/.lab/.field/.formgrid/.tablewrap/.btn/.modal)은 그대로 두고 겉모습만 바꾼다.
+   → 미리보기 · ▶시스템 생성(mes_screen.css) · 단일 index.html 모두 같은 스킨을 쓴다. */
+const SKIN={
+ base:{name:'MES 표준 (기본)',desc:'원래의 밝은 ERP 폼 — Malgun Gothic 12px',css:'',shell:''},
+
+ 'mm-dark':{name:'mm 현장 다크',desc:'mm_main 원본 — index.html · head_moldpart_input · mold_repair · work_status (slate #0f172a + ice)',
+  css:`/* ── mm 현장 다크 (mm_main 원본 팔레트) ── */
+:root{--line:#334155;--line2:#475569;--blue:#7dd3fc;--blue2:rgba(125,211,252,.22);--ink:#e2e8f0;--bg:#0f172a;--sel:#0ea5e9;
+ --mm-card:#1e293b;--mm-hi:#283447;--mm-deep:#16202f;--mm-sub:#94a3b8;--mm-dim:#64748b;--mm-ice:#7dd3fc;--mm-green:#4ade80;--mm-rose:#fca5a5;--mm-orange:#fdba74;--mm-purple:#c4b5fd}
+body{font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:13px;color:var(--ink);
+ background:radial-gradient(circle at 0% 0%,rgba(56,189,248,.10) 0%,transparent 45%),radial-gradient(circle at 100% 100%,rgba(139,92,246,.10) 0%,transparent 45%),linear-gradient(180deg,#0b1220 0%,#0f172a 100%);background-attachment:fixed}
+::-webkit-scrollbar-thumb{background:#334155}
+.screen{background:transparent}
+.title{height:auto;min-height:54px;padding:13px 14px;border-bottom:1px solid rgba(125,211,252,.18);background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(15,23,42,.84))}
+.title h1{font-size:19px;font-weight:700;color:#f1f5f9}
+.title h1:before{content:'';display:inline-block;width:4px;height:17px;margin-right:9px;border-radius:2px;background:var(--mm-ice);vertical-align:-2px}
+.title small{color:var(--mm-sub)}
+.body{padding:10px;gap:10px}
+.foot{background:rgba(15,23,42,.92);border-top:1px solid var(--line);color:var(--mm-sub)}
+.foot .msg,.msg{color:var(--mm-sub)}.foot .right,.rightmsg{color:var(--mm-dim)}
+.panel{background:var(--mm-card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cap,.box-title,.grid-title{height:36px;padding:0 12px;background:transparent;border-bottom:1px solid var(--line);color:#f1f5f9;font-weight:700}
+.cap:before{content:'';width:4px;height:15px;margin-right:8px;border-radius:2px;background:var(--mm-ice);flex-shrink:0}
+.cap .right{color:var(--mm-sub);font-weight:500}
+.filters{padding:9px;gap:6px;border-bottom:1px solid var(--line)}
+.filters .lab{min-width:0}
+.lab,.label{background:transparent;border:0;color:var(--mm-sub);font-size:12px;font-weight:600;justify-content:flex-start;min-height:30px;padding:0 2px}
+.field,.check{height:30px;background:var(--mm-hi);border:1px solid var(--line);border-radius:8px;padding:0 10px;color:var(--ink)}
+.field:focus{outline:0;border-color:var(--mm-ice);box-shadow:0 0 0 2px rgba(125,211,252,.20)}
+.field[readonly]{background:var(--mm-deep);color:var(--mm-dim)}
+.field.req{border-left:3px solid #ef4444}
+textarea.field{padding:7px 10px}
+.formgrid{border:0;gap:8px 10px;padding:11px;grid-template-columns:repeat(3,minmax(74px,max-content) minmax(0,1fr))}
+.formgrid>*{border:0}
+@media(max-width:1400px){.formgrid{grid-template-columns:repeat(2,minmax(74px,max-content) minmax(0,1fr))}}
+@media(max-width:880px){.formgrid{grid-template-columns:minmax(74px,max-content) minmax(0,1fr)}}
+.tablewrap{background:transparent}
+th{background:var(--mm-deep);color:var(--mm-sub);border-bottom:1px solid var(--line2);font-weight:700}
+th,td{border-right:0;border-bottom:1px solid #2a3647;padding:8px 10px}
+tbody tr:hover{background:var(--mm-hi)}
+tbody tr.sel,tbody tr.on{background:rgba(14,165,233,.30);color:#f8fafc}
+td.num,td.money{color:#e8eef6}
+tr.dirty td:first-child{box-shadow:inset 3px 0 0 var(--mm-orange)}
+.empty{color:var(--mm-dim)}
+.group-title{height:30px;background:var(--mm-deep);border-bottom:1px solid var(--line);color:var(--mm-ice)}
+.row-item{min-height:32px;border-bottom:1px solid #2a3647}
+.row-item span{border-right:0;padding:7px 10px}
+.row-item:hover{background:var(--mm-hi)}.row-item.on{background:rgba(14,165,233,.30);color:#f8fafc}
+.actions{padding:8px;gap:8px}
+.btn{height:34px;min-width:66px;padding:0 13px;border:1px solid var(--line);border-radius:8px;background:var(--mm-hi);color:#cbd5e1;font-weight:600}
+.btn:hover{background:#31405a;border-color:var(--line2)}
+.btn.primary{background:linear-gradient(135deg,#0284c7,#0ea5e9);border-color:#0ea5e9;color:#f0f9ff}
+.btn.warn{background:linear-gradient(135deg,#b91c1c,#dc2626);border-color:#ef4444;color:#fee2e2}
+.btn.pink{background:linear-gradient(135deg,#7e22ce,#a855f7);border-color:#c4b5fd;color:#f5f3ff}
+.btn.sm{height:27px;min-width:0;padding:0 9px}
+.modal{background:var(--mm-card);border:1px solid var(--line2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.55)}
+.modal .t{height:42px;padding:0 14px;background:linear-gradient(135deg,#0284c7,#0ea5e9);color:#f0f9ff;border-radius:12px 12px 0 0}
+.modal .bd{padding:14px}
+.modal .bt{background:var(--mm-deep);border-top:1px solid var(--line)}
+.modal-bg{background:rgba(2,6,16,.62)}
+#toast{border-radius:10px;background:#15803d}#toast.err{background:#b91c1c}#toast.warn{background:#c2410c}
+@media(max-width:680px){.title{min-height:46px;padding:10px 12px}.title h1{font-size:17px}}`,
+  shell:`:root{--steel:#0b1220;--steel-2:#111a2b;--steel-3:#1e293b;--paper:#0f172a;--white:#1e293b;
+ --ink:#e2e8f0;--ink-2:#cbd5e1;--ink-3:#94a3b8;--line:#334155;--line-2:#1e293b;--amber:#7dd3fc;--green:#4ade80;--red:#fca5a5;--blue:#38bdf8;--gray:#64748b}
+body{background:linear-gradient(180deg,#0b1220 0%,#0f172a 100%);color:var(--ink)}`},
+
+ 'mm-card':{name:'mm 밝은 카드',desc:'mm_main 원본 — purchase_order.html (배경 #f4f6fa · 남색 #1e40af · 좌측 4px 카드)',
+  css:`/* ── mm 밝은 카드 (purchase_order.html 원본 팔레트) ── */
+:root{--line:#e5e7eb;--line2:#cbd5e1;--blue:#2563eb;--blue2:#dbeafe;--ink:#1f2937;--bg:#f4f6fa;--sel:#2563eb;--mm-navy:#1e40af;--mm-sub:#6b7280}
+body{font-family:"Malgun Gothic","맑은 고딕",sans-serif;font-size:13px;color:var(--ink);background:#f4f6fa}
+.screen{background:#f4f6fa}
+.title{height:auto;min-height:56px;padding:14px 16px 12px;border-bottom:2px solid #cbd5e1;background:#f4f6fa}
+.title h1{font-size:21px;font-weight:700;color:var(--mm-navy)}
+.title h1:before{content:'▣';color:#2563eb;margin-right:8px}
+.title small{color:var(--mm-sub)}
+.body{padding:12px;gap:12px}
+.foot{background:#fff;border-top:1px solid #e5e7eb;color:var(--mm-sub)}
+.foot .msg,.msg{color:var(--mm-sub)}
+.panel{background:#fff;border:1px solid #e5e7eb;border-left:4px solid #2563eb;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
+.cap,.box-title,.grid-title{height:40px;padding:0 14px;background:#fff;border-bottom:1px solid #e5e7eb;color:var(--mm-navy);font-size:15px;font-weight:700}
+.cap .right{color:var(--mm-sub);font-weight:500;font-size:13px}
+.filters{padding:10px 12px;gap:6px;background:#f8fafc;border-bottom:1px solid #e5e7eb}
+.lab,.label{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;color:#475569;font-weight:600;min-height:32px}
+.field,.check{height:32px;border:1px solid #cbd5e1;border-radius:6px;padding:0 9px;background:#fff}
+.field:focus{outline:0;border-color:#2563eb;box-shadow:0 0 0 2px #dbeafe}
+.field[readonly]{background:#f1f5f9;color:#64748b}
+.field.req{border-left:3px solid #ef4444}
+.formgrid{border:0;gap:7px 8px;padding:12px}
+.formgrid>*{border:0}
+.tablewrap{background:#fff}
+th{background:var(--mm-navy);color:#fff;border-bottom:0;border-right:1px solid #2b4fbd;font-weight:600}
+th,td{padding:7px 10px;border-right:0;border-bottom:1px solid #eef2f7}
+tbody tr:hover{background:#f1f5f9}
+tbody tr.sel,tbody tr.on{background:#dbeafe;color:#1e3a8a}
+tbody tr.sel a,tbody tr.on a{color:#1e3a8a}
+tr.dirty td:first-child{box-shadow:inset 3px 0 0 #f59e0b}
+.empty{color:#94a3b8;padding:36px 0}
+.group-title{height:32px;background:#eef2ff;border-bottom:1px solid #dbe3f5;color:var(--mm-navy)}
+.row-item{min-height:32px;border-bottom:1px solid #eef2f7}
+.row-item span{padding:7px 10px;border-right:0}
+.row-item:hover{background:#f1f5f9}.row-item.on{background:#dbeafe;color:#1e3a8a}
+.actions{padding:8px;gap:7px}
+.btn{height:32px;min-width:68px;padding:0 13px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#374151;font-weight:500}
+.btn:hover{background:#f1f5f9;border-color:#2563eb;color:var(--mm-navy)}
+.btn.primary{background:#2563eb;border-color:#2563eb;color:#fff;font-weight:600}
+.btn.primary:hover{background:#1d4ed8;color:#fff}
+.btn.warn{background:#dc2626;border-color:#dc2626;color:#fff}.btn.warn:hover{background:#b91c1c;color:#fff}
+.btn.pink{background:#db2777;border-color:#db2777;color:#fff}
+.btn.sm{height:26px;min-width:0;padding:0 9px;font-size:12px}
+.modal{border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 12px 40px rgba(15,23,42,.22)}
+.modal .t{height:44px;padding:0 16px;background:var(--mm-navy);border-radius:12px 12px 0 0}
+.modal .bd{padding:14px}
+.modal .bt{background:#f8fafc;border-top:1px solid #e5e7eb}
+#toast{border-radius:8px}
+@media(max-width:680px){.title{min-height:48px}.title h1{font-size:18px}}`,
+  shell:`:root{--steel:#1e40af;--steel-2:#1d4ed8;--steel-3:#2563eb;--paper:#f4f6fa;--line:#e5e7eb;--line-2:#1d4ed8;--amber:#f59e0b;--ink:#1f2937;--ink-2:#4b5563;--ink-3:#6b7280;--blue:#2563eb}`},
+
+ 'mm-erp':{name:'mm PC ERP 블루',desc:'mm_main 원본 — mes_main.html 통합 프레임 (#2d66ad · 12px 조밀 그리드)',
+  css:`/* ── mm PC ERP 블루 (mes_main.html 원본 팔레트) ── */
+:root{--line:#a9b6c4;--line2:#c8d1da;--blue:#2d66ad;--blue2:#dce8f6;--ink:#25313d;--bg:#eef2f5;--sel:#2d66ad;--mm-dark:#1f4f8c;--mm-muted:#667483}
+body{font-family:"Malgun Gothic","맑은 고딕",Arial,sans-serif;font-size:12px;color:var(--ink);background:#dfe5ea}
+.screen{background:#eef2f5}
+.title{height:44px;padding:0 12px;border-bottom:2px solid #2d66ad;background:linear-gradient(#f7fafc,#e7edf3)}
+.title h1{font-size:17px;font-weight:700;color:var(--mm-dark)}
+.title h1:before{content:'▪';color:#2d66ad;margin-right:7px}
+.title small{color:var(--mm-muted)}
+.body{padding:7px;gap:7px}
+.foot{height:26px;background:#e7edf3;border-top:1px solid #9aa8b5;color:var(--mm-muted)}
+.panel{border:1px solid #8494a4;background:#fff}
+.cap,.box-title,.grid-title{height:28px;background:#edf2f6;border-bottom:1px solid #aab6c1;color:var(--mm-dark)}
+.cap .right{color:var(--mm-muted)}
+.filters{background:#fff;border-bottom:1px solid #d6dde4;padding:4px}
+.lab,.label{background:#e7edf3;border:1px solid #c8d1da;color:#3c4d5e;font-weight:600;min-height:24px}
+.field,.check{height:24px;border:1px solid #b2bec9}
+.field:focus{outline:0;border-color:#2d66ad;box-shadow:0 0 0 1px #dce8f6}
+.field.req{border-left:3px solid #c0392b}
+.formgrid{border:1px solid #a9b6c4;border-right:0;border-bottom:0}
+.formgrid>*{border-right:1px solid #b2bec9;border-bottom:1px solid #b2bec9}
+th{background:linear-gradient(#f2f6f9,#dfe7ee);color:#31465c;border-bottom:1px solid #aab6c1;font-weight:700}
+th,td{padding:4px 8px;border-right:1px solid #dde3e9;border-bottom:1px solid #dde3e9}
+tbody tr:hover{background:#eaf2fa}
+tbody tr.sel,tbody tr.on{background:#2d66ad;color:#fff}
+.group-title{background:#e7edf3;border-bottom:1px solid #aab6c1;color:var(--mm-dark)}
+.row-item:hover{background:#eaf2fa}.row-item.on{background:#2d66ad;color:#fff}
+.btn{height:26px;min-width:68px;background:linear-gradient(#fdfefe,#e3eaef);border:1px solid #9aa8b5}
+.btn:hover{background:#fff;border-color:#2d66ad}
+.btn.primary{background:linear-gradient(#e9f2fb,#cfe0f2);color:var(--mm-dark);border-color:#7ea4c8;font-weight:700}
+.btn.warn{background:linear-gradient(#fff,#f6dcdc);color:#9c2b2b;border-color:#c89b9b}
+.btn.sm{height:22px;min-width:0;padding:0 7px;font-size:11px}
+.modal{border:1px solid #6f8296}
+.modal .t{height:30px;background:linear-gradient(#3d76b5,#2d66ad)}
+.modal .bt{background:#eef2f5;border-top:1px solid #c8d1da}`,
+  shell:`:root{--steel:#2d66ad;--steel-2:#1f4f8c;--steel-3:#3d76b5;--paper:#dfe5ea;--line:#c8d1da;--line-2:#1f4f8c;--amber:#f2a93b;--ink:#25313d;--ink-2:#3c4d5e;--ink-3:#667483;--blue:#2d66ad}`}
+};
+const skinId=()=>(SKIN[D.skin]?D.skin:'base');
+const skinCss=id=>PV_CSS+(SKIN[SKIN[id]?id:'base'].css?'\n\n'+SKIN[id].css+'\n':'');
+/* 화면 블록에 따로 지정한 스킨이 있으면 그걸, 없으면 설계 전체 스킨 */
+const skinOf=n=>skinCss((n&&n.meta&&n.meta.skin&&SKIN[n.meta.skin])?n.meta.skin:skinId());
+function setSkin(id){
+ if(!SKIN[id])return;
+ D.skin=id==='base'?undefined:id;save();renderPanel();
+ $('stat').textContent=`화면 테마: ${SKIN[id].name} — 미리보기와 [▶ 시스템 생성]의 mes_screen.css 에 함께 적용됩니다.`;
+ if(pvDlg.classList.contains('on')&&pvNode)previewScreen(pvNode);
+}
+function skinMenuHtml(){
+ return Object.entries(SKIN).map(([k,v])=>`<button onclick="setSkin('${k}')"><span class="dot" style="background:${k==='mm-dark'?'#0f172a':k==='mm-card'?'#2563eb':k==='mm-erp'?'#2d66ad':'#c7d2db'}"></span>${esc(v.name)}</button>`).join('');
+}
+
 let pvNode=null;
 function tablesOf(n){return D.edges.filter(e=>e.from===n.id&&e.kind==='uses').map(e=>N(e.to)).filter(t=>t&&t.type==='table')}
 function sampleRows(t,cnt){
@@ -1941,7 +2116,7 @@ function buildPreview(n,kindOverride){
  const ts=tablesOf(n);
  const t=ts[0];
  const kind=kindOverride||n.meta.kind||'input';
- if(!t)return {html:`<!doctype html><meta charset="utf-8"><style>${PV_CSS}</style><div class="screen"><div class="title"><h1>${esc(n.name)}</h1></div><div class="body"><section class="panel"><div class="empty">이 화면에 "사용" 연결된 테이블이 없습니다.<br>블록 오른쪽 ○ 를 끌어 테이블에 연결하면 입력칸이 만들어집니다.</div></section></div></div>`,code:''};
+ if(!t)return {html:`<!doctype html><meta charset="utf-8"><style>${skinOf(n)}</style><div class="screen"><div class="title"><h1>${esc(n.name)}</h1></div><div class="body"><section class="panel"><div class="empty">이 화면에 "사용" 연결된 테이블이 없습니다.<br>블록 오른쪽 ○ 를 끌어 테이블에 연결하면 입력칸이 만들어집니다.</div></section></div></div>`,code:''};
  const isChk=kind==='check'||(kind==='input'&&isCheckTable(t));
  const isBoard=kind==='board',isPerm=kind==='perm',isPaste=kind==='paste',isDash=kind==='dash';
  const md=(kind==='status'||isChk||isBoard||isPerm||isPaste||isDash)?null:detailOf(n);
@@ -1955,7 +2130,7 @@ function buildPreview(n,kindOverride){
  const code=html;
  /* 외부 파일 의존을 떼고 샘플 자료를 넣는다 */
  html=html.replace(/<script src="app_config\.js"><\/script>/,'')
-          .replace(/<link rel="stylesheet" href="mes_screen\.css"\s*\/?>/g,'<style>'+PV_CSS+'</style>')
+          .replace(/<link rel="stylesheet" href="mes_screen\.css"\s*\/?>/g,'<style>'+skinOf(n)+'</style>')
           .replace(/<script src="mes_db\.js"><\/script>[\s\S]*?<\/script>/,'');
  const arr=kind==='status'?'data':'rows';const isChkK=isChk;
  const pt=md?md.parent:t;
@@ -2252,6 +2427,16 @@ if(C.MODE==='json'){C.SUPABASE={url:'local://db',key:'local'};const v='?v='+C.AP
   if(md)GEN[file]=masterDetailScreen(s,md.parent,md.child,md.edge,loc,use.filter(x=>x!==md.parent&&x!==md.child));
   else GEN[file]=s.meta.kind==='status'?statusScreen(s,t,loc,use.slice(1)):inputScreen(s,t,loc,use.slice(1));
  }
+ /* 화면 CSS — 설계 전체 테마. 화면 블록에 따로 지정한 테마가 있으면 그 화면에만 덧붙인다 */
+ GEN['mes_screen.css']=skinCss(skinId());
+ for(const s2 of D.nodes.filter(n=>n.type==='screen')){
+  const f=s2.meta.file||(slug(s2.name)+'.html');
+  if(!GEN[f]||!s2.meta.skin||s2.meta.skin===skinId()||!SKIN[s2.meta.skin])continue;
+  GEN[f]=GEN[f].replace(/(<link rel="stylesheet" href="mes_screen\.css"\s*\/?>)/,
+   `$1<style>/* ${s2.meta.skin} — 이 화면 전용 테마 */\n${SKIN[s2.meta.skin].css}</style>`);
+ }
+ /* 앱 프레임(index.html) 도 같은 테마로 */
+ if(SKIN[skinId()].shell)GEN['index.html']=skinShell(RT['index.html'],skinId());
  GEN['설계_관계정리.md']=relationsDoc();
  if(skipped.length)GEN['건너뛴_화면.txt']='아래 화면은 "직접 수정함(🔒)" 으로 표시되어 다시 생성하지 않았습니다.\n기존 파일을 그대로 두세요.\n\n'+skipped.map(f=>'· '+f).join('\n');
  if(warn.length)GEN['경고.txt']=warn.join('\n');
@@ -3393,7 +3578,7 @@ function inlineScreen(html){
  const bridge=`<script>window.APP_CONFIG=parent.APP_CONFIG;window.MESLOCAL=parent.MESLOCAL;window.fetch=(u,o)=>parent.fetch(u,o);<\/script>`;
  return html
   .replace(/<script src="app_config\.js"><\/script>/,()=>bridge)
-  .replace(/<link rel="stylesheet" href="mes_screen\.css"\s*\/?>/g,()=>'<style>'+RT['mes_screen.css']+'</style>')
+  .replace(/<link rel="stylesheet" href="mes_screen\.css"\s*\/?>/g,()=>'<style>'+(GEN['mes_screen.css']||RT['mes_screen.css'])+'</style>')
   .replace(/<script src="mes_db\.js"><\/script>/,()=>'<script>'+_sc(RT['mes_db.js'])+'<\/script>')
   .replace(/<script src="mes_ctx\.js"><\/script>/,()=>'<script>'+_sc(RT['mes_ctx.js'])+'<\/script>')
   .replace(/<script src="mes_lookup\.js"><\/script>/,'');
@@ -3406,7 +3591,7 @@ function buildSingleHtml(){
  for(const [f,c] of Object.entries(GEN))if(/\.html$/.test(f)&&f!=='index.html')screens[f]=inlineScreen(c);
  screens['user_information.html']=inlineScreen(RT['user_information.html']);
  screens['user_manual.html']=inlineScreen(RT['user_manual.html']);
- let sh=RT['index.html'];
+ let sh=skinShell(RT['index.html'],skinId());
  const head='<script>'+_sc(cfg)+'<\/script>\n<script>'+_sc(GEN['db.js'])+'<\/script>\n<script>'+_sc(RT['mes_local.js'])+'<\/script>\n'
    +'<script>window.__SCREENS='+_sc(JSON.stringify(screens))+';window.__MESCTX_SRC='+_sc(JSON.stringify(RT['mes_ctx.js']))+';<\/script>';
  sh=sh.replace('<script src="app_config.js"><\/script>',()=>head);
@@ -3419,6 +3604,10 @@ function buildSingleHtml(){
  sh=sh.replace("['mes_db.js?v='+APP_VER,'mes_ctx.js?v='+APP_VER,'mes_screen.css?v='+APP_VER].forEach(prefetch);","");
  sh=sh.replace("const step=()=>{if(i>=hot.length)return;prefetch(hot[i++]+'?v='+APP_VER);setTimeout(step,600)};step()","");
  return sh;
+}
+function skinShell(html,id){
+ const sh=SKIN[id]&&SKIN[id].shell;if(!sh)return html;
+ return html.replace('</head>',`<style>/* ${SKIN[id].name} — 앱 프레임 테마 */\n${sh}</style>\n</head>`);
 }
 function downloadSingle(){
  const html=buildSingleHtml();if(!html)return;
@@ -4105,6 +4294,7 @@ let LAST=null;
  }catch(e){}
  D={nodes:[],edges:[]};curName='';updateTitle();
  select(null);view={x:40,y:40,k:1};render();introStat();
+ try{$('skinMenu').innerHTML=skinMenuHtml()}catch(e){}
 })();
 function introStat(){
  $('stat').innerHTML='빈 설계 — [＋ 추가] 로 블록을 놓거나, [설계] 메뉴의 문답·모듈·샘플로 시작하세요.'
