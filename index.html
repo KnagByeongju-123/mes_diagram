@@ -171,6 +171,32 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;grid-template-co
 .manual-table th,.manual-table td{border:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
 .manual-table th{background:#f3f5f8;color:var(--ink-2)}
 .manual-key{display:inline-block;min-width:54px;text-align:center;padding:1px 6px;border:1px solid #c5cdd8;border-bottom-width:2px;border-radius:4px;background:#fff;font:11px ui-monospace,Consolas,monospace;color:#3c4758}
+/* 사용안내 - 실습하기 */
+.manual-practice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+.practice-card{border:1px solid var(--line);border-radius:9px;background:#fbfcfd;padding:12px;text-align:left;display:grid;grid-template-columns:auto 1fr;gap:5px 9px;align-items:start}
+.practice-card:hover{border-color:var(--blue);background:#f7faff;box-shadow:0 2px 8px rgba(59,130,246,.08)}
+.practice-card .lv{grid-row:1/3;display:inline-grid;place-items:center;min-width:48px;height:24px;border-radius:999px;background:#eef3f8;color:#4a5568;font-size:11px;font-weight:700;padding:0 7px}
+.practice-card b{font-size:13px;color:var(--ink)}
+.practice-card small{color:var(--ink-3);line-height:1.55}
+.practice-card.adv .lv{background:#f4efff;color:#6944a8}.practice-card.mid .lv{background:#eaf8f1;color:#247255}
+.practice-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.practice-panel{position:fixed;left:14px;bottom:14px;width:min(390px,calc(100vw - 28px));max-height:min(620px,calc(100vh - 76px));background:#fff;border:1px solid #bfc9d6;border-radius:10px;box-shadow:0 16px 42px rgba(20,28,40,.24);z-index:46;display:none;overflow:hidden}
+.practice-panel.on{display:flex;flex-direction:column}
+.practice-ph{padding:11px 13px;background:var(--steel);color:#fff;display:flex;align-items:center;gap:8px}
+.practice-ph b{font-size:13px}.practice-ph .lv{font-size:10px;padding:2px 6px;border-radius:999px;background:var(--amber);color:var(--steel);font-weight:800}.practice-ph .x{margin-left:auto;color:#b9c3d1;font-size:18px;cursor:pointer}
+.practice-pb{padding:12px 13px;overflow:auto;display:grid;gap:9px}
+.practice-desc{font-size:12px;color:var(--ink-2);line-height:1.6}
+.practice-progress{height:7px;border-radius:999px;background:#e8edf3;overflow:hidden}.practice-progress i{display:block;height:100%;width:0;background:var(--green);transition:width .2s}
+.practice-count{font-size:11px;color:var(--ink-3);text-align:right;margin-top:-4px}
+.practice-now{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fbfcfd}
+.practice-now b{display:block;font-size:12.5px;margin-bottom:4px}.practice-now p{font-size:12px;color:var(--ink-2);line-height:1.55}
+.practice-steps{display:grid;gap:3px;max-height:180px;overflow:auto}
+.practice-step{display:flex;gap:7px;align-items:flex-start;padding:5px 6px;border-radius:5px;font-size:11.5px;color:var(--ink-2);line-height:1.45}
+.practice-step.now{background:#eef5ff;color:#275a95;font-weight:600}.practice-step.done{color:#247255}.practice-step .ico{width:15px;flex:0 0 15px;text-align:center}
+.practice-msg{min-height:34px;padding:8px 9px;border-radius:6px;background:#f5f7fa;color:var(--ink-2);font-size:11.5px;line-height:1.55}
+.practice-msg.ok{background:#eaf8f1;color:#24634b}.practice-msg.warn{background:#fff7e8;color:#76591d}
+.practice-btns{display:flex;gap:5px;flex-wrap:wrap}.practice-btns .btn{font-size:11.5px;padding:4px 9px}
+@media(max-width:720px){.manual-practice-grid{grid-template-columns:1fr}.practice-panel{left:8px;bottom:8px;width:calc(100vw - 16px)}}
 @media(max-width:720px){.manual-quick{grid-template-columns:1fr}.manual-flow{grid-template-columns:1fr 1fr}}
 @media(max-width:900px){
  .app{grid-template-columns:1fr;grid-template-rows:48px 1fr auto}
@@ -275,6 +301,7 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;grid-template-co
         <button onclick="guideGo('g_edit')">④ 내용 수정하기</button>
         <button onclick="guideGo('g_save')">⑤ 저장하고 다시 열기</button>
         <button onclick="guideGo('g_make')">⑥ 시스템 만들기</button>
+        <button onclick="guideGo('g_practice')">⑦ 실습하기</button>
       </div>
     </section>
 
@@ -371,9 +398,48 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;grid-template-co
       <div class="manual-flow"><div>생산관리<br><small>대메뉴</small></div><div>생산실적<br><small>중분류</small></div><div>작업실적 등록<br><small>화면</small></div><div>production_log<br><small>테이블</small></div></div>
       <p>이렇게 만들고 화면에서 쓸 항목을 <b>작업일자, 설비, 품번, 수량, 작업자</b>처럼 넣으면 기본적인 입력 시스템을 만들 수 있습니다.</p>
     </section>
+
+
+    <section class="manual-sec" id="g_practice">
+      <h3>⑦ 실습하기 — 직접 만들어 보세요</h3>
+      <p>아래에서 연습할 종류를 고르면 <b>빈 설계 화면</b>에서 직접 만들어 볼 수 있습니다. 왼쪽 아래에 작은 <b>실습 도우미</b>가 열리고, 지금 해야 할 일과 완료 여부를 자동으로 알려줍니다.</p>
+      <div class="manual-note"><b>현재 작업이 있어도 괜찮습니다.</b> 실습을 시작하면 실습 전 설계를 따로 백업합니다. 실습이 끝난 뒤 <b>[실습 전 설계 복원]</b>으로 돌아갈 수 있습니다.</div>
+      <div class="manual-practice-grid">
+        <button class="practice-card" onclick="practiceStart('prod')"><span class="lv">입문</span><b>생산실적 등록</b><small>대메뉴 → 중분류 → 등록화면 → 테이블 기본 연결 연습</small></button>
+        <button class="practice-card mid" onclick="practiceStart('quality')"><span class="lv">기본</span><b>품질검사 등록 + 불량현황</b><small>등록화면과 조회화면이 같은 자료를 사용하는 방법 연습</small></button>
+        <button class="practice-card mid" onclick="practiceStart('mold')"><span class="lv">기본</span><b>금형점검 관리</b><small>체크시트 화면, 금형대장과 점검내역의 테이블 관계 연습</small></button>
+        <button class="practice-card mid" onclick="practiceStart('stock')"><span class="lv">중급</span><b>자재 입·출고 관리</b><small>기준정보와 입출고 이력 테이블을 연결하는 방법 연습</small></button>
+        <button class="practice-card adv" onclick="practiceStart('safety')"><span class="lv">중급</span><b>위험성평가 + 개선조치</b><small>두 화면의 업무 흐름과 두 테이블의 관계를 함께 연습</small></button>
+        <button class="practice-card adv" onclick="practiceStart('mes')"><span class="lv">종합</span><b>수주 → 생산 → 출하</b><small>화면 3개, 테이블 3개, 흐름선과 참조선을 종합해서 제작</small></button>
+      </div>
+      <div class="practice-actions">
+        <button class="btn" onclick="practiceRestoreBackup()">↩ 실습 전 설계 복원</button>
+        <button class="btn" onclick="guideGo('g_block')">블록 설명 다시 보기</button>
+      </div>
+      <div class="manual-ok"><b>막혀도 괜찮습니다.</b> 실습 도우미의 [힌트]를 먼저 보고, 그래도 어렵다면 [정답 예시 만들기]로 완성 구조를 확인할 수 있습니다.</div>
+    </section>
   </div>
   <div class="bt"><button class="btn primary" onclick="guideDlg.classList.remove('on')">확인</button><span class="msg">모르는 기능이 있으면 먼저 [사용안내]에서 순서를 확인하세요.</span></div>
 </div></div>
+
+<div class="practice-panel" id="practicePanel">
+  <div class="practice-ph"><span class="lv" id="practiceLevel">입문</span><b id="practiceTitle">실습하기</b><span class="x" onclick="practiceEndKeep()" title="실습 도우미 닫기">×</span></div>
+  <div class="practice-pb">
+    <div class="practice-desc" id="practiceDesc"></div>
+    <div class="practice-progress"><i id="practiceBar"></i></div><div class="practice-count" id="practiceCount"></div>
+    <div class="practice-now"><b id="practiceNowTitle">1단계</b><p id="practiceNowText"></p></div>
+    <div class="practice-steps" id="practiceSteps"></div>
+    <div class="practice-msg" id="practiceMsg">[＋ 추가] 메뉴를 이용해 직접 만들어 보세요.</div>
+    <div class="practice-btns">
+      <button class="btn primary" onclick="practiceCheckNow()">✓ 진행 확인</button>
+      <button class="btn" onclick="practiceHint()">💡 힌트</button>
+      <button class="btn" onclick="practiceBuildAnswer()">정답 예시 만들기</button>
+      <button class="btn" onclick="practiceReset()">↻ 처음부터</button>
+      <button class="btn" onclick="openGuide();guideGo('g_practice')">📘 실습 목록</button>
+      <button class="btn" onclick="practiceRestoreBackup()">↩ 이전 설계 복원</button>
+    </div>
+  </div>
+</div>
 
 <div class="mbg" id="valDlg"><div class="modal" style="width:min(760px,94vw)">
   <div class="t">설계 검증 <span class="x" onclick="valDlg.classList.remove('on')">×</span></div>
@@ -606,6 +672,7 @@ function render(){
  }
  $('stat').textContent=`블록 ${D.nodes.length} · 연결 ${D.edges.length}  (자동 저장됨)`;
  updateUndoUI();save();
+ if(typeof practiceRefresh==='function')practiceRefresh();
 }
 function edgePath(a,b){
  const p1=ports(a).out,p2=ports(b).in;
@@ -619,6 +686,139 @@ function edgePath(a,b){
 function ddToggle(btn){const dd=btn.parentElement;const open=dd.classList.contains('open');document.querySelectorAll('.dd.open').forEach(x=>x.classList.remove('open'));if(!open)dd.classList.add('open')}
 function openGuide(){guideDlg.classList.add('on');setTimeout(()=>{const b=guideDlg.querySelector('.manual-body');if(b)b.scrollTop=0},0)}
 function guideGo(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
+
+/* ═══════════════ 사용안내 · 실습하기 ═══════════════ */
+const PRACTICE_BACKUP_KEY='sysdesign.practice.backup.v1';
+let practiceState={key:null};
+const P_COL=(name,label,type='text',pk=false,req=false)=>({name,label,type,pk,req});
+const PRACTICES={
+ prod:{level:'입문',title:'생산실적 등록',desc:'가장 기본적인 구조를 직접 만듭니다. 대메뉴부터 자료 저장 테이블까지 한 줄로 연결하는 연습입니다.',
+  nodes:[
+   {type:'module',name:'생산관리',meta:{icon:'⚙',desc:'생산 실적 관리'}},
+   {type:'section',name:'생산실적',meta:{icon:'▣'}},
+   {type:'screen',name:'작업실적 등록',meta:{file:'prod_input.html',kind:'input'}},
+   {type:'table',name:'production_log'}],
+  columns:{production_log:[P_COL('work_date','작업일자','date',false,true),P_COL('machine','설비'),P_COL('item_code','품번','text',false,true),P_COL('qty','수량','num'),P_COL('worker','작업자')]},
+  edges:[['생산관리','생산실적','contains'],['생산실적','작업실적 등록','contains'],['작업실적 등록','production_log','uses']],
+  steps:[
+   ['대메뉴 만들기','[＋ 추가]에서 대메뉴를 추가하고 이름을 “생산관리”로 바꾸세요.',{node:'생산관리'},'대메뉴를 클릭한 뒤 오른쪽의 이름 칸에서 수정합니다.'],
+   ['중분류 만들기','중분류 “생산실적”을 만들고 생산관리 아래에 연결하세요.',{edge:['생산관리','생산실적','contains']},'생산관리를 선택한 뒤 중분류를 추가하면 자동 연결되기 쉽습니다.'],
+   ['등록 화면 만들기','화면 “작업실적 등록”을 만들고 화면 종류를 등록으로 두세요.',{node:'작업실적 등록'},'화면을 클릭하면 오른쪽에서 화면 종류를 바꿀 수 있습니다.'],
+   ['메뉴와 화면 연결','생산실적 → 작업실적 등록이 포함 선으로 연결되어야 합니다.',{edge:['생산실적','작업실적 등록','contains']},'블록 오른쪽 ○를 끌어 화면 블록에 놓으세요.'],
+   ['자료표 만들기','테이블 이름을 “production_log”로 만들고 작업일자·설비·품번·수량·작업자 항목을 넣으세요.',{cols:'production_log'},'테이블을 선택하면 오른쪽의 항목 표에서 열을 추가하고 이름/표시명을 바꿀 수 있습니다.'],
+   ['화면과 자료표 연결','작업실적 등록 → production_log를 사용 선으로 연결하세요.',{edge:['작업실적 등록','production_log','uses']},'화면 오른쪽 ○에서 테이블까지 끌면 “사용” 선이 자동 선택됩니다.'] ]},
+ quality:{level:'기본',title:'품질검사 등록 + 불량현황',desc:'등록 화면과 조회 화면이 같은 검사자료를 함께 사용하는 구조를 연습합니다.',
+  nodes:[{type:'module',name:'품질관리',meta:{icon:'✓',desc:'검사 및 불량 관리'}},{type:'section',name:'검사관리',meta:{icon:'▣'}},{type:'screen',name:'검사결과 등록',meta:{file:'quality_input.html',kind:'input'}},{type:'screen',name:'불량현황',meta:{file:'quality_status.html',kind:'status'}},{type:'table',name:'quality_results'}],
+  columns:{quality_results:[P_COL('inspect_date','검사일','date'),P_COL('item_code','품번'),P_COL('lot_no','LOT번호'),P_COL('result','판정'),P_COL('defect_qty','불량수량','num'),P_COL('inspector','검사자')]},
+  edges:[['품질관리','검사관리','contains'],['검사관리','검사결과 등록','contains'],['검사관리','불량현황','contains'],['검사결과 등록','quality_results','uses'],['불량현황','quality_results','uses'],['검사결과 등록','불량현황','flow']],
+  steps:[
+   ['메뉴 뼈대 만들기','대메뉴 “품질관리”와 중분류 “검사관리”를 만들고 연결하세요.',{edge:['품질관리','검사관리','contains']},'품질관리 선택 → [＋ 추가] → 중분류 순서로 만들면 쉽습니다.'],
+   ['등록 화면 만들기','“검사결과 등록” 화면을 만들고 검사관리 아래에 연결하세요.',{edge:['검사관리','검사결과 등록','contains']},'화면 종류는 “등록”을 사용합니다.'],
+   ['조회 화면 만들기','“불량현황” 화면을 만들고 화면 종류를 “현황”으로 설정한 뒤 검사관리 아래에 연결하세요.',{all:[{edge:['검사관리','불량현황','contains']},{node:'불량현황'}]},'오른쪽 화면 종류에서 “현황”을 선택하세요.'],
+   ['검사자료 만들기','quality_results 테이블에 검사일·품번·LOT번호·판정·불량수량·검사자 항목을 만드세요.',{cols:'quality_results'},'테이블의 표시명에는 한글을 사용해도 됩니다.'],
+   ['등록 화면 연결','검사결과 등록 → quality_results를 연결하세요.',{edge:['검사결과 등록','quality_results','uses']},'화면에서 테이블로 연결하면 사용 선입니다.'],
+   ['조회 화면도 연결','불량현황 → quality_results도 연결하세요.',{edge:['불량현황','quality_results','uses']},'같은 테이블을 여러 화면이 함께 사용할 수 있습니다.'],
+   ['화면 흐름 연결','검사결과 등록 → 불량현황을 흐름 선으로 연결하세요.',{edge:['검사결과 등록','불량현황','flow']},'화면에서 화면으로 선을 연결하면 흐름 선이 됩니다.'] ]},
+ mold:{level:'기본',title:'금형점검 관리',desc:'금형대장과 점검내역 두 자료표를 만들고 서로 참조시키는 연습입니다.',
+  nodes:[{type:'module',name:'금형관리',meta:{icon:'◆',desc:'금형 대장과 점검'}},{type:'section',name:'예방점검',meta:{icon:'▣'}},{type:'screen',name:'금형점검표',meta:{file:'mold_check.html',kind:'check'}},{type:'table',name:'molds'},{type:'table',name:'mold_checks'}],
+  columns:{molds:[P_COL('mold_no','금형번호','text',true,true),P_COL('item_code','품번'),P_COL('location','보관위치')],mold_checks:[P_COL('check_date','점검일','date'),P_COL('mold_no','금형번호'),P_COL('result','판정'),P_COL('action','조치내용'),P_COL('inspector','점검자')]},
+  edges:[['금형관리','예방점검','contains'],['예방점검','금형점검표','contains'],['금형점검표','mold_checks','uses'],['금형점검표','molds','uses'],['mold_checks','molds','ref']],
+  steps:[
+   ['금형 메뉴 만들기','금형관리 → 예방점검 → 금형점검표를 순서대로 만들고 연결하세요.',{edge:['예방점검','금형점검표','contains']},'대메뉴를 만든 뒤 그 블록을 선택한 상태로 다음 블록을 추가하세요.'],
+   ['체크시트로 바꾸기','금형점검표 화면 종류를 “체크시트”로 설정하세요.',{node:'금형점검표'},'화면 블록을 클릭한 뒤 오른쪽의 화면 종류에서 체크시트를 고릅니다.'],
+   ['금형대장 만들기','molds 테이블에 금형번호·품번·보관위치를 만드세요.',{cols:'molds'},'금형번호를 대표 항목(PK)으로 두면 좋습니다.'],
+   ['점검내역 만들기','mold_checks 테이블에 점검일·금형번호·판정·조치내용·점검자를 만드세요.',{cols:'mold_checks'},'점검 결과가 계속 쌓이는 이력 자료표입니다.'],
+   ['점검표와 자료 연결','금형점검표가 molds와 mold_checks 두 테이블을 모두 사용하도록 연결하세요.',{edges:[['금형점검표','molds','uses'],['금형점검표','mold_checks','uses']]},'한 화면에서 두 개의 테이블을 사용할 수 있습니다.'],
+   ['테이블 관계 만들기','mold_checks → molds를 참조 선으로 연결하세요.',{edge:['mold_checks','molds','ref']},'점검내역의 금형번호가 어느 금형인지 찾기 위한 연결입니다.'] ]},
+ stock:{level:'중급',title:'자재 입·출고 관리',desc:'자재 기준정보와 입출고 이력을 나누고, 등록/현황 화면을 연결하는 연습입니다.',
+  nodes:[{type:'module',name:'자재관리',meta:{icon:'▦',desc:'재고와 입출고'}},{type:'section',name:'재고관리',meta:{icon:'▣'}},{type:'screen',name:'입출고 등록',meta:{file:'stock_input.html',kind:'input'}},{type:'screen',name:'재고현황',meta:{file:'stock_status.html',kind:'status'}},{type:'table',name:'materials'},{type:'table',name:'stock_moves'}],
+  columns:{materials:[P_COL('material_code','자재코드','text',true,true),P_COL('material_name','자재명'),P_COL('unit','단위'),P_COL('safe_qty','안전재고','num')],stock_moves:[P_COL('move_date','처리일','date'),P_COL('material_code','자재코드'),P_COL('move_type','구분'),P_COL('qty','수량','num'),P_COL('worker','담당자')]},
+  edges:[['자재관리','재고관리','contains'],['재고관리','입출고 등록','contains'],['재고관리','재고현황','contains'],['입출고 등록','stock_moves','uses'],['입출고 등록','materials','uses'],['재고현황','stock_moves','uses'],['재고현황','materials','uses'],['stock_moves','materials','ref']],
+  steps:[
+   ['메뉴와 화면 만들기','자재관리 → 재고관리 아래에 “입출고 등록”과 “재고현황” 화면을 만드세요.',{edges:[['자재관리','재고관리','contains'],['재고관리','입출고 등록','contains'],['재고관리','재고현황','contains']]},'등록 화면과 현황 화면은 같은 중분류 아래에 둘 수 있습니다.'],
+   ['자재 기준정보 만들기','materials 테이블에 자재코드·자재명·단위·안전재고를 만드세요.',{cols:'materials'},'자재코드는 중복되지 않는 대표 코드로 사용합니다.'],
+   ['입출고 이력 만들기','stock_moves 테이블에 처리일·자재코드·구분·수량·담당자를 만드세요.',{cols:'stock_moves'},'구분에는 입고/출고 같은 값을 넣는 구조입니다.'],
+   ['등록 화면 연결','입출고 등록 화면이 materials와 stock_moves를 모두 사용하도록 연결하세요.',{edges:[['입출고 등록','materials','uses'],['입출고 등록','stock_moves','uses']]},'자재를 선택하고 입출고 내역을 저장하기 때문에 두 자료표를 함께 씁니다.'],
+   ['현황 화면 연결','재고현황 화면도 materials와 stock_moves를 모두 사용하도록 연결하세요.',{edges:[['재고현황','materials','uses'],['재고현황','stock_moves','uses']]},'기준정보와 이력을 합쳐 재고를 보여 주는 구조입니다.'],
+   ['자료표 관계 만들기','stock_moves → materials를 참조 선으로 연결하세요.',{edge:['stock_moves','materials','ref']},'입출고 이력의 자재코드가 자재대장의 자재코드를 가리키도록 합니다.'] ]},
+ safety:{level:'중급',title:'위험성평가 + 개선조치',desc:'위험요인을 등록하고 개선조치로 이어지는 업무 흐름을 설계합니다.',
+  nodes:[{type:'module',name:'안전관리',meta:{icon:'⚠',desc:'위험성평가와 개선'}},{type:'section',name:'위험성평가',meta:{icon:'▣'}},{type:'screen',name:'위험요인 등록',meta:{file:'risk_input.html',kind:'input'}},{type:'screen',name:'개선조치 관리',meta:{file:'action_input.html',kind:'input'}},{type:'table',name:'risk_assessments'},{type:'table',name:'risk_actions'}],
+  columns:{risk_assessments:[P_COL('assess_date','평가일','date'),P_COL('process','공정'),P_COL('hazard','유해위험요인'),P_COL('risk_level','위험도','num'),P_COL('assessor','평가자')],risk_actions:[P_COL('action_date','조치일','date'),P_COL('risk_id','위험요인번호'),P_COL('action','개선대책'),P_COL('owner','담당자'),P_COL('status','진행상태')]},
+  edges:[['안전관리','위험성평가','contains'],['위험성평가','위험요인 등록','contains'],['위험성평가','개선조치 관리','contains'],['위험요인 등록','risk_assessments','uses'],['개선조치 관리','risk_actions','uses'],['개선조치 관리','risk_assessments','uses'],['위험요인 등록','개선조치 관리','flow'],['risk_actions','risk_assessments','ref']],
+  steps:[
+   ['메뉴 만들기','안전관리 → 위험성평가 아래에 위험요인 등록과 개선조치 관리 화면을 만드세요.',{edges:[['안전관리','위험성평가','contains'],['위험성평가','위험요인 등록','contains'],['위험성평가','개선조치 관리','contains']]},'대메뉴 1개, 중분류 1개, 화면 2개입니다.'],
+   ['평가 자료표 만들기','risk_assessments에 평가일·공정·유해위험요인·위험도·평가자를 만드세요.',{cols:'risk_assessments'},'위험도는 숫자 형식으로 둘 수 있습니다.'],
+   ['개선 자료표 만들기','risk_actions에 조치일·위험요인번호·개선대책·담당자·진행상태를 만드세요.',{cols:'risk_actions'},'개선조치가 여러 건 쌓일 수 있는 이력 자료표입니다.'],
+   ['각 화면 연결','위험요인 등록은 risk_assessments, 개선조치 관리는 risk_actions와 risk_assessments를 사용하도록 연결하세요.',{edges:[['위험요인 등록','risk_assessments','uses'],['개선조치 관리','risk_actions','uses'],['개선조치 관리','risk_assessments','uses']]},'개선 화면은 원래 위험요인도 함께 봐야 하므로 두 테이블을 씁니다.'],
+   ['업무 흐름 만들기','위험요인 등록 → 개선조치 관리를 흐름 선으로 연결하세요.',{edge:['위험요인 등록','개선조치 관리','flow']},'화면끼리 연결하면 초록 점선 흐름선이 만들어집니다.'],
+   ['자료 관계 만들기','risk_actions → risk_assessments를 참조 선으로 연결하세요.',{edge:['risk_actions','risk_assessments','ref']},'어떤 위험요인에 대한 개선조치인지 찾기 위한 관계입니다.'] ]},
+ mes:{level:'종합',title:'수주 → 생산 → 출하',desc:'화면 3개와 테이블 3개를 연결해 하나의 업무 흐름을 완성하는 종합 실습입니다.',
+  nodes:[{type:'module',name:'통합업무',meta:{icon:'▣',desc:'수주·생산·출하'}},{type:'section',name:'업무진행',meta:{icon:'▣'}},{type:'screen',name:'수주등록',meta:{file:'order_input.html',kind:'input'}},{type:'screen',name:'생산실적등록',meta:{file:'prod_result_input.html',kind:'input'}},{type:'screen',name:'출하등록',meta:{file:'shipment_input.html',kind:'input'}},{type:'table',name:'orders'},{type:'table',name:'prod_results'},{type:'table',name:'shipments'}],
+  columns:{orders:[P_COL('order_no','수주번호','text',true,true),P_COL('order_date','수주일','date'),P_COL('customer','거래처'),P_COL('item_code','품번'),P_COL('order_qty','수주수량','num')],prod_results:[P_COL('work_date','작업일','date'),P_COL('order_no','수주번호'),P_COL('good_qty','양품수량','num'),P_COL('defect_qty','불량수량','num'),P_COL('worker','작업자')],shipments:[P_COL('ship_date','출하일','date'),P_COL('order_no','수주번호'),P_COL('ship_qty','출하수량','num'),P_COL('vehicle','차량'),P_COL('worker','담당자')]},
+  edges:[['통합업무','업무진행','contains'],['업무진행','수주등록','contains'],['업무진행','생산실적등록','contains'],['업무진행','출하등록','contains'],['수주등록','orders','uses'],['생산실적등록','prod_results','uses'],['생산실적등록','orders','uses'],['출하등록','shipments','uses'],['출하등록','orders','uses'],['수주등록','생산실적등록','flow'],['생산실적등록','출하등록','flow'],['prod_results','orders','ref'],['shipments','orders','ref']],
+  steps:[
+   ['메뉴와 화면 3개 만들기','통합업무 → 업무진행 아래에 수주등록·생산실적등록·출하등록 화면을 만드세요.',{edges:[['통합업무','업무진행','contains'],['업무진행','수주등록','contains'],['업무진행','생산실적등록','contains'],['업무진행','출하등록','contains']]},'화면 3개를 같은 중분류에 넣습니다.'],
+   ['수주 자료 만들기','orders 테이블에 수주번호·수주일·거래처·품번·수주수량을 만드세요.',{cols:'orders'},'수주번호를 대표 항목으로 두면 관계 연결이 쉽습니다.'],
+   ['생산 자료 만들기','prod_results 테이블에 작업일·수주번호·양품수량·불량수량·작업자를 만드세요.',{cols:'prod_results'},'생산실적은 수주번호를 갖고 있어야 어떤 수주 작업인지 연결할 수 있습니다.'],
+   ['출하 자료 만들기','shipments 테이블에 출하일·수주번호·출하수량·차량·담당자를 만드세요.',{cols:'shipments'},'출하도 수주번호로 원래 수주와 연결합니다.'],
+   ['화면과 자료 연결','수주등록은 orders, 생산실적등록은 prod_results+orders, 출하등록은 shipments+orders를 사용하도록 연결하세요.',{edges:[['수주등록','orders','uses'],['생산실적등록','prod_results','uses'],['생산실적등록','orders','uses'],['출하등록','shipments','uses'],['출하등록','orders','uses']]},'생산과 출하 화면에서 원 수주 내용을 볼 수 있게 orders도 연결합니다.'],
+   ['업무 흐름 연결','수주등록 → 생산실적등록 → 출하등록 순서로 흐름 선을 만드세요.',{edges:[['수주등록','생산실적등록','flow'],['생산실적등록','출하등록','flow']]},'화면에서 화면으로 순서대로 연결합니다.'],
+   ['자료 관계 연결','prod_results → orders, shipments → orders를 참조 선으로 연결하세요.',{edges:[['prod_results','orders','ref'],['shipments','orders','ref']]},'생산실적과 출하내역이 어느 수주에 속하는지 표시하는 관계입니다.'] ]}
+};
+function pNorm(v){return String(v??'').trim().replace(/\s+/g,'').toLowerCase()}
+function practiceCfg(){return PRACTICES[practiceState.key]||null}
+function practiceNodeByName(name){const cfg=practiceCfg(),sp=cfg?.nodes.find(x=>pNorm(x.name)===pNorm(name));return D.nodes.find(n=>pNorm(n.name)===pNorm(name)&&(!sp||n.type===sp.type))}
+function practiceNodeDone(name){const cfg=practiceCfg(),sp=cfg?.nodes.find(x=>pNorm(x.name)===pNorm(name)),n=practiceNodeByName(name);return !!(n&&(!sp?.meta?.kind||n.meta?.kind===sp.meta.kind))}
+function practiceEdgeDone(a,b,k){const A=practiceNodeByName(a),B=practiceNodeByName(b);return !!(A&&B&&D.edges.some(e=>e.from===A.id&&e.to===B.id&&e.kind===k))}
+function practiceColsDone(table){const cfg=practiceCfg(),t=practiceNodeByName(table),req=cfg?.columns?.[table]||[];if(!t||t.type!=='table')return false;const cols=t.meta?.cols||[];return req.every(r=>cols.some(c=>pNorm(c.name)===pNorm(r.name)||pNorm(c.label)===pNorm(r.label)))}
+function practiceCheckOne(ch){
+ if(!ch)return false;
+ if(ch.node)return practiceNodeDone(ch.node);
+ if(ch.all)return ch.all.every(x=>practiceCheckOne(x));
+ if(ch.cols)return practiceColsDone(ch.cols);
+ if(ch.edge)return practiceEdgeDone(...ch.edge);
+ if(ch.edges)return ch.edges.every(e=>practiceEdgeDone(...e));
+ return false;
+}
+function practiceResults(){const cfg=practiceCfg();return cfg?cfg.steps.map(s=>practiceCheckOne(s[2])):[]}
+function practiceRefresh(){
+ const cfg=practiceCfg(),P=$('practicePanel');if(!cfg||!P||!P.classList.contains('on'))return;
+ const r=practiceResults(),done=r.filter(Boolean).length,idx=r.findIndex(x=>!x),cur=idx<0?cfg.steps.length-1:idx,pct=Math.round(done/r.length*100);
+ $('practiceTitle').textContent=cfg.title;$('practiceLevel').textContent=cfg.level;$('practiceDesc').textContent=cfg.desc;$('practiceBar').style.width=pct+'%';$('practiceCount').textContent=`${done} / ${r.length} 단계 완료 · ${pct}%`;
+ $('practiceSteps').innerHTML=cfg.steps.map((s,i)=>`<div class="practice-step ${r[i]?'done':i===cur?'now':''}"><span class="ico">${r[i]?'✓':i===cur?'▶':'○'}</span><span>${i+1}. ${esc(s[0])}</span></div>`).join('');
+ if(idx<0){$('practiceNowTitle').textContent='🎉 실습 완료';$('practiceNowText').textContent='모든 단계가 완성되었습니다. [✓ 설계검증]이나 [▶ 시스템 생성]도 눌러 보세요.';$('practiceMsg').className='practice-msg ok';$('practiceMsg').textContent='잘 만들었습니다. 이제 같은 방식으로 회사 업무에 맞는 화면을 직접 설계할 수 있습니다.'}
+ else{$('practiceNowTitle').textContent=`${idx+1}단계 · ${cfg.steps[idx][0]}`;$('practiceNowText').textContent=cfg.steps[idx][1];if($('practiceMsg').classList.contains('ok')){$('practiceMsg').className='practice-msg';$('practiceMsg').textContent='[＋ 추가] 메뉴를 이용해 직접 만들어 보세요.'}}
+}
+function practiceStart(key){
+ const cfg=PRACTICES[key];if(!cfg)return;
+ if(practiceState.key){if(!confirm(`현재 “${practiceCfg()?.title||'실습'}”을 끝내고 “${cfg.title}” 실습으로 바꿀까요?`))return}
+ else{
+  if(D.nodes.length&&!confirm(`“${cfg.title}” 실습을 시작하면 현재 설계 대신 빈 실습 화면이 열립니다.\n현재 설계는 자동으로 백업하며 나중에 복원할 수 있습니다.\n\n실습을 시작할까요?`))return;
+  try{localStorage.setItem(PRACTICE_BACKUP_KEY,JSON.stringify({D:cloneUndo(D),view:cloneUndo(view),curName,sysName:$('sysName')?.value||''}))}catch(e){}
+ }
+ clearDeleteUndo();D={nodes:[],edges:[]};sel=null;view={x:40,y:40,k:1};practiceState={key};
+ if($('sysName'))$('sysName').value='실습 - '+cfg.title;
+ guideDlg.classList.remove('on');$('practicePanel').classList.add('on');renderPanel();render();
+ $('practiceMsg').className='practice-msg';$('practiceMsg').textContent='1단계부터 직접 만들어 보세요. 완료하면 자동으로 다음 단계가 표시됩니다.';
+ $('stat').textContent=`🧩 실습 중 — ${cfg.title} · 왼쪽 아래 실습 도우미를 따라 만들어 보세요.`;practiceRefresh();
+}
+function practiceHint(){const cfg=practiceCfg();if(!cfg)return;const r=practiceResults(),i=r.findIndex(x=>!x);const msg=$('practiceMsg');msg.className='practice-msg warn';msg.textContent=i<0?'이미 모든 단계를 완료했습니다.':`💡 ${cfg.steps[i][3]}`}
+function practiceCheckNow(){const cfg=practiceCfg();if(!cfg)return;const r=practiceResults(),done=r.filter(Boolean).length,i=r.findIndex(x=>!x),msg=$('practiceMsg');if(i<0){msg.className='practice-msg ok';msg.textContent='✓ 모든 단계가 완료되었습니다. 설계검증과 시스템 생성도 시험해 보세요.'}else{msg.className='practice-msg warn';msg.textContent=`현재 ${done}/${r.length}단계 완료. 다음은 “${cfg.steps[i][0]}”입니다.`}practiceRefresh()}
+function practiceReset(){const cfg=practiceCfg();if(!cfg)return;if(D.nodes.length&&!confirm(`“${cfg.title}” 실습 내용을 모두 지우고 처음부터 다시 할까요?`))return;clearDeleteUndo();D={nodes:[],edges:[]};sel=null;view={x:40,y:40,k:1};renderPanel();render();$('practiceMsg').className='practice-msg';$('practiceMsg').textContent='처음부터 다시 시작합니다. 1단계를 진행하세요.'}
+function practiceBuildAnswer(){
+ const cfg=practiceCfg();if(!cfg)return;if(!confirm(`현재 실습 내용을 정리하고 “${cfg.title}” 정답 예시를 자동으로 만들어 볼까요?`))return;
+ clearDeleteUndo();D={nodes:[],edges:[]};const map={};
+ for(const sp of cfg.nodes){let meta=cloneUndo(sp.meta||{});if(sp.type==='table')meta={...meta,cols:cloneUndo(cfg.columns?.[sp.name]||[])};map[sp.name]=addNode(sp.type,sp.name,meta,0,0)}
+ for(const e of cfg.edges){const a=map[e[0]],b=map[e[1]];if(a&&b)addEdge(a.id,b.id,e[2],'',{quiet:true,noSelect:true})}
+ sel=null;renderPanel();autoLayout();fitAll();practiceRefresh();$('practiceMsg').className='practice-msg ok';$('practiceMsg').textContent='정답 예시를 만들었습니다. 선의 색과 연결 방향, 테이블 항목을 하나씩 눌러 확인해 보세요.';
+}
+function practiceEndKeep(){if(!practiceState.key){$('practicePanel')?.classList.remove('on');return}if(!confirm('실습 도우미를 닫을까요? 현재 실습 설계는 그대로 남습니다.'))return;practiceState={key:null};$('practicePanel').classList.remove('on');$('stat').textContent='실습 도우미를 닫았습니다. 현재 설계는 그대로 사용할 수 있습니다.'}
+function practiceRestoreBackup(){
+ let b=null;try{b=JSON.parse(localStorage.getItem(PRACTICE_BACKUP_KEY)||'null')}catch(e){}
+ if(!b||!b.D){alert('복원할 실습 전 설계가 없습니다.');return}
+ if(!confirm('실습 전 설계로 돌아갈까요? 현재 실습 내용은 화면에서 사라집니다.'))return;
+ clearDeleteUndo();D=b.D||{nodes:[],edges:[]};view=b.view||{x:40,y:40,k:1};curName=b.curName||'';if($('sysName')&&b.sysName)$('sysName').value=b.sysName;practiceState={key:null};$('practicePanel')?.classList.remove('on');try{localStorage.removeItem(PRACTICE_BACKUP_KEY)}catch(e){}updateTitle();select(null);render();$('stat').textContent=`↩ 실습 전 설계를 복원했습니다 — 블록 ${D.nodes.length} · 연결 ${D.edges.length}`;
+}
 document.addEventListener('click',e=>{if(!e.target.closest('.dd'))document.querySelectorAll('.dd.open').forEach(x=>x.classList.remove('open'))});
 document.addEventListener('click',e=>{if(e.target.closest('.dd .menu button'))document.querySelectorAll('.dd.open').forEach(x=>x.classList.remove('open'))});
 const svg=$('svg');let drag=null,lastHit={id:null,t:0};
@@ -878,7 +1078,7 @@ function renderPanel(){
    <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="perm" ${n.meta.kind==='perm'?'selected':''}>권한관리 (사용자+메뉴별 4권한 트리)</option><option value="paste" ${n.meta.kind==='paste'?'selected':''}>엑셀 붙여넣기 등록 (대량 품목)</option><option value="dash" ${n.meta.kind==='dash'?'selected':''}>대시보드 (KPI·알림·그룹별 상태표·자동갱신)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
    <div class="f"><label>화면 CSS 테마 (이 화면만)</label><select id="f_skin"><option value="">설계 전체 테마 따름 — ${esc(SKIN[skinId()].name)}</option>${Object.entries(SKIN).map(([k,v])=>`<option value="${k}" ${n.meta.skin===k?'selected':''}>${esc(v.name)}</option>`).join('')}</select></div>
    <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewScreen()">▶ 화면 미리보기</button></div>
-   <label class="ck" style="padding:4px 0"><input id="f_lock" type="checkbox" ${n.meta.locked?'checked':''}>이 화면은 직접 수정함 — 다시 생성해도 덮어쓰지 않기</label>
+   <label class="ck" style="padding:4px 0 4px 25px"><input id="f_lock" type="checkbox" ${n.meta.locked?'checked':''}>이 화면은 직접 수정함 — 다시 생성해도 덮어쓰지 않기</label>
    <div class="f"><label>사용 테이블 (자동: "사용" 연결)</label><div style="color:#4a5568">${D.edges.filter(e=>e.from===n.id&&e.kind==='uses').map(e=>esc(N(e.to)?.name)).join(', ')||'<span style="color:#8a94a6">없음 — 오른쪽 ○ 를 테이블로 끌어 연결</span>'}</div></div>
    ${originPanelHtml(n)}`}
  if(n.type==='table'){const cols=n.meta.cols||(n.meta.cols=[]),pk0=cols.find(c=>c.pk)||cols[0],auto=autoNoConfig(n),al=alertConfig(n),ap=approvalConfig(n),dateCols=cols.filter(c=>c.type==='date'&&!c.formula);
