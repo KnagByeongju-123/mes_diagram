@@ -287,7 +287,7 @@ work_date, 일자, date"></textarea></div>
       <div class="row2"><input id="lb_name" placeholder="모듈 이름 (예: 수주 · 출하 기본)"><label class="ck"><input id="lb_deep" type="checkbox" checked>연결된 블록까지 함께 저장</label></div>
       <div class="acts"><button class="btn primary" onclick="saveModule()">＋ 모듈로 저장</button><button class="btn" onclick="saveModule(true)">현재 설계 전체를 모듈로</button><span class="msg" id="lb_msg" style="font-size:11.5px;color:#8a94a6"></span></div>
     </section>
-    <div class="f"><label>기본 모듈 — 구분별 뼈대 (공통 · 금형제작 · ESG 스마트팩토리 · 철강 수입무역 · mm 통합 MES) — 🎨 화면 테마: mm 3종 · ESG 3종</label><div class="links" id="lb_builtin"></div></div>
+    <div class="f"><label>기본 모듈 — 구분별 뼈대 (공통 · 금형제작 · ESG 스마트팩토리 · 철강 수입무역 · mm 통합 MES · GI MES) — 🎨 화면 테마: mm 3종 · ESG 3종 · GI 2종</label><div class="links" id="lb_builtin"></div></div>
     <div class="f"><label>내 모듈 <span style="color:#8a94a6;font-size:11px">(이 브라우저 · ☁ 연결 시 Supabase 공유)</span></label><div class="links" id="lb_mine"></div></div>
   </div>
   <div class="bt"><button class="btn" onclick="libDlg.classList.remove('on')">닫기</button><span class="msg">모듈을 넣은 뒤 블록의 ○ 를 끌어 기존 블록과 연결하세요.</span></div>
@@ -1488,7 +1488,218 @@ const BUILTIN=[
   {type:'section',name:'업무',meta:{icon:'💬'},dx:0,dy:0},
   {type:'screen',name:'수정요청 게시판',meta:{file:'board.html',kind:'board',skin:'mm-card'},dx:210,dy:0},
   {type:'table',name:'board_post',meta:{cols:[COL('id','ID','num',1),COL('category','분류(수정요청/버그/개선/공지/기타)'),COL('title','제목','text',0,1),COL('content','내용'),COL('author','작성자(기본 익명)'),COL('status','상태(대기/진행/완료/보류)'),COL('replies','댓글(JSONB 배열)'),COL('created_at','작성일시','date')]},dx:470,dy:0}],
-  edges:[[0,1,'contains',''],[1,2,'uses','글 등록·수정·삭제 · 댓글 · 상태변경']]}}
+  edges:[[0,1,'contains',''],[1,2,'uses','글 등록·수정·삭제 · 댓글 · 상태변경']]}},
+ /* ═══ Gyeongil (GI MES · SCM Smart · ki_) ═══ */
+ {cat:'GI MES (경일)',name:'GI MES 화면배치도 (전체 메뉴체계)',desc:'ki_config.js MENU 그대로 — 대메뉴 6 · 중분류 11 · 화면 50 (드롭다운 메뉴 · 좌측트리 겸용)',data:{nodes:[
+  {type:'module',name:'금형관리',meta:{icon:'🔧',desc:'점검계획 · 점검등록 · 금형평가'},dx:0,dy:0},
+  {type:'section',name:'점검계획',meta:{icon:'📅'},dx:210,dy:0},
+  {type:'screen',name:'점검 도래현황',meta:{file:'plan_board.html',kind:'dash',skin:'gi-erp'},dx:420,dy:0},
+  {type:'screen',name:'점검 예측 · 계획표',meta:{file:'plan_board.html?view=plan',kind:'status',skin:'gi-erp'},dx:420,dy:70},
+  {type:'screen',name:'연마·교체 도래현황',meta:{file:'tool_alert.html',kind:'dash',skin:'gi-erp'},dx:420,dy:140},
+  {type:'screen',name:'연마·교체 알람이력',meta:{file:'tool_alarm.html',kind:'status',skin:'gi-erp'},dx:420,dy:210},
+  {type:'section',name:'점검등록',meta:{icon:'📋'},dx:210,dy:280},
+  {type:'screen',name:'일상점검 등록',meta:{file:'daily_check.html',kind:'check',skin:'gi-erp'},dx:420,dy:280},
+  {type:'screen',name:'정기점검 등록',meta:{file:'mold_inspection.html',kind:'input',skin:'gi-erp'},dx:420,dy:350},
+  {type:'screen',name:'세척등록',meta:{file:'wash_check.html',kind:'check',skin:'gi-erp'},dx:420,dy:420},
+  {type:'screen',name:'등록실적 조회',meta:{file:'mold_inspection_detail.html',kind:'status',skin:'gi-erp'},dx:420,dy:490},
+  {type:'section',name:'금형평가',meta:{icon:'⏱'},dx:210,dy:560},
+  {type:'screen',name:'일별 타발수 등록',meta:{file:'shot_daily.html',kind:'input',skin:'gi-erp'},dx:420,dy:560},
+  {type:'screen',name:'월별 타발수',meta:{file:'shot_ledger.html',kind:'status',skin:'gi-erp'},dx:420,dy:630},
+  {type:'screen',name:'금형 등급평가',meta:{file:'grade_eval.html',kind:'input',skin:'gi-erp'},dx:420,dy:700},
+  {type:'screen',name:'금형대장',meta:{file:'mold_master.html',kind:'input',skin:'gi-erp'},dx:420,dy:770},
+  {type:'module',name:'물류관리',meta:{icon:'🚚',desc:'LOT 추적'},dx:0,dy:930},
+  {type:'section',name:'LOT 추적',meta:{icon:'🔎'},dx:210,dy:930},
+  {type:'screen',name:'물류등록',meta:{file:'lot_route.html',kind:'board',skin:'gi-erp'},dx:420,dy:930},
+  {type:'screen',name:'LOT 추적(통합조회)',meta:{file:'lot_track.html',kind:'status',skin:'gi-erp'},dx:420,dy:1000},
+  {type:'screen',name:'물류이력',meta:{file:'lot_trace.html',kind:'status',skin:'gi-erp'},dx:420,dy:1070},
+  {type:'screen',name:'QR 입출고 이력',meta:{file:'lot_move.html',kind:'status',skin:'gi-erp'},dx:420,dy:1140},
+  {type:'screen',name:'공정이동표 발행이력',meta:{file:'lot_token.html',kind:'status',skin:'gi-erp'},dx:420,dy:1210},
+  {type:'screen',name:'협력사 재고현황',meta:{file:'vendor_stock.html',kind:'status',skin:'gi-erp'},dx:420,dy:1280},
+  {type:'screen',name:'QR(수동, 수정)',meta:{file:'lot_scan.html',kind:'other',skin:'gi-mobile'},dx:420,dy:1350},
+  {type:'screen',name:'QR(리딩)',meta:{file:'lot_vendor.html?home=1',kind:'other',skin:'gi-mobile'},dx:420,dy:1420},
+  {type:'module',name:'온습도관리',meta:{icon:'🌡',desc:'모니터링 · 센서기준'},dx:700,dy:0},
+  {type:'section',name:'모니터링',meta:{icon:'🌡'},dx:910,dy:0},
+  {type:'screen',name:'실시간 현황',meta:{file:'env_live.html',kind:'dash',skin:'gi-erp'},dx:1120,dy:0},
+  {type:'screen',name:'측정 이력',meta:{file:'env_history.html',kind:'status',skin:'gi-erp'},dx:1120,dy:70},
+  {type:'screen',name:'알람 이력',meta:{file:'env_alert.html',kind:'status',skin:'gi-erp'},dx:1120,dy:140},
+  {type:'section',name:'센서기준',meta:{icon:'📍'},dx:910,dy:210},
+  {type:'screen',name:'센서 마스터',meta:{file:'sensor.html',kind:'input',skin:'gi-erp'},dx:1120,dy:210},
+  {type:'module',name:'기준정보',meta:{icon:'▦',desc:'생산기준 · 외주기준 · 점검기준'},dx:700,dy:370},
+  {type:'section',name:'생산기준',meta:{icon:'▦'},dx:910,dy:370},
+  {type:'screen',name:'금형정보',meta:{file:'mold_spec.html',kind:'input',skin:'gi-erp'},dx:1120,dy:370},
+  {type:'screen',name:'금형타입',meta:{file:'mold_type.html',kind:'input',skin:'gi-erp'},dx:1120,dy:440},
+  {type:'screen',name:'소재 비중정보',meta:{file:'material.html',kind:'input',skin:'gi-erp'},dx:1120,dy:510},
+  {type:'screen',name:'금형 보관장소',meta:{file:'mold_location.html',kind:'input',skin:'gi-erp'},dx:1120,dy:580},
+  {type:'screen',name:'연마/교체주기설정',meta:{file:'tool_rule.html',kind:'input',skin:'gi-erp'},dx:1120,dy:650},
+  {type:'screen',name:'금형별 연마/교체주기',meta:{file:'tool_rule.html?view=ind',kind:'input',skin:'gi-erp'},dx:1120,dy:720},
+  {type:'screen',name:'호기설정',meta:{file:'machine.html',kind:'input',skin:'gi-erp'},dx:1120,dy:790},
+  {type:'section',name:'외주기준',meta:{icon:'↔'},dx:910,dy:860},
+  {type:'screen',name:'공정코드',meta:{file:'process.html',kind:'input',skin:'gi-erp'},dx:1120,dy:860},
+  {type:'screen',name:'협력사 정보',meta:{file:'vendor.html',kind:'input',skin:'gi-erp'},dx:1120,dy:930},
+  {type:'screen',name:'고객사 정보',meta:{file:'customer.html',kind:'input',skin:'gi-erp'},dx:1120,dy:1000},
+  {type:'screen',name:'표준 공정경로',meta:{file:'std_route.html',kind:'input',skin:'gi-erp'},dx:1120,dy:1070},
+  {type:'section',name:'점검기준',meta:{icon:'🔧'},dx:910,dy:1140},
+  {type:'screen',name:'점검주기 기준',meta:{file:'cycle_rule.html',kind:'input',skin:'gi-erp'},dx:1120,dy:1140},
+  {type:'screen',name:'정기점검 항목',meta:{file:'inspection_item.html',kind:'input',skin:'gi-erp'},dx:1120,dy:1210},
+  {type:'screen',name:'일상점검 항목',meta:{file:'daily_item.html',kind:'input',skin:'gi-erp'},dx:1120,dy:1280},
+  {type:'screen',name:'세척항목(순서)',meta:{file:'wash_step.html',kind:'input',skin:'gi-erp'},dx:1120,dy:1350},
+  {type:'screen',name:'등급 평가항목',meta:{file:'grade_item.html',kind:'input',skin:'gi-erp'},dx:1120,dy:1420},
+  {type:'screen',name:'설비 점검기준',meta:{file:'check_machine.html',kind:'input',skin:'gi-erp'},dx:1120,dy:1490},
+  {type:'module',name:'시스템',meta:{icon:'⚙',desc:'시스템'},dx:1400,dy:0},
+  {type:'section',name:'시스템',meta:{icon:'⚙'},dx:1610,dy:0},
+  {type:'screen',name:'비밀번호 설정',meta:{file:'settings.html',kind:'input',skin:'gi-erp'},dx:1820,dy:0},
+  {type:'screen',name:'사용자정보',meta:{file:'user_info.html',kind:'perm',skin:'gi-erp'},dx:1820,dy:70},
+  {type:'screen',name:'알림 설정(ntfy)',meta:{file:'notify_config.html',kind:'input',skin:'gi-erp'},dx:1820,dy:140},
+  {type:'screen',name:'오류로그',meta:{file:'error_log.html',kind:'status',skin:'gi-erp'},dx:1820,dy:210},
+  {type:'module',name:'사용안내',meta:{icon:'📖',desc:'사용안내'},dx:1400,dy:370},
+  {type:'section',name:'사용안내',meta:{icon:'📖'},dx:1610,dy:370},
+  {type:'screen',name:'사용안내',meta:{file:'guide.html',kind:'other',skin:'gi-erp'},dx:1820,dy:370},
+  {type:'screen',name:'처음 시작하기',meta:{file:'guide.html?sec=start',kind:'status',skin:'gi-erp'},dx:1820,dy:440},
+  {type:'screen',name:'LOT 외주 진행',meta:{file:'guide.html?sec=lot',kind:'status',skin:'gi-erp'},dx:1820,dy:510},
+  {type:'screen',name:'LOT 추적 사용법',meta:{file:'guide.html?sec=track',kind:'status',skin:'gi-erp'},dx:1820,dy:580},
+  {type:'screen',name:'화면 공통 조작',meta:{file:'guide.html?sec=common',kind:'status',skin:'gi-erp'},dx:1820,dy:650}],
+  edges:[[0,1,'contains',''],[1,2,'contains',''],[1,3,'contains',''],[1,4,'contains',''],[1,5,'contains',''],[0,6,'contains',''],[6,7,'contains',''],[6,8,'contains',''],[6,9,'contains',''],[6,10,'contains',''],[0,11,'contains',''],[11,12,'contains',''],[11,13,'contains',''],[11,14,'contains',''],[11,15,'contains',''],[16,17,'contains',''],[17,18,'contains',''],[17,19,'contains',''],[17,20,'contains',''],[17,21,'contains',''],[17,22,'contains',''],[17,23,'contains',''],[17,24,'contains',''],[17,25,'contains',''],[26,27,'contains',''],[27,28,'contains',''],[27,29,'contains',''],[27,30,'contains',''],[26,31,'contains',''],[31,32,'contains',''],[33,34,'contains',''],[34,35,'contains',''],[34,36,'contains',''],[34,37,'contains',''],[34,38,'contains',''],[34,39,'contains',''],[34,40,'contains',''],[34,41,'contains',''],[33,42,'contains',''],[42,43,'contains',''],[42,44,'contains',''],[42,45,'contains',''],[42,46,'contains',''],[33,47,'contains',''],[47,48,'contains',''],[47,49,'contains',''],[47,50,'contains',''],[47,51,'contains',''],[47,52,'contains',''],[47,53,'contains',''],[54,55,'contains',''],[55,56,'contains',''],[55,57,'contains',''],[55,58,'contains',''],[55,59,'contains',''],[60,61,'contains',''],[61,62,'contains',''],[61,63,'contains',''],[61,64,'contains',''],[61,65,'contains',''],[61,66,'contains','']]}},
+ {cat:'GI MES (경일)',name:'GI 금형 점검계획 · 연마교체',desc:'점검 도래현황(정기·세척 통합) · 예측 계획표 · 연마/교체 도래 안돈 · 알람이력 (Gyeongil ki_)',data:{nodes:[
+  {type:'section',name:'점검계획',meta:{icon:'📅'},dx:0,dy:0},
+  {type:'screen',name:'점검 도래현황',meta:{file:'plan_board.html',kind:'dash',skin:'gi-erp'},dx:210,dy:0},
+  {type:'screen',name:'점검 예측 · 계획표',meta:{file:'plan_board.html?view=plan',kind:'status',skin:'gi-erp'},dx:210,dy:70},
+  {type:'screen',name:'연마·교체 도래현황',meta:{file:'tool_alert.html',kind:'dash',skin:'gi-erp'},dx:210,dy:140},
+  {type:'screen',name:'연마·교체 알람이력',meta:{file:'tool_alarm.html',kind:'status',skin:'gi-erp'},dx:210,dy:210},
+  {type:'table',name:'ki_mold',meta:{cols:[COL('mold_code','금형코드(품번)','text',1,1),COL('mold_name','금형명','text',0,1),COL('customer_name','고객사','text'),COL('model','모델','text'),COL('mold_type','금형종류','text'),COL('mold_no','금형번호','text'),COL('grade','등급','text'),COL('machine_no','사용기계','text'),COL('prod_type','생산구분','text'),COL('factory_code','공장','text'),COL('location','보관장소','text'),COL('shot_count','누적 타발수','num'),COL('shot_limit','수명(SHOT)','num'),COL('cycle_days','점검주기(일)','num'),COL('last_inspection','최근점검','date'),COL('next_inspection','점검예정','date'),COL('status','상태','text'),COL('remark','비고','text'),COL('updated_at','수정일시','date'),COL('shot_base','기초 타발수','num')]},dx:470,dy:0},
+  {type:'table',name:'ki_insp_plan',meta:{cols:[COL('mold_code','금형코드(품번)','text',1,1),COL('year','연도','num',1,1),COL('months','계획 배정월','num'),COL('updated_at','수정일시','date')]},dx:470,dy:416},
+  {type:'table',name:'ki_cycle_rule',meta:{cols:[COL('rule_id','기준코드','text',1,1),COL('kind','구분','text',0,1),COL('target','대상','text',0,1),COL('cycle_days','주기(일)','num'),COL('limit_shot','타발수 한도','num'),COL('plan_months','계획월(JSON)','num'),COL('label','화면 표기','text'),COL('sort_order','순서','num'),COL('is_active','사용','bool'),COL('remark','비고','text'),COL('updated_at','수정일시','date')]},dx:470,dy:560},
+  {type:'table',name:'ki_wash',meta:{cols:[COL('wash_id','세척ID','num',1,1),COL('mold_code','금형코드(품번)','text',0,1),COL('wash_date','세척일','date'),COL('wash_type','세척구분(일상/정기)','text'),COL('worker','담당','text'),COL('shot_count','타발수','num'),COL('steps','공정단계(JSON)','text'),COL('judgement','판정','text'),COL('remark','비고','text'),COL('created_at','등록일시','date')]},dx:470,dy:823},
+  {type:'table',name:'ki_mold_tool',meta:{cols:[COL('mold_code','금형코드','text',1,1),COL('kind','구분','text',1,1),COL('part_name','부위','text'),COL('use_common','공통기준 사용','bool'),COL('limit_shot','타발수 한도(개별)','num'),COL('cycle_days','주기(일)(개별)','num'),COL('warn_pct','임박기준(%)','num'),COL('last_date','최근 실시일','date'),COL('last_shot','최근 실시 타발수','num'),COL('is_active','사용','bool'),COL('remark','비고','text'),COL('updated_at','수정일시','date')]},dx:470,dy:1069},
+  {type:'table',name:'ki_tool_rule',meta:{cols:[COL('rule_id','기준코드','text',1,1),COL('kind','구분','text',0,1),COL('target','대상(ALL 또는 금형종류)','text',0,1),COL('part_name','부위','text'),COL('limit_shot','타발수 한도','num'),COL('cycle_days','주기(일)','num'),COL('warn_pct','임박기준(%)','num'),COL('label','화면 표기','text'),COL('sort_order','순서','num'),COL('is_active','사용','bool'),COL('remark','비고','text'),COL('updated_at','수정일시','date')]},dx:470,dy:1349},
+  {type:'table',name:'ki_tool_alert',meta:{cols:[COL('alert_id','알람ID','num',1,1),COL('occurred_at','일시','date'),COL('mold_code','금형코드','text',0,1),COL('kind','구분','text',0,1),COL('part_name','부위','text'),COL('level','등급','text'),COL('reason','사유','text'),COL('shot_count','타발수','num'),COL('limit_shot','타발수 한도','num'),COL('used_shot','타발수','num'),COL('days_left','잔여(일)','num'),COL('message','메시지','text'),COL('status','상태','text'),COL('notified','ntfy','bool'),COL('notified_at','알림시각','date'),COL('action','조치내용','text'),COL('closed_at','해제시각','date'),COL('closed_by','해제자','text')]},dx:470,dy:1629}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[1,5,'uses','저장/조회'],[1,6,'uses','참조'],[1,7,'uses','참조'],[1,8,'uses','참조'],[2,6,'uses','저장/조회'],[2,5,'uses','참조'],[3,9,'uses','저장/조회'],[3,10,'uses','참조'],[3,5,'uses','참조'],[3,11,'uses','참조'],[4,11,'uses','저장/조회'],[9,5,'ref','mold_code → ki_mold.mold_code'],[11,5,'ref','mold_code → ki_mold.mold_code'],[1,2,'flow','도래 → 연간 계획'],[3,4,'flow','발생 → 조치/해제']]}},
+ {cat:'GI MES (경일)',name:'GI 금형 점검등록 (일상 · 정기 · 세척)',desc:'상형8/하형8 일상점검표 · 정기점검(항목별 측정·판정) · 세척등록 · 항목별 실적조회',data:{nodes:[
+  {type:'section',name:'점검등록',meta:{icon:'📋'},dx:0,dy:0},
+  {type:'screen',name:'일상점검 등록',meta:{file:'daily_check.html',kind:'check',skin:'gi-erp'},dx:210,dy:0},
+  {type:'screen',name:'정기점검 등록',meta:{file:'mold_inspection.html',kind:'input',skin:'gi-erp'},dx:210,dy:70},
+  {type:'screen',name:'세척등록',meta:{file:'wash_check.html',kind:'check',skin:'gi-erp'},dx:210,dy:140},
+  {type:'screen',name:'등록실적 조회',meta:{file:'mold_inspection_detail.html',kind:'status',skin:'gi-erp'},dx:210,dy:210},
+  {type:'table',name:'ki_daily_check',meta:{cols:[COL('check_id','check_id','num',1,1),COL('mold_code','금형코드(품번)','text',0,1),COL('check_date','점검일','date'),COL('checker','checker','text'),COL('shot_count','타발수','num'),COL('actions','조치','text'),COL('judgement','판정','text'),COL('issue','이상내용','text'),COL('action_taken','조치내용','text'),COL('created_at','등록일시','date')]},dx:470,dy:0},
+  {type:'table',name:'ki_daily_check_detail',meta:{cols:[COL('check_id','check_id','num',1,1),COL('side','구분','text',1,1),COL('item_no','항목번호(1~13)','num',1,1),COL('item_name','점검항목','text'),COL('result','결과','text'),COL('note','메모','text')]},dx:470,dy:246},
+  {type:'table',name:'ki_daily_item',meta:{cols:[COL('side','구분','text',1,1),COL('item_no','항목번호(1~8)','num',1,1),COL('item_name','점검항목','text',0,1),COL('is_active','사용','bool')]},dx:470,dy:424},
+  {type:'table',name:'ki_mold',meta:{cols:[COL('mold_code','금형코드(품번)','text',1,1),COL('mold_name','금형명','text',0,1),COL('customer_name','고객사','text'),COL('model','모델','text'),COL('mold_type','금형종류','text'),COL('mold_no','금형번호','text'),COL('grade','등급','text'),COL('machine_no','사용기계','text'),COL('prod_type','생산구분','text'),COL('factory_code','공장','text'),COL('location','보관장소','text'),COL('shot_count','누적 타발수','num'),COL('shot_limit','수명(SHOT)','num'),COL('cycle_days','점검주기(일)','num'),COL('last_inspection','최근점검','date'),COL('next_inspection','점검예정','date'),COL('status','상태','text'),COL('remark','비고','text'),COL('updated_at','수정일시','date'),COL('shot_base','기초 타발수','num')]},dx:470,dy:568},
+  {type:'table',name:'ki_inspection_result',meta:{cols:[COL('inspection_no','점검번호','num',1,1),COL('mold_code','금형코드','text',0,1),COL('inspection_date','점검일','date',0,1),COL('inspector','점검자','text',0,1),COL('shot_count','타발수','num'),COL('judgement','판정','text',0,1),COL('defect_count','부적합 건수','num'),COL('action_taken','조치내용','text'),COL('next_inspection','다음 점검예정','date'),COL('remark','비고','text'),COL('created_at','등록일시','date')]},dx:470,dy:984},
+  {type:'table',name:'ki_inspection_detail',meta:{cols:[COL('inspection_no','점검번호','num',1,1),COL('item_code','항목코드','text',1,1),COL('item_name','점검항목','text'),COL('criteria','기준','text'),COL('measured_value','측정값','text'),COL('result','결과','text'),COL('remark','비고','text')]},dx:470,dy:1247},
+  {type:'table',name:'ki_inspection_item',meta:{cols:[COL('item_code','항목코드','text',1,1),COL('item_name','점검항목','text',0,1),COL('category','분류','text'),COL('method','점검방법','text'),COL('criteria','기준','text'),COL('unit','단위','text'),COL('sort_order','순서','num'),COL('is_active','사용','bool')]},dx:470,dy:1442},
+  {type:'table',name:'ki_wash',meta:{cols:[COL('wash_id','세척ID','num',1,1),COL('mold_code','금형코드(품번)','text',0,1),COL('wash_date','세척일','date'),COL('wash_type','세척구분(일상/정기)','text'),COL('worker','담당','text'),COL('shot_count','타발수','num'),COL('steps','공정단계(JSON)','text'),COL('judgement','판정','text'),COL('remark','비고','text'),COL('created_at','등록일시','date')]},dx:470,dy:1654},
+  {type:'table',name:'ki_wash_step',meta:{cols:[COL('step_no','순서','num',1,1),COL('step_name','세척항목','text',0,1),COL('is_active','사용','bool')]},dx:470,dy:1900}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[1,5,'uses','저장/조회'],[1,6,'uses','참조'],[1,7,'uses','참조'],[1,8,'uses','참조'],[2,9,'uses','저장/조회'],[2,10,'uses','참조'],[2,11,'uses','참조'],[2,8,'uses','참조'],[3,12,'uses','저장/조회'],[3,13,'uses','참조'],[3,8,'uses','참조'],[4,10,'uses','저장/조회'],[4,6,'uses','참조'],[4,12,'uses','참조'],[6,5,'ref','check_id → ki_daily_check','1N'],[9,8,'ref','mold_code → ki_mold.mold_code'],[10,9,'ref','inspection_no → ki_inspection_result','1N'],[1,4,'flow','실적 조회'],[2,4,'flow','실적 조회']]}},
+ {cat:'GI MES (경일)',name:'GI 금형평가 · 타발수 · 금형대장',desc:'일별 타발수 → 월별 누적 SHOT → 13항목 등급평가(A/B/C/F) → 금형대장 자동반영',data:{nodes:[
+  {type:'section',name:'금형평가',meta:{icon:'⏱'},dx:0,dy:0},
+  {type:'screen',name:'일별 타발수 등록',meta:{file:'shot_daily.html',kind:'input',skin:'gi-erp'},dx:210,dy:0},
+  {type:'screen',name:'월별 타발수',meta:{file:'shot_ledger.html',kind:'status',skin:'gi-erp'},dx:210,dy:70},
+  {type:'screen',name:'금형 등급평가',meta:{file:'grade_eval.html',kind:'input',skin:'gi-erp'},dx:210,dy:140},
+  {type:'screen',name:'금형대장',meta:{file:'mold_master.html',kind:'input',skin:'gi-erp'},dx:210,dy:210},
+  {type:'table',name:'ki_shot_daily',meta:{cols:[COL('mold_code','금형제번','text',1,1),COL('work_date','작업일','date',1,1),COL('machine_no','호기','text'),COL('shot_qty','일 타발수','num',0,1),COL('counter_end','종료 카운터(참고)','num'),COL('worker','작업자','text'),COL('remark','비고','text'),COL('updated_at','수정일시','date')]},dx:470,dy:0},
+  {type:'table',name:'ki_mold',meta:{cols:[COL('mold_code','금형코드(품번)','text',1,1),COL('mold_name','금형명','text',0,1),COL('customer_name','고객사','text'),COL('model','모델','text'),COL('mold_type','금형종류','text'),COL('mold_no','금형번호','text'),COL('grade','등급','text'),COL('machine_no','사용기계','text'),COL('prod_type','생산구분','text'),COL('factory_code','공장','text'),COL('location','보관장소','text'),COL('shot_count','누적 타발수','num'),COL('shot_limit','수명(SHOT)','num'),COL('cycle_days','점검주기(일)','num'),COL('last_inspection','최근점검','date'),COL('next_inspection','점검예정','date'),COL('status','상태','text'),COL('remark','비고','text'),COL('updated_at','수정일시','date'),COL('shot_base','기초 타발수','num')]},dx:470,dy:212},
+  {type:'table',name:'ki_machine',meta:{cols:[COL('machine_no','호기번호','text',1,1),COL('machine_name','호기명','text',0,1),COL('tonnage','톤수','num'),COL('sort_order','순서','num'),COL('is_active','사용','bool'),COL('remark','비고','text')]},dx:470,dy:628},
+  {type:'table',name:'ki_shot_ledger',meta:{cols:[COL('mold_code','금형코드(품번)','text',1,1),COL('year','연도','num',1,1),COL('m1','1월','num'),COL('m2','2월','num'),COL('m3','3월','num'),COL('m4','4월','num'),COL('m5','5월','num'),COL('m6','6월','num'),COL('m7','7월','num'),COL('m8','8월','num'),COL('m9','9월','num'),COL('m10','10월','num'),COL('m11','11월','num'),COL('m12','12월','num'),COL('updated_at','수정일시','date')]},dx:470,dy:806},
+  {type:'table',name:'ki_grade_eval',meta:{cols:[COL('eval_id','평가ID','num',1,1),COL('mold_code','금형코드(품번)','text',0,1),COL('eval_date','평가일','date'),COL('evaluator','평가자','text'),COL('total_score','총점','num'),COL('grade','등급','text'),COL('applied','등급반영','bool'),COL('method','점검방법','text'),COL('remark','비고','text'),COL('created_at','등록일시','date')]},dx:470,dy:1137},
+  {type:'table',name:'ki_grade_eval_detail',meta:{cols:[COL('eval_id','평가ID','num',1,1),COL('item_no','항목번호(1~13)','num',1,1),COL('score','점수','num'),COL('note','메모','text')]},dx:470,dy:1383},
+  {type:'table',name:'ki_grade_item',meta:{cols:[COL('item_no','항목번호(1~13)','num',1,1),COL('item_name','평가항목','text',0,1),COL('auto_source','자동산출','text'),COL('default_score','기본점수(1~5)','num'),COL('remark','비고','text')]},dx:470,dy:1527},
+  {type:'table',name:'ki_factory',meta:{cols:[COL('factory_code','공장','text',1,1),COL('factory_name','공장명','text'),COL('width_m','가로(m)','num'),COL('height_m','세로(m)','num'),COL('remark','비고','text')]},dx:470,dy:1688},
+  {type:'table',name:'ki_mold_location',meta:{cols:[COL('location_code','장소코드','text',1,1),COL('location_name','장소명','text',0,1),COL('factory_code','공장','text'),COL('sort_order','순서','num'),COL('is_active','사용','bool'),COL('remark','비고','text')]},dx:470,dy:1849}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[1,5,'uses','저장/조회'],[1,6,'uses','참조'],[1,7,'uses','참조'],[2,8,'uses','저장/조회'],[2,6,'uses','참조'],[3,9,'uses','저장/조회'],[3,10,'uses','참조'],[3,11,'uses','참조'],[3,6,'uses','참조'],[4,6,'uses','저장/조회'],[4,7,'uses','참조'],[4,12,'uses','참조'],[4,13,'uses','참조'],[5,6,'ref','mold_code → ki_mold.mold_code'],[5,7,'ref','machine_no → ki_machine.machine_no'],[6,7,'ref','machine_no → ki_machine.machine_no'],[6,12,'ref','factory_code → ki_factory.factory_code'],[6,13,'ref','location → ki_mold_location.location_code'],[10,9,'ref','eval_id → ki_grade_eval','1N'],[13,12,'ref','factory_code → ki_factory.factory_code'],[1,2,'flow','일별 → 월별 누적'],[2,3,'flow','타발수 점수'],[3,4,'flow','등급 반영']]}},
+ {cat:'GI MES (경일)',name:'GI 물류 LOT 추적 · 외주 · QR',desc:'외주발주 → 반출 → 공정이동표 QR → 협력사 도착/반송 → 사내입고 · 통합이력 · 협력사 재고 · 현장 QR 화면(모바일)',data:{nodes:[
+  {type:'section',name:'LOT 추적',meta:{icon:'🔎'},dx:0,dy:0},
+  {type:'screen',name:'물류등록',meta:{file:'lot_route.html',kind:'board',skin:'gi-erp'},dx:210,dy:0},
+  {type:'screen',name:'LOT 추적(통합조회)',meta:{file:'lot_track.html',kind:'status',skin:'gi-erp'},dx:210,dy:70},
+  {type:'screen',name:'물류이력',meta:{file:'lot_trace.html',kind:'status',skin:'gi-erp'},dx:210,dy:140},
+  {type:'screen',name:'QR 입출고 이력',meta:{file:'lot_move.html',kind:'status',skin:'gi-erp'},dx:210,dy:210},
+  {type:'screen',name:'공정이동표 발행이력',meta:{file:'lot_token.html',kind:'status',skin:'gi-erp'},dx:210,dy:280},
+  {type:'screen',name:'협력사 재고현황',meta:{file:'vendor_stock.html',kind:'status',skin:'gi-erp'},dx:210,dy:350},
+  {type:'screen',name:'QR(수동, 수정)',meta:{file:'lot_scan.html',kind:'other',skin:'gi-mobile'},dx:210,dy:420},
+  {type:'screen',name:'QR(리딩)',meta:{file:'lot_vendor.html?home=1',kind:'other',skin:'gi-mobile'},dx:210,dy:490},
+  {type:'table',name:'ki_osp_order',meta:{cols:[COL('no','번호','num',1,1),COL('st','상태','text'),COL('vendor','외주업체','text'),COL('job','JOB(제번)','text'),COL('item','품목','text'),COL('proc','공정','text'),COL('procName','공정명','text'),COL('part','부품','text'),COL('partName','부품명','text'),COL('mp','가공공정','text'),COL('odate','발주일','text'),COL('edate','납기일','text'),COL('idate','입고일','text'),COL('cdate','완료일','text'),COL('quote','견적금액','num'),COL('fix','확정금액','num'),COL('mold_no','금형번호','text'),COL('map_part','품번','text'),COL('sdate','출고일','text'),COL('lot','LOT','text'),COL('qty','수량','num'),COL('lots','LOT목록(JSON)','text'),COL('route_no','공정경로번호','text'),COL('move_kind','이동구분','text')]},dx:470,dy:0},
+  {type:'table',name:'ki_osp_receipt',meta:{cols:[COL('no','번호','num',1,1),COL('job','JOB(제번)','text'),COL('item','품목','text'),COL('proc','공정','text'),COL('procName','공정명','text'),COL('part','부품','text'),COL('partName','부품명','text'),COL('mp','가공공정','text'),COL('mpName','가공공정명','text'),COL('vendor','외주업체','text'),COL('odate','발주일','text'),COL('idate','입고일','text'),COL('cdate','완료일','text'),COL('quote','견적금액','num'),COL('rate','진척률','num'),COL('status','상태','text')]},dx:470,dy:484},
+  {type:'table',name:'ki_lot_progress',meta:{cols:[COL('no','번호','num',1,1),COL('job','JOB(제번)','text'),COL('proc','공정','text'),COL('part','부품','text'),COL('steps','공정단계(JSON)','text')]},dx:470,dy:832},
+  {type:'table',name:'ki_std_route',meta:{cols:[COL('row_no','순번','num'),COL('standard_process_no','표준공정번호','num',1,1),COL('standard_process_name','표준공정명','text',0,1),COL('steps','가공공정 순서','text',0,1),COL('inhouse','사내 수행 공정','text'),COL('part_no','적용 품번','text')]},dx:470,dy:993},
+  {type:'table',name:'ki_vendor',meta:{cols:[COL('vendor_code','업체코드','text',1,1),COL('vendor_name','업체명','text',0,1),COL('vendor_type','업체구분','text'),COL('partner_type','협력구분','text'),COL('location_type','소재지','text'),COL('ceo_name','대표자','text'),COL('phone','대표전화','text'),COL('email','이메일','text'),COL('address','주소','text'),COL('contact_name','담당자','text'),COL('contact_phone','담당자 연락처','text'),COL('proc_codes','담당 공정코드(쉼표)','text'),COL('outsourcing_flag','외주가공','bool'),COL('milling_flag','면삭','bool'),COL('is_active','사용','bool'),COL('sort_order','순서','num'),COL('remark','비고','text'),COL('updated_at','수정일시','date')]},dx:470,dy:1171},
+  {type:'table',name:'ki_process',meta:{cols:[COL('process_code','공정코드','text',1,1),COL('process_name','공정명','text',0,1),COL('process_group','공정그룹','text'),COL('sort_order','정렬순서','num'),COL('completion_progress','완료 진척률','num'),COL('use_progress','진척 사용','bool'),COL('use_plan','계획 사용','bool'),COL('remark','비고','text')]},dx:470,dy:1553},
+  {type:'table',name:'ki_lot_move',meta:{cols:[COL('move_id','이동ID','num',1,1),COL('part','LOT 번호','text',0,1),COL('osp_no','외주번호','num'),COL('io','구분','text',0,1),COL('mp','가공공정','text'),COL('vendor','외주처','text'),COL('move_date','일자','date'),COL('out_qty','출고수량','num'),COL('in_qty','입고수량','num'),COL('short_qty','부족수량','num'),COL('reason','부족사유','text'),COL('remark','특기사항','text'),COL('worker','기록자','text'),COL('source','경로','text'),COL('created_at','등록일시','date'),COL('move_kind','이동구분','text')]},dx:470,dy:1765},
+  {type:'table',name:'ki_lot_receipt',meta:{cols:[COL('receipt_id','입고ID','num',1,1),COL('part','부품','text',0,1),COL('job','JOB(제번)','text'),COL('in_date','입고일','date'),COL('qty','수량','num'),COL('short_qty','부족','num'),COL('reason','부족사유','text'),COL('worker','담당','text'),COL('remark','비고','text'),COL('created_at','등록일시','date')]},dx:470,dy:2113},
+  {type:'table',name:'ki_lot_token',meta:{cols:[COL('token','QR토큰','text',1,1),COL('part','부품','text',0,1),COL('issued_by','발행자','text'),COL('issued_at','발행일시','date'),COL('expires_at','만료일시','date'),COL('revoked','폐기','bool'),COL('last_used_at','최근사용','date'),COL('use_count','사용횟수','num'),COL('remark','비고','text')]},dx:470,dy:2359}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[0,5,'contains',''],[0,6,'contains',''],[0,7,'contains',''],[0,8,'contains',''],[1,9,'uses','저장/조회'],[1,10,'uses','참조'],[1,11,'uses','참조'],[1,12,'uses','참조'],[1,13,'uses','참조'],[1,14,'uses','참조'],[2,15,'uses','저장/조회'],[2,16,'uses','참조'],[2,9,'uses','참조'],[2,17,'uses','참조'],[3,11,'uses','저장/조회'],[3,9,'uses','참조'],[3,13,'uses','참조'],[4,15,'uses','저장/조회'],[4,9,'uses','참조'],[5,17,'uses','저장/조회'],[6,15,'uses','저장/조회'],[6,9,'uses','참조'],[6,13,'uses','참조'],[7,15,'uses','저장/조회'],[7,16,'uses','참조'],[7,9,'uses','참조'],[8,17,'uses','저장/조회'],[8,15,'uses','참조'],[8,9,'uses','참조'],[1,8,'flow','이동표 QR 발행 → 현장 스캔'],[8,4,'flow','스캔 → 입출고 이력'],[4,2,'flow','통합 조회']]}},
+ {cat:'GI MES (경일)',name:'GI 온습도 모니터링',desc:'센서별 실시간 온습도 · 추이 · 측정이력 · 상하한 이탈 알람 · 센서 마스터(임계치)',data:{nodes:[
+  {type:'section',name:'모니터링',meta:{icon:'🌡'},dx:0,dy:0},
+  {type:'screen',name:'실시간 현황',meta:{file:'env_live.html',kind:'dash',skin:'gi-erp'},dx:210,dy:0},
+  {type:'screen',name:'측정 이력',meta:{file:'env_history.html',kind:'status',skin:'gi-erp'},dx:210,dy:70},
+  {type:'screen',name:'알람 이력',meta:{file:'env_alert.html',kind:'status',skin:'gi-erp'},dx:210,dy:140},
+  {type:'screen',name:'센서 마스터',meta:{file:'sensor.html',kind:'input',skin:'gi-erp'},dx:210,dy:210},
+  {type:'table',name:'ki_env_reading',meta:{cols:[COL('reading_id','측정ID','num',1,1),COL('sensor_code','센서','text'),COL('measured_at','측정시각','date'),COL('temperature','온도(℃)','num'),COL('humidity','습도(%)','num')]},dx:470,dy:0},
+  {type:'table',name:'ki_sensor',meta:{cols:[COL('sensor_code','센서코드','text',1,1),COL('factory_code','공장','text',0,1),COL('zone_code','구역','text'),COL('sensor_name','센서명','text',0,1),COL('x','X','num'),COL('y','Y','num'),COL('temp_min','온도 하한','num'),COL('temp_max','온도 상한','num'),COL('humi_min','습도 하한','num'),COL('humi_max','습도 상한','num'),COL('is_active','사용','bool'),COL('remark','비고','text')]},dx:470,dy:161},
+  {type:'table',name:'ki_env_alert',meta:{cols:[COL('alert_id','알람ID','num',1,1),COL('sensor_code','센서','text',0,1),COL('occurred_at','발생시각','text',0,1),COL('alert_type','알람구분','text',0,1),COL('value','측정값','num'),COL('threshold','임계값','num'),COL('status','처리상태','text',0,1),COL('action','조치내용','text')]},dx:470,dy:441},
+  {type:'table',name:'ki_zone',meta:{cols:[COL('zone_code','구역','text',1,1),COL('factory_code','공장','text'),COL('zone_name','구역명','text'),COL('x','X좌표','num'),COL('y','Y좌표','num'),COL('w','폭','num'),COL('h','높이','num'),COL('color','색상','text'),COL('remark','비고','text')]},dx:470,dy:653}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[1,5,'uses','저장/조회'],[1,6,'uses','참조'],[2,5,'uses','저장/조회'],[2,6,'uses','참조'],[3,7,'uses','저장/조회'],[3,6,'uses','참조'],[4,6,'uses','저장/조회'],[4,8,'uses','참조'],[6,8,'ref','zone_code → ki_zone.zone_code'],[7,6,'ref','sensor_code → ki_sensor.sensor_code'],[1,3,'flow','임계치 이탈 → 알람']]}},
+ {cat:'GI MES (경일)',name:'GI 기준정보 (생산 · 외주)',desc:'금형정보 · 금형타입 · 소재비중 · 보관장소 · 연마/교체주기 · 호기 · 공정코드 · 협력사 · 고객사 · 표준 공정경로',data:{nodes:[
+  {type:'section',name:'생산기준',meta:{icon:'▦'},dx:0,dy:0},
+  {type:'screen',name:'금형정보',meta:{file:'mold_spec.html',kind:'input',skin:'gi-erp'},dx:210,dy:0},
+  {type:'screen',name:'금형타입',meta:{file:'mold_type.html',kind:'input',skin:'gi-erp'},dx:210,dy:70},
+  {type:'screen',name:'소재 비중정보',meta:{file:'material.html',kind:'input',skin:'gi-erp'},dx:210,dy:140},
+  {type:'screen',name:'금형 보관장소',meta:{file:'mold_location.html',kind:'input',skin:'gi-erp'},dx:210,dy:210},
+  {type:'screen',name:'연마/교체주기설정',meta:{file:'tool_rule.html',kind:'input',skin:'gi-erp'},dx:210,dy:280},
+  {type:'screen',name:'금형별 연마/교체주기',meta:{file:'tool_rule.html?view=ind',kind:'input',skin:'gi-erp'},dx:210,dy:350},
+  {type:'screen',name:'호기설정',meta:{file:'machine.html',kind:'input',skin:'gi-erp'},dx:210,dy:420},
+  {type:'screen',name:'공정코드',meta:{file:'process.html',kind:'input',skin:'gi-erp'},dx:210,dy:490},
+  {type:'screen',name:'협력사 정보',meta:{file:'vendor.html',kind:'input',skin:'gi-erp'},dx:210,dy:560},
+  {type:'screen',name:'고객사 정보',meta:{file:'customer.html',kind:'input',skin:'gi-erp'},dx:210,dy:630},
+  {type:'screen',name:'표준 공정경로',meta:{file:'std_route.html',kind:'input',skin:'gi-erp'},dx:210,dy:700},
+  {type:'table',name:'ki_mold_master',meta:{cols:[COL('mold_no','금형제번','text',1,1),COL('mold_type_code','금형타입','text'),COL('material_code','소재재질','text'),COL('thickness_mm','소재두께(mm)','num'),COL('width_mm','소재폭(mm)','num'),COL('pitch_mm','피치(mm)','num'),COL('density','비중(비우면 재질값)','num'),COL('part_no','매칭품번','text'),COL('asset_owner','자산처(고객사)','text'),COL('remark','비고','text'),COL('updated_at','수정일시','date')]},dx:470,dy:0},
+  {type:'table',name:'ki_mold_type',meta:{cols:[COL('mold_type_code','타입코드','text',1,1),COL('mold_type_name','타입명','text',0,1),COL('sort_order','순서','num'),COL('remark','비고','text')]},dx:470,dy:263},
+  {type:'table',name:'ki_material',meta:{cols:[COL('material_code','소재코드','text',1,1),COL('material_name','소재명','text',0,1),COL('density','비중','num',0,1),COL('sort_order','순서','num'),COL('remark','비고','text')]},dx:470,dy:407},
+  {type:'table',name:'ki_mold_location',meta:{cols:[COL('location_code','장소코드','text',1,1),COL('location_name','장소명','text',0,1),COL('factory_code','공장','text'),COL('sort_order','순서','num'),COL('is_active','사용','bool'),COL('remark','비고','text')]},dx:470,dy:568},
+  {type:'table',name:'ki_factory',meta:{cols:[COL('factory_code','공장','text',1,1),COL('factory_name','공장명','text'),COL('width_m','가로(m)','num'),COL('height_m','세로(m)','num'),COL('remark','비고','text')]},dx:470,dy:746},
+  {type:'table',name:'ki_tool_rule',meta:{cols:[COL('rule_id','기준코드','text',1,1),COL('kind','구분','text',0,1),COL('target','대상(ALL 또는 금형종류)','text',0,1),COL('part_name','부위','text'),COL('limit_shot','타발수 한도','num'),COL('cycle_days','주기(일)','num'),COL('warn_pct','임박기준(%)','num'),COL('label','화면 표기','text'),COL('sort_order','순서','num'),COL('is_active','사용','bool'),COL('remark','비고','text'),COL('updated_at','수정일시','date')]},dx:470,dy:907},
+  {type:'table',name:'ki_mold_tool',meta:{cols:[COL('mold_code','금형코드','text',1,1),COL('kind','구분','text',1,1),COL('part_name','부위','text'),COL('use_common','공통기준 사용','bool'),COL('limit_shot','타발수 한도(개별)','num'),COL('cycle_days','주기(일)(개별)','num'),COL('warn_pct','임박기준(%)','num'),COL('last_date','최근 실시일','date'),COL('last_shot','최근 실시 타발수','num'),COL('is_active','사용','bool'),COL('remark','비고','text'),COL('updated_at','수정일시','date')]},dx:470,dy:1187},
+  {type:'table',name:'ki_mold',meta:{cols:[COL('mold_code','금형코드(품번)','text',1,1),COL('mold_name','금형명','text',0,1),COL('customer_name','고객사','text'),COL('model','모델','text'),COL('mold_type','금형종류','text'),COL('mold_no','금형번호','text'),COL('grade','등급','text'),COL('machine_no','사용기계','text'),COL('prod_type','생산구분','text'),COL('factory_code','공장','text'),COL('location','보관장소','text'),COL('shot_count','누적 타발수','num'),COL('shot_limit','수명(SHOT)','num'),COL('cycle_days','점검주기(일)','num'),COL('last_inspection','최근점검','date'),COL('next_inspection','점검예정','date'),COL('status','상태','text'),COL('remark','비고','text'),COL('updated_at','수정일시','date'),COL('shot_base','기초 타발수','num')]},dx:470,dy:1467},
+  {type:'table',name:'ki_machine',meta:{cols:[COL('machine_no','호기번호','text',1,1),COL('machine_name','호기명','text',0,1),COL('tonnage','톤수','num'),COL('sort_order','순서','num'),COL('is_active','사용','bool'),COL('remark','비고','text')]},dx:470,dy:1883},
+  {type:'table',name:'ki_process',meta:{cols:[COL('process_code','공정코드','text',1,1),COL('process_name','공정명','text',0,1),COL('process_group','공정그룹','text'),COL('sort_order','정렬순서','num'),COL('completion_progress','완료 진척률','num'),COL('use_progress','진척 사용','bool'),COL('use_plan','계획 사용','bool'),COL('remark','비고','text')]},dx:470,dy:2061},
+  {type:'table',name:'ki_vendor',meta:{cols:[COL('vendor_code','업체코드','text',1,1),COL('vendor_name','업체명','text',0,1),COL('vendor_type','업체구분','text'),COL('partner_type','협력구분','text'),COL('location_type','소재지','text'),COL('ceo_name','대표자','text'),COL('phone','대표전화','text'),COL('email','이메일','text'),COL('address','주소','text'),COL('contact_name','담당자','text'),COL('contact_phone','담당자 연락처','text'),COL('proc_codes','담당 공정코드(쉼표)','text'),COL('outsourcing_flag','외주가공','bool'),COL('milling_flag','면삭','bool'),COL('is_active','사용','bool'),COL('sort_order','순서','num'),COL('remark','비고','text'),COL('updated_at','수정일시','date')]},dx:470,dy:2273},
+  {type:'table',name:'ki_customer',meta:{cols:[COL('customer_name','고객사','text',1,1),COL('contact_name','담당자','text'),COL('contact_phone','담당자 연락처','text'),COL('is_active','사용','bool'),COL('sort_order','순서','num'),COL('remark','비고','text')]},dx:470,dy:2655},
+  {type:'table',name:'ki_std_route',meta:{cols:[COL('row_no','순번','num'),COL('standard_process_no','표준공정번호','num',1,1),COL('standard_process_name','표준공정명','text',0,1),COL('steps','가공공정 순서','text',0,1),COL('inhouse','사내 수행 공정','text'),COL('part_no','적용 품번','text')]},dx:470,dy:2833}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[0,5,'contains',''],[0,6,'contains',''],[0,7,'contains',''],[0,8,'contains',''],[0,9,'contains',''],[0,10,'contains',''],[0,11,'contains',''],[1,12,'uses','저장/조회'],[1,13,'uses','참조'],[1,14,'uses','참조'],[2,13,'uses','저장/조회'],[3,14,'uses','저장/조회'],[4,15,'uses','저장/조회'],[4,16,'uses','참조'],[5,17,'uses','저장/조회'],[6,18,'uses','저장/조회'],[6,19,'uses','참조'],[6,17,'uses','참조'],[7,20,'uses','저장/조회'],[8,21,'uses','저장/조회'],[9,22,'uses','저장/조회'],[9,21,'uses','참조'],[10,23,'uses','저장/조회'],[11,24,'uses','저장/조회'],[11,21,'uses','참조'],[12,13,'ref','mold_type_code → ki_mold_type.mold_type_code'],[12,14,'ref','material_code → ki_material.material_code'],[12,23,'ref','asset_owner → ki_customer.customer_name'],[15,16,'ref','factory_code → ki_factory.factory_code'],[18,19,'ref','mold_code → ki_mold.mold_code'],[19,20,'ref','machine_no → ki_machine.machine_no'],[19,16,'ref','factory_code → ki_factory.factory_code'],[19,15,'ref','location → ki_mold_location.location_code']]}},
+ {cat:'GI MES (경일)',name:'GI 점검기준',desc:'점검주기(등급별·타발수/기간) · 정기점검 항목 · 일상점검 항목(상형/하형) · 세척순서 · 등급 평가항목 · 설비 점검기준',data:{nodes:[
+  {type:'section',name:'점검기준',meta:{icon:'🔧'},dx:0,dy:0},
+  {type:'screen',name:'점검주기 기준',meta:{file:'cycle_rule.html',kind:'input',skin:'gi-erp'},dx:210,dy:0},
+  {type:'screen',name:'정기점검 항목',meta:{file:'inspection_item.html',kind:'input',skin:'gi-erp'},dx:210,dy:70},
+  {type:'screen',name:'일상점검 항목',meta:{file:'daily_item.html',kind:'input',skin:'gi-erp'},dx:210,dy:140},
+  {type:'screen',name:'세척항목(순서)',meta:{file:'wash_step.html',kind:'input',skin:'gi-erp'},dx:210,dy:210},
+  {type:'screen',name:'등급 평가항목',meta:{file:'grade_item.html',kind:'input',skin:'gi-erp'},dx:210,dy:280},
+  {type:'screen',name:'설비 점검기준',meta:{file:'check_machine.html',kind:'input',skin:'gi-erp'},dx:210,dy:350},
+  {type:'table',name:'ki_cycle_rule',meta:{cols:[COL('rule_id','기준코드','text',1,1),COL('kind','구분','text',0,1),COL('target','대상','text',0,1),COL('cycle_days','주기(일)','num'),COL('limit_shot','타발수 한도','num'),COL('plan_months','계획월(JSON)','num'),COL('label','화면 표기','text'),COL('sort_order','순서','num'),COL('is_active','사용','bool'),COL('remark','비고','text'),COL('updated_at','수정일시','date')]},dx:470,dy:0},
+  {type:'table',name:'ki_inspection_item',meta:{cols:[COL('item_code','항목코드','text',1,1),COL('item_name','점검항목','text',0,1),COL('category','분류','text'),COL('method','점검방법','text'),COL('criteria','기준','text'),COL('unit','단위','text'),COL('sort_order','순서','num'),COL('is_active','사용','bool')]},dx:470,dy:263},
+  {type:'table',name:'ki_daily_item',meta:{cols:[COL('side','구분','text',1,1),COL('item_no','항목번호(1~8)','num',1,1),COL('item_name','점검항목','text',0,1),COL('is_active','사용','bool')]},dx:470,dy:475},
+  {type:'table',name:'ki_wash_step',meta:{cols:[COL('step_no','순서','num',1,1),COL('step_name','세척항목','text',0,1),COL('is_active','사용','bool')]},dx:470,dy:619},
+  {type:'table',name:'ki_grade_item',meta:{cols:[COL('item_no','항목번호(1~13)','num',1,1),COL('item_name','평가항목','text',0,1),COL('auto_source','자동산출','text'),COL('default_score','기본점수(1~5)','num'),COL('remark','비고','text')]},dx:470,dy:746},
+  {type:'table',name:'ki_check_item',meta:{cols:[COL('check_id','check_id','num',1,1),COL('target','대상','text'),COL('check_type','check_type','text'),COL('item_name','점검항목','text'),COL('criteria','기준','text'),COL('cycle','주기','text'),COL('qr_code','QR코드','text'),COL('link_no','연결번호','text'),COL('sort_order','순서','num'),COL('is_active','사용','bool'),COL('remark','비고','text')]},dx:470,dy:907},
+  {type:'table',name:'ki_machine',meta:{cols:[COL('machine_no','호기번호','text',1,1),COL('machine_name','호기명','text',0,1),COL('tonnage','톤수','num'),COL('sort_order','순서','num'),COL('is_active','사용','bool'),COL('remark','비고','text')]},dx:470,dy:1170}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[0,5,'contains',''],[0,6,'contains',''],[1,7,'uses','저장/조회'],[2,8,'uses','저장/조회'],[3,9,'uses','저장/조회'],[4,10,'uses','저장/조회'],[5,11,'uses','저장/조회'],[6,12,'uses','저장/조회'],[6,13,'uses','참조']]}},
+ {cat:'GI MES (경일)',name:'GI 시스템 · 사용자 권한',desc:'마스터/사용자 PIN · 사용자 등록 + 권한 매트릭스 · ntfy 알림 설정 · 오류로그',data:{nodes:[
+  {type:'section',name:'시스템',meta:{icon:'⚙'},dx:0,dy:0},
+  {type:'screen',name:'비밀번호 설정',meta:{file:'settings.html',kind:'input',skin:'gi-erp'},dx:210,dy:0},
+  {type:'screen',name:'사용자정보',meta:{file:'user_info.html',kind:'perm',skin:'gi-erp'},dx:210,dy:70},
+  {type:'screen',name:'알림 설정(ntfy)',meta:{file:'notify_config.html',kind:'input',skin:'gi-erp'},dx:210,dy:140},
+  {type:'screen',name:'오류로그',meta:{file:'error_log.html',kind:'status',skin:'gi-erp'},dx:210,dy:210},
+  {type:'table',name:'ki_app_settings',meta:{cols:[COL('key','설정키','text',1,1),COL('value','측정값','text'),COL('updated_at','수정일시','date'),COL('updated_by','수정자','text')]},dx:470,dy:0},
+  {type:'table',name:'ki_employee',meta:{cols:[COL('emp_no','사번','text',1,1),COL('emp_name','사용자','text'),COL('dept','부서','text'),COL('position','직급','text'),COL('factory','공장','text'),COL('role','권한역할','text'),COL('hire_date','입사일','date'),COL('phone','대표전화','text'),COL('is_active','사용','bool'),COL('remark','비고','text'),COL('updated_at','수정일시','date'),COL('user_id','아이디','text'),COL('name_en','영문명','text'),COL('user_group','사용자그룹','text'),COL('proc_group','공정그룹','text'),COL('biz_div','사업부','text'),COL('mobile','휴대폰','text'),COL('email','이메일','text'),COL('login_email','로그인메일','text'),COL('reg_date','등록일','date'),COL('auth_uid','Auth UID','text')]},dx:470,dy:144},
+  {type:'table',name:'ki_permission',meta:{cols:[COL('perm_id','권한ID','num',1,1),COL('emp_no','사번','text'),COL('menu_id','메뉴ID','text'),COL('menu_name','메뉴명','text'),COL('can_view','조회','bool'),COL('can_save','저장','bool'),COL('can_edit','수정','bool'),COL('can_delete','삭제','bool'),COL('updated_at','수정일시','date')]},dx:470,dy:577},
+  {type:'table',name:'ki_table_menu',meta:{cols:[COL('table_name','테이블명','text',1,1),COL('menus','메뉴(JSON)','text',0,1)]},dx:470,dy:806},
+  {type:'table',name:'ki_notify_config',meta:{cols:[COL('id','ID','num',1,1),COL('andon_enabled','안돈 사용','bool'),COL('ntfy_enabled','ntfy 사용','bool'),COL('ntfy_url','ntfy 서버','text'),COL('ntfy_topic','토픽','text'),COL('ntfy_priority','우선순위','num'),COL('alert_level','알림수준','text'),COL('poll_sec','폴링(초)','num'),COL('updated_at','수정일시','date'),COL('updated_by','수정자','text')]},dx:470,dy:916},
+  {type:'table',name:'ki_error_log',meta:{cols:[COL('err_id','오류ID','num',1,1),COL('occurred_at','일시','date',0,1),COL('level','error | warn | info','text',0,1),COL('kind','js | api | rpc | app','text'),COL('menu','화면','text'),COL('page','파일','text'),COL('emp_no','사번','text'),COL('emp_name','사용자','text'),COL('message','메시지','text',0,1),COL('detail','상세','text'),COL('url','URL','text'),COL('user_agent','브라우저','text')]},dx:470,dy:1162}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[1,5,'uses','저장/조회'],[1,6,'uses','참조'],[2,6,'uses','저장/조회'],[2,7,'uses','참조'],[2,8,'uses','참조'],[3,9,'uses','저장/조회'],[4,10,'uses','저장/조회']]}},
+ {cat:'GI MES (경일)',name:'GI 트윈팩토리 (공장 · 구역 · 설비)',desc:'공장 도면 위 구역·설비·센서 좌표 배치 (twin_map.html)',data:{nodes:[
+  {type:'section',name:'트윈팩토리',meta:{icon:'🏭'},dx:0,dy:0},
+  {type:'screen',name:'트윈팩토리 맵',meta:{file:'twin_map.html',kind:'dash',skin:'gi-erp'},dx:210,dy:0},
+  {type:'table',name:'ki_factory',meta:{cols:[COL('factory_code','공장','text',1,1),COL('factory_name','공장명','text'),COL('width_m','가로(m)','num'),COL('height_m','세로(m)','num'),COL('remark','비고','text')]},dx:470,dy:0},
+  {type:'table',name:'ki_zone',meta:{cols:[COL('zone_code','구역','text',1,1),COL('factory_code','공장','text'),COL('zone_name','구역명','text'),COL('x','X좌표','num'),COL('y','Y좌표','num'),COL('w','폭','num'),COL('h','높이','num'),COL('color','색상','text'),COL('remark','비고','text')]},dx:470,dy:161},
+  {type:'table',name:'ki_asset',meta:{cols:[COL('asset_code','설비코드','text',1,1),COL('factory_code','공장','text'),COL('zone_code','구역','text'),COL('asset_name','설비명','text'),COL('asset_type','설비종류','text'),COL('x','X좌표','num'),COL('y','Y좌표','num'),COL('status','상태','text'),COL('spec','사양','text'),COL('last_signal','최종신호','date'),COL('remark','비고','text')]},dx:470,dy:390},
+  {type:'table',name:'ki_sensor',meta:{cols:[COL('sensor_code','센서코드','text',1,1),COL('factory_code','공장','text',0,1),COL('zone_code','구역','text'),COL('sensor_name','센서명','text',0,1),COL('x','X','num'),COL('y','Y','num'),COL('temp_min','온도 하한','num'),COL('temp_max','온도 상한','num'),COL('humi_min','습도 하한','num'),COL('humi_max','습도 상한','num'),COL('is_active','사용','bool'),COL('remark','비고','text')]},dx:470,dy:653}],
+  edges:[[0,1,'contains',''],[1,2,'uses','저장/조회'],[1,3,'uses','참조'],[1,4,'uses','참조'],[1,5,'uses','참조'],[5,2,'ref','factory_code → ki_factory.factory_code'],[5,3,'ref','zone_code → ki_zone.zone_code']]}}
 ];
 function myModules(){try{return JSON.parse(localStorage.getItem(LIB_LS)||'[]')}catch(e){return []}}
 function setMy(list){try{localStorage.setItem(LIB_LS,JSON.stringify(list))}catch(e){}}
@@ -2315,7 +2526,133 @@ tbody tr.sel,tbody tr.on{background:rgba(56,189,248,.16);color:#e0f2fe}
 #toast{border-radius:20px;background:rgba(0,0,0,.9);top:auto;bottom:70px}#toast.show{transform:translateX(-50%)}
 @media(max-width:680px){.screen .stats{grid-template-columns:repeat(3,1fr)}.actions .btn{flex:1 1 40%}}`,
   shell:`:root{--steel:#0f1117;--steel-2:#1a1d27;--steel-3:#222838;--paper:#0f1117;--white:#1a1d27;--ink:#e8eaf0;--ink-2:#cbd5e1;--ink-3:#8b8fa3;--line:#2a2e3d;--line-2:#2a2e3d;--amber:#38bdf8;--green:#22c55e;--red:#ef4444;--blue:#38bdf8;--gray:#6b7085}
-body{background:#0f1117;color:var(--ink);font-family:'Noto Sans KR',Pretendard,-apple-system,sans-serif}`}
+body{background:#0f1117;color:var(--ink);font-family:'Noto Sans KR',Pretendard,-apple-system,sans-serif}`},
+ 'gi-erp':{name:'GI MES ERP (경일)',desc:'Gyeongil 원본 ki_style.css — HC Smart 준용 · 맑은고딕 12px · #2469a8 블루 · 교차 줄무늬 그리드 · 신규(분홍)/저장(파랑)/삭제(빨강) 버튼',
+  css:`/* ── GI MES ERP (Gyeongil ki_style.css 원본 팔레트) ── */
+:root{--line:#aeb8c2;--line2:#d1d9e0;--blue:#2469a8;--blue2:#dbe8f5;--ink:#273746;--bg:#dfe4e9;--sel:#c9ddf3;--gi-dark:#1d568c;--gi-sel:#2e77bd}
+body{font-family:"Malgun Gothic","맑은 고딕",Arial,sans-serif;font-size:12px;color:var(--ink);background:#d7dde3}
+.screen{background:#fff;border:1px solid #8f9cab;box-shadow:0 1px 3px rgba(24,45,67,.15)}
+.title{height:32px;padding:0 9px;border-bottom:1px solid #a9b6c2;background:linear-gradient(#fbfcfd,#e8edf2)}
+.title h1{font-size:14px;font-weight:800;color:#41556a}
+.title h1:before{content:'◯';color:#76879a;font-size:13px;margin-right:5px}
+.title small{font-size:10px;color:#8894a0}
+.body{padding:7px;gap:7px}
+.foot{height:24px;padding:0 10px;background:#e7edf3;border-top:1px solid #9aa8b5;color:#667483;font-size:11px}
+.panel{border:1px solid #a9b6c3;background:#f7f9fb}
+.cap,.box-title,.grid-title{height:28px;padding:0 8px;background:#edf2f6;border-bottom:1px solid #aab6c1;color:#33506b;font-size:11px;font-weight:800}
+.cap:before{content:'📌';margin-right:5px;font-size:10px}
+.cap .right{color:#8b98a5;font-weight:400}
+.filters{background:#f7f9fb;border-bottom:1px solid #d6dde4;padding:4px}
+.lab,.label{background:#edf2f6;border:1px solid #d1d9e0;color:#526171;font-weight:700;min-height:24px;justify-content:flex-start}
+.field,.check{height:24px;border:1px solid #aeb9c4;background:#fff;color:#42515f}
+.field:focus{outline:0;border-color:var(--gi-sel);box-shadow:0 0 0 1px #dbe8f5}
+.field[readonly]{background:#eef2f6;color:#68757f}
+.field.req{border-left:3px solid #c0392b}
+.formgrid{border:1px solid #a9b6c3;border-right:0;border-bottom:0;background:#f7f9fb}
+.formgrid>*{border-right:1px solid #d1d9e0;border-bottom:1px solid #d6dde4}
+.tablewrap{border:1px solid #8494a4;background:#fff}
+th{height:27px;background:linear-gradient(#f3f6f8,#dce3e9);border-right:1px solid #aab7c3;border-bottom:1px solid #aab7c3;color:#33506b;font-weight:800}
+td{height:26px;border-right:1px solid #d0d7de;border-bottom:1px solid #d9dfe5;padding:0 6px}
+tbody tr:nth-child(even) td{background:#fafbfc}
+tbody tr:hover td{background:#e8f1fa}
+tbody tr.sel,tbody tr.on{background:#c9ddf3;color:#123a61;font-weight:700}
+tbody tr.sel td,tbody tr.on td{background:#c9ddf3}
+tbody tr.sel td:first-child,tbody tr.on td:first-child{box-shadow:inset 3px 0 0 #2f68ad}
+tbody tr.sel a,tbody tr.on a{color:#123a61}
+tr.dirty td:first-child{box-shadow:inset 3px 0 0 #e2a8c4}
+.group-title{background:#eef2f6;border-top:1px solid #dfe5ea;border-bottom:1px solid #dfe5ea;color:#2f4559;font-weight:800}
+.row-item{border-bottom:1px solid #eceff2}
+.row-item:hover{background:#e8f1fa}.row-item.on{background:var(--gi-sel);color:#fff}
+.actions{padding:6px 7px;background:#eef2f6;border-top:1px solid #d1d9e0;gap:5px}
+.btn{height:24px;min-width:0;padding:0 10px;border:1px solid #9aa8b6;background:linear-gradient(#fff,#e1e7ec);color:#405163}
+.btn:hover{border-color:#6e8fb3;background:#edf5fd}
+.btn.primary{background:linear-gradient(#4f84c0,#2e67a8);color:#fff;border-color:#24578f;font-weight:700}
+.btn.primary:hover{background:linear-gradient(#5b90cc,#3a73b4);color:#fff}
+.btn.warn{background:linear-gradient(#fff,#fdecec);border-color:#daa;color:#b23030}.btn.warn:hover{background:#fbe0e0}
+.btn.pink{background:linear-gradient(#fff,#fdeaf3);border-color:#e2a8c4;color:#a4356b;font-weight:700}.btn.pink:hover{background:#fbdcea;border-color:#d287ac}
+.btn.sm{height:22px;padding:0 8px;font-size:11px}
+/* 뱃지 (b-wait/run/done/late) */
+.screen .badge{border-radius:2px;border:1px solid transparent;color:#1f4f8c;background:#e6f0fb;border-color:#b8cfe9}
+.screen .badge.ok{background:#e6f5eb;color:#15803d;border-color:#b4ddc3}.screen .badge.ng{background:#fdecec;color:#b91c1c;border-color:#eab8b8}.screen .badge.warn{background:#fdf3e0;color:#8a5b12;border-color:#e6cfa2}
+.screen .st{border:1px solid #a9b6c3;background:#fff;border-left:4px solid #2e67a8}
+.screen .prog{background:#e6ebf0;border:1px solid #c8d2dc;border-radius:0;height:12px}.screen .prog i{background:linear-gradient(#5b93cd,#2e67a8)}
+.screen .chip{border-radius:2px;height:24px;border-color:#9aa8b6;background:linear-gradient(#fff,#eef2f6);color:#546270;font-weight:700}
+.screen .chip.on{background:linear-gradient(#3b4a5a,#25313d);border-color:#25313d;color:#fff}
+.screen .cg{border:1px solid #8494a4}.screen .cg-hdr{background:#edf2f6;border-bottom:1px solid #aab6c1}
+.screen .tg button.ok.on{background:#15803d;border-color:#15803d}.screen .tg button.ng.on{background:#b91c1c;border-color:#b91c1c}
+.modal{border:1px solid #737f8a}
+.modal .t{height:30px;background:linear-gradient(#4f84c0,#2e67a8)}
+.modal .bt{background:#eef2f6;border-top:1px solid #d1d9e0}`,
+  shell:`:root{--steel:#edf1f4;--steel-2:#e5edf5;--steel-3:#dce5ee;--paper:#dfe4e9;--line:#b2bdc6;--line-2:#c8d0d7;--amber:#265eb8;--ink:#273746;--ink-2:#546270;--ink-3:#8b98a5;--blue:#2469a8}
+body{font-family:"Malgun Gothic","맑은 고딕",Arial,sans-serif}
+.top{color:#546270;background:linear-gradient(#fafbfc,#edf1f4)}
+.top .brand b,.top button{color:#546270}.top .brand .mark{color:#fff}`},
+
+ 'gi-mobile':{name:'GI 현장 QR (모바일)',desc:'Gyeongil 원본 — lot_qr · lot_vendor · qr_home · mobile_home (#eef2f6 · 15px 큰 글자 · 파랑 그라데이션 상단바 · 14px 둥근 카드 · 56px 하단 버튼)',
+  css:`/* ── GI 현장 QR 모바일 (Gyeongil lot_qr.html 원본 팔레트) ── */
+:root{--line:#dbe3ea;--line2:#e8eef3;--blue:#2668a8;--blue2:#dbe8f5;--ink:#16202b;--bg:#eef2f6;--sel:#2668a8;--gi-sub:#6b7a89;--gi-blue-d:#1b4b7d;--gi-green:#1f8a4c;--gi-orange:#e07b1c;--gi-red:#c0392b}
+body{font:15px/1.6 'Malgun Gothic','맑은 고딕',-apple-system,sans-serif;color:var(--ink);background:var(--bg);-webkit-tap-highlight-color:transparent}
+.screen{background:var(--bg)}
+.title{height:auto;min-height:54px;padding:13px 15px;border:0;background:linear-gradient(135deg,#3579b8,#22537f);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.14)}
+.title h1{font-size:16px;font-weight:800;color:#fff}
+.title h1:before{content:'▣';margin-right:8px;color:rgba(255,255,255,.8)}
+.title small{color:rgba(255,255,255,.85);font-size:12px;font-weight:700;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);padding:3px 10px;border-radius:20px;margin-left:auto}
+.body{padding:12px;gap:12px;max-width:600px;margin:0 auto;width:100%}
+.foot{height:auto;min-height:48px;background:#fff;border-top:1px solid var(--line);color:var(--gi-sub);font-size:13px}
+.panel{background:#fff;border:0;border-radius:14px;box-shadow:0 1px 3px rgba(20,40,60,.09);overflow:hidden}
+.cap,.box-title,.grid-title{height:auto;min-height:38px;padding:12px 15px 4px;background:#fff;border:0;color:var(--gi-sub);font-size:12.5px;font-weight:800;letter-spacing:.3px}
+.cap .right{color:#9aa7b3;font-weight:700;font-size:12px}
+.filters{padding:10px 15px;gap:8px;border-bottom:1px solid #f0f3f6}
+.filters .lab{min-width:0}
+.lab,.label{background:transparent;border:0;color:var(--gi-sub);font-size:12px;font-weight:700;justify-content:flex-start;min-height:34px;padding:0 2px}
+.field,.check{height:46px;border:1.5px solid var(--line);border-radius:10px;padding:0 13px;font-size:16px;background:#fff}
+.field:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 3px rgba(38,104,168,.15)}
+.field[readonly]{background:#f1f5f9;color:var(--gi-sub)}
+.field.req{border-left:3px solid var(--gi-red)}
+textarea.field{padding:10px 13px;min-height:70px}
+.formgrid{border:0;gap:8px 10px;padding:6px 15px 15px;grid-template-columns:minmax(70px,max-content) minmax(0,1fr)}
+.formgrid>*{border:0}
+.formgrid>.field,.formgrid>.check{border:1.5px solid var(--line)}
+.formgrid .span2,.formgrid .span3{grid-column:span 1}
+th{background:#f1f5f9;color:#41556a;border-bottom:1px solid var(--line);font-size:12px;font-weight:800}
+th,td{padding:9px 10px;border-right:0;border-bottom:1px solid #f0f3f6;font-size:13px}
+tbody tr:hover{background:#f6f9fc}
+tbody tr.sel,tbody tr.on{background:var(--blue2);color:var(--gi-blue-d);font-weight:700}
+.empty{color:#9aa7b3;padding:36px 0}
+.group-title{background:#f1f5f9;border-bottom:1px solid var(--line);color:#41556a;font-weight:800;height:34px;padding:0 15px}
+.row-item{min-height:50px;border-bottom:1px solid #f0f3f6}
+.row-item span{border-right:0;padding:12px 15px;font-size:14px}
+.row-item:hover{background:#f6f9fc}.row-item.on{background:var(--blue2);color:var(--gi-blue-d)}
+.actions{padding:10px 12px;gap:8px}
+.btn{height:56px;min-width:0;flex:1 1 auto;padding:0 16px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:#41556a;font-size:16px;font-weight:800;transition:transform .1s}
+.btn:active{transform:scale(.97)}
+.btn:hover{border-color:var(--blue);color:var(--gi-blue-d)}
+.btn.primary{background:linear-gradient(135deg,#3579b8,#1f5286);border:0;color:#fff;box-shadow:0 4px 14px rgba(38,104,168,.28)}
+.btn.warn{background:linear-gradient(135deg,#f0902e,#cf6c11);border:0;color:#fff}
+.btn.pink{background:linear-gradient(135deg,#27a35c,#187a43);border:0;color:#fff}
+.btn.sm{height:34px;flex:0 0 auto;padding:0 12px;font-size:13px;border-radius:8px;font-weight:700}
+/* 칩 · 태그 · 상태 히어로 */
+.screen .chip{background:#f1f5f9;border:0;border-radius:8px;height:32px;padding:0 12px;font-size:12px;color:#41556a;font-weight:700}
+.screen .chip.on{background:var(--blue);color:#fff}
+.screen .badge{border-radius:6px;padding:2px 8px;font-size:11px;font-weight:800}
+.screen .st{background:#fff;border:0;border-radius:14px;box-shadow:0 1px 3px rgba(20,40,60,.09);border-left:4px solid var(--blue)}
+.screen .st .v{font-size:26px;font-weight:900;letter-spacing:-1px}
+.screen .st.ok{border-left-color:var(--gi-green)}.screen .st.ok .v{color:var(--gi-green)}
+.screen .st.ng{border-left-color:var(--gi-red)}.screen .st.warn{border-left-color:var(--gi-orange)}
+.screen .cg{border:0;border-radius:14px;box-shadow:0 1px 3px rgba(20,40,60,.09);overflow:hidden}
+.screen .cg-hdr{background:#fff;border-bottom:1px solid #f0f3f6}
+.screen .item{min-height:52px;margin:0 10px 8px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:2px 6px}
+.screen .item .nm{font-size:15px;font-weight:700}
+.screen .tg button{height:38px;border:1.5px solid var(--line);border-radius:9px;font-size:14px;font-weight:800;color:#9aa7b3}
+.screen .tg button.ok.on{background:var(--gi-green);border-color:var(--gi-green);color:#fff}
+.screen .tg button.ng.on{background:var(--gi-red);border-color:var(--gi-red);color:#fff}
+.modal{border:0;border-radius:16px;box-shadow:0 12px 40px rgba(20,40,60,.3)}
+.modal .t{height:50px;padding:0 16px;background:linear-gradient(135deg,#3579b8,#22537f);border-radius:16px 16px 0 0;font-size:15px}
+.modal .bd{padding:16px}.modal .bt{background:#f6f9fc;border-top:1px solid #f0f3f6}
+#toast{border-radius:20px;background:rgba(22,32,43,.92);top:auto;bottom:80px}#toast.show{transform:translateX(-50%)}
+@media(max-width:680px){.actions .btn{flex:1 1 40%}}`,
+  shell:`:root{--steel:#22537f;--steel-2:#2b649a;--steel-3:#3579b8;--paper:#eef2f6;--line:#dbe3ea;--line-2:#1b4b7d;--amber:#f0902e;--ink:#16202b;--ink-2:#41556a;--ink-3:#6b7a89;--blue:#2668a8;--green:#1f8a4c;--red:#c0392b}
+body{font-family:'Malgun Gothic','맑은 고딕',-apple-system,sans-serif}`}
 };
 const skinId=()=>(SKIN[D.skin]?D.skin:'base');
 const skinCss=id=>{const k=SKIN[SKIN[id]?id:'base'];return (k.font?`@import url('${k.font}');\n`:'')+PV_CSS+(k.css?'\n\n'+k.css+'\n':'')};
@@ -2328,7 +2665,7 @@ function setSkin(id){
  if(pvDlg.classList.contains('on')&&pvNode)previewScreen(pvNode);
 }
 function skinMenuHtml(){
- return Object.entries(SKIN).map(([k,v])=>`<button onclick="setSkin('${k}')"><span class="dot" style="background:${k==='mm-dark'?'#0f172a':k==='mm-card'?'#2563eb':k==='mm-erp'?'#2d66ad':k==='esg-check'?'#f59e0b':k==='esg-light'?'#c62828':k==='esg-mon'?'#38bdf8':'#c7d2db'}"></span>${esc(v.name)}</button>`).join('');
+ return Object.entries(SKIN).map(([k,v])=>`<button onclick="setSkin('${k}')"><span class="dot" style="background:${k==='mm-dark'?'#0f172a':k==='mm-card'?'#2563eb':k==='mm-erp'?'#2d66ad':k==='esg-check'?'#f59e0b':k==='esg-light'?'#c62828':k==='esg-mon'?'#38bdf8':k==='gi-erp'?'#2469a8':k==='gi-mobile'?'#3579b8':'#c7d2db'}"></span>${esc(v.name)}</button>`).join('');
 }
 
 let pvNode=null;
@@ -2490,7 +2827,7 @@ let LAST_VALIDATION={errors:[],warnings:[]};
 function validateDesign(show){
  const errors=[],warnings=[];
  const push=(level,msg,refType,refId,detail='')=>{(level==='error'?errors:warnings).push({level,msg,refType,refId,detail})};
- const dbName=/^[a-z_][a-z0-9_]*$/;
+ const dbName=/^[a-zA-Z_][a-zA-Z0-9_]*$/;   /* 대문자 섞인 컬럼("procName")은 원본 DB에 실제 있는 경우 — schema.sql 에서 따옴표로 감싼다 */
  const dup=(arr,key)=>{const m=new Map();for(const x of arr){const k=key(x);if(!k)continue;if(!m.has(k))m.set(k,[]);m.get(k).push(x)}return[...m.entries()].filter(([,v])=>v.length>1)};
  const allowed={contains:(a,b)=>(a==='module'&&(b==='section'||b==='screen'))||(a==='section'&&b==='screen'),uses:(a,b)=>a==='screen'&&b==='table',ref:(a,b)=>a==='table'&&b==='table',flow:(a,b)=>a==='screen'&&b==='screen'};
 
@@ -2642,9 +2979,10 @@ if(C.MODE==='json'){C.SUPABASE={url:'local://db',key:'local'};const v='?v='+C.AP
   user_permissions:[],user_initial_passwords:[{user_id:'hcsmart',temp_password:'000000',issued_by:'bootstrap',changed_by_user:false}],page_state:[],error_log:[],ui_layout:[]};
  GEN['db.js']=`/* db.js — 시스템 설계도에서 생성. 로그인 hcsmart / 000000 */\nwindow.MES_SEED = ${JSON.stringify(db,null,1)};\n`;
  const sqlType={text:'text',num:'numeric',date:'date',bool:'boolean'};
+ const qid=n=>/[A-Z]/.test(n)?'"'+n+'"':n;
  let sql=`-- schema.sql — 시스템 설계도에서 생성. mes_template 의 schema.sql(공통 테이블·함수) 을 먼저 실행한 뒤 이 파일을 실행한다.\n`;
  for(const t of tables){if(['users','user_permissions'].includes(t.name))continue;const cols=t.meta.cols||[];const p=cols.filter(c=>c.pk).map(c=>c.name);
-  sql+=`\ncreate table if not exists public.${t.name}(\n${cols.map(c=>`  ${c.name} ${sqlType[c.type]||'text'}${c.req||c.pk?' not null':''}`).join(',\n')}${p.length?`,\n  primary key(${p.join(',')})`:''}\n);\nalter table public.${t.name} enable row level security;\ndrop policy if exists auth_all on public.${t.name};\ncreate policy auth_all on public.${t.name} for all to authenticated using(true) with check(true);\n`;
+  sql+=`\ncreate table if not exists public.${t.name}(\n${cols.map(c=>`  ${qid(c.name)} ${sqlType[c.type]||'text'}${c.req||c.pk?' not null':''}`).join(',\n')}${p.length?`,\n  primary key(${p.map(qid).join(',')})`:''}\n);\nalter table public.${t.name} enable row level security;\ndrop policy if exists auth_all on public.${t.name};\ncreate policy auth_all on public.${t.name} for all to authenticated using(true) with check(true);\n`;
   for(const e of D.edges.filter(e=>e.from===t.id&&e.kind==='ref'))sql+=`-- 참조: ${t.name} → ${N(e.to)?.name}  ${e.label||''}\n`}
  GEN['schema.sql']=sql;
  /* 화면 */
