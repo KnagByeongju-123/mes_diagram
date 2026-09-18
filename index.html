@@ -285,13 +285,18 @@ work_date, 일자, date"></textarea></div>
   <div class="bd" style="grid-template-columns:1fr;min-height:0;padding:14px;display:grid;gap:12px;align-content:start">
     <section class="src">
       <h4>지금 선택한 블록을 모듈로 저장</h4>
-      <div class="row2"><input id="lb_name" placeholder="모듈 이름 (예: 수주 · 출하 기본)"><label class="ck"><input id="lb_deep" type="checkbox" checked>연결된 블록까지 함께 저장</label></div>
+      <div class="row2"><input id="lb_name" placeholder="모듈 이름 (예: 수주 · 출하 기본)"><label class="ck"><input id="lb_deep" type="checkbox" checked>딸린 화면·테이블까지 함께 저장</label></div>
       <div class="acts"><button class="btn primary" onclick="saveModule()">＋ 모듈로 저장</button><button class="btn" onclick="saveModule(true)">현재 설계 전체를 모듈로</button><span class="msg" id="lb_msg" style="font-size:11.5px;color:#8a94a6"></span></div>
+    </section>
+    <section class="src">
+      <h4>모듈 삽입 시 연관관계</h4>
+      <label class="ck"><input id="lb_auto" type="checkbox" checked>현재 선택한 블록에 자동 연결 (대메뉴→중분류/화면, 중분류→화면, 화면→테이블)</label>
+      <div id="lb_anchor" style="font-size:11.5px;color:#8a94a6;line-height:1.6">선택한 블록이 없으면 모듈 내부 연결만 복원합니다.</div>
     </section>
     <div class="f"><label>기본 모듈 — 구분별 뼈대 (공통 · 금형제작 · ESG 스마트팩토리 · 철강 수입무역 · mm 통합 MES · GI MES) — 🎨 화면 테마: mm 3종 · ESG 3종 · GI 2종</label><div class="links" id="lb_builtin"></div></div>
     <div class="f"><label>내 모듈 <span style="color:#8a94a6;font-size:11px">(이 브라우저 · ☁ 연결 시 Supabase 공유)</span></label><div class="links" id="lb_mine"></div></div>
   </div>
-  <div class="bt"><button class="btn" onclick="libDlg.classList.remove('on')">닫기</button><span class="msg">모듈을 넣은 뒤 블록의 ○ 를 끌어 기존 블록과 연결하세요.</span></div>
+  <div class="bt"><button class="btn" onclick="libDlg.classList.remove('on')">닫기</button><span class="msg">선택한 대메뉴·중분류·화면이 있으면 삽입 모듈의 진입 블록을 자동 연결합니다. 필요하면 ○ 드래그로 추가 연결하세요.</span></div>
 </div></div>
 <div class="mbg" id="crawlDlg"><div class="modal" style="width:min(660px,94vw)">
   <div class="t">웹 사이트 가져오기 <span class="x" onclick="crawlDlg.classList.remove('on')">×</span></div>
@@ -468,20 +473,48 @@ function fitAll(){if(!D.nodes.length)return;const r=svg.getBoundingClientRect();
  const k=Math.min(1.4,(r.width-60)/(x2-x1),(r.height-60)/(y2-y1));view.k=k;view.x=(r.width-(x2-x1)*k)/2-x1*k;view.y=(r.height-(y2-y1)*k)/2-y1*k;render()}
 
 /* ═══════════════ 편집 ═══════════════ */
+/* 연결 규칙을 한 곳에서 관리한다. 수동 연결·모듈 삽입·문답 생성이 같은 규칙을 사용한다. */
+function inferredKind(a,b){
+ if(!a||!b)return null;
+ if(a.type==='module'&&(b.type==='section'||b.type==='screen'))return 'contains';
+ if(a.type==='section'&&b.type==='screen')return 'contains';
+ if(a.type==='screen'&&b.type==='table')return 'uses';
+ if(a.type==='screen'&&b.type==='screen')return 'flow';
+ if(a.type==='table'&&b.type==='table')return 'ref';
+ return null;
+}
+/* "선택한 블록 아래에 새 블록 추가" 때는 계층/사용 관계만 자동으로 만든다.
+   화면→화면 흐름, 테이블→테이블 FK는 의미 확인이 필요하므로 자동 생성하지 않는다. */
+function contextKind(a,b){
+ const k=inferredKind(a,b);return(k==='contains'||k==='uses')?k:null;
+}
+function hasEdge(from,to,kind){return D.edges.some(e=>e.from===from&&e.to===to&&(!kind||e.kind===kind))}
 function addNode(type,name,meta,x,y){
+ const manual=arguments.length===1,anchor=manual&&sel&&sel.node?N(sel.node):null;
  const r=svg.getBoundingClientRect();
  const n={id:uid(),type,name:name||TYPE[type].name+' '+(D.nodes.filter(z=>z.type===type).length+1),
   x:x??Math.round(((r.width/2-view.x)/view.k-60+Math.random()*80)/8)*8,y:y??Math.round(((r.height/2-view.y)/view.k-30+Math.random()*80)/8)*8,
   meta:meta||(type==='table'?{cols:[{name:'code',label:'코드',type:'text',pk:true,req:true},{name:'name',label:'명칭',type:'text'}]}
    :type==='screen'?{file:'',kind:'input'}
    :{icon:'▣',desc:''})};
- D.nodes.push(n);select({node:n.id});return n;
+ D.nodes.push(n);
+ let auto='';
+ if(anchor&&anchor.id!==n.id){const k=contextKind(anchor,n);
+  if(k&&!hasEdge(anchor.id,n.id,k)){D.edges.push({id:uid(),from:anchor.id,to:n.id,kind:k,label:''});auto=` · ${anchor.name} → ${n.name} 자동 연결`;}}
+ select({node:n.id});
+ if(auto)$('stat').textContent=`블록 추가${auto}`;
+ return n;
 }
-function addEdge(from,to,kind,label){
- const a=N(from),b=N(to);if(!a||!b)return;
- if(D.edges.some(e=>e.from===from&&e.to===to))return select({edge:D.edges.find(e=>e.from===from&&e.to===to).id});
- if(!kind){kind=(a.type==='table'&&b.type==='table')?'ref':(a.type==='screen'&&b.type==='table')?'uses':(a.type==='screen'&&b.type==='screen')?'flow':'contains'}
- const e={id:uid(),from,to,kind,label:label||''};D.edges.push(e);select({edge:e.id});return e;
+function addEdge(from,to,kind,label,opts){
+ opts=opts||{};const a=N(from),b=N(to);if(!a||!b)return null;
+ const expected=inferredKind(a,b);kind=kind||expected;
+ if(!expected||kind!==expected){
+  if(!opts.quiet)alert(`'${a.name}' (${TYPE[a.type]?.name||a.type}) → '${b.name}' (${TYPE[b.type]?.name||b.type}) 연결은 만들 수 없습니다.\n허용 관계: 대메뉴→중분류/화면, 중분류→화면, 화면→테이블/화면, 테이블→테이블`);
+  return null;
+ }
+ const same=D.edges.find(e=>e.from===from&&e.to===to&&e.kind===kind);
+ if(same){if(!opts.noSelect)select({edge:same.id});return same}
+ const e={id:uid(),from,to,kind,label:label||''};D.edges.push(e);if(!opts.noSelect)select({edge:e.id});else save();return e;
 }
 function deleteSel(){
  if(!sel)return;
@@ -1736,7 +1769,13 @@ const BUILTIN=[
 function myModules(){try{return JSON.parse(localStorage.getItem(LIB_LS)||'[]')}catch(e){return []}}
 function setMy(list){try{localStorage.setItem(LIB_LS,JSON.stringify(list))}catch(e){}}
 let LIBALL=[];                                   /* 화면에 뿌린 내 모듈 (로컬 + ☁) */
-function openLib(){libDlg.classList.add('on');$('lb_msg').textContent='';$('lb_name').value='';renderLib()}
+function libAnchorText(){
+ const a=sel&&sel.node?N(sel.node):null,el=$('lb_anchor');if(!el)return;
+ if(!a){el.innerHTML='선택한 블록이 없으므로 <b>모듈 내부 연결만</b> 복원합니다.';return}
+ const next=a.type==='module'?'중분류 또는 화면':a.type==='section'?'화면':a.type==='screen'?'테이블':'자동 연결 없음 (FK는 직접 지정)';
+ el.innerHTML=`현재 선택: <b>${esc(a.name)}</b> (${TYPE[a.type].name}) → 삽입 모듈의 <b>${next}</b>를 자동 연결합니다.`;
+}
+function openLib(){libDlg.classList.add('on');$('lb_msg').textContent='';$('lb_name').value='';libAnchorText();renderLib()}
 /* ═══ 기본 모듈 수정·삭제(숨김) — 브라우저에 오버레이로 저장 ═══ */
 const BI_HIDE_LS='design.bihide', BI_OVR_LS='design.biovr';
 function biHide(){try{return JSON.parse(localStorage.getItem(BI_HIDE_LS)||'[]')}catch(e){return[]}}
@@ -1746,7 +1785,7 @@ function setBiOvr(o){try{localStorage.setItem(BI_OVR_LS,JSON.stringify(o))}catch
 function builtinAt(i){const m=BUILTIN[i];const o=biOvr()[m.name];
  return o&&o.data?{...m,desc:o.desc||m.desc,data:o.data,ovr:true}:m}
 function editBuiltin(i){const m=builtinAt(i);
- insertModule(m.data,m.name);$('lb_name').value=m.name;libDlg.classList.add('on');
+ insertModule(m.data,m.name,{auto:false});$('lb_name').value=m.name;libDlg.classList.add('on');
  $('lb_msg').textContent=`'${m.name}' 를 캔버스에 넣었습니다. 고친 뒤 블록을 고르고 [＋ 모듈로 저장](또는 블록 패널의 📦)에서 같은 이름으로 저장하면 이 기본 모듈이 업데이트됩니다.`;}
 function hideBuiltin(i){const m=builtinAt(i);
  if(!confirm(`기본 모듈 '${m.name}' 을 목록에서 삭제할까요?\n(코드 원본은 남아 있으며, 구분 제목의 [↺ 복원]으로 되돌릴 수 있습니다)`))return;
@@ -1795,7 +1834,7 @@ async function loadCloudModules(){
 /* 모듈을 캔버스로 불러와 고친 뒤 같은 이름으로 다시 저장 */
 function editModule(name){
  const m=LIBALL.find(x=>x.name===name);if(!m)return;
- insertModule(m.data,name);
+ insertModule(m.data,name,{auto:false});
  $('lb_name').value=name;libDlg.classList.add('on');
  $('lb_msg').textContent=`'${name}' 를 캔버스에 넣었습니다. 고친 뒤 블록을 고르고 [＋ 모듈로 저장] 하면 같은 이름으로 덮어씁니다.`;
 }
@@ -1898,12 +1937,7 @@ function saveModule(whole,force){
  if(whole)ids=D.nodes.map(n=>n.id);
  else{
   if(!sel||!sel.node)return $('lb_msg').textContent='저장할 블록을 먼저 클릭하세요.';
-  ids=[sel.node];
-  if($('lb_deep').checked){const seen=new Set(ids);let q=[sel.node];
-   while(q.length){const cur=q.shift();
-    for(const e of D.edges){const o=e.from===cur?e.to:e.to===cur?e.from:null;
-     if(o&&!seen.has(o)){seen.add(o);q.push(o)}}}
-   ids=[...seen]}
+  ids=$('lb_deep').checked?collectModuleIds(sel.node):[sel.node];
  }
  const idx=new Map(ids.map((id,i)=>[id,i]));
  const nodes=ids.map(id=>{const n=N(id);return{type:n.type,name:n.name,meta:JSON.parse(JSON.stringify(n.meta)),dx:n.x,dy:n.y}});
@@ -1923,27 +1957,75 @@ function saveModule(whole,force){
  if(SB.url&&SB.key)sb('design_modules?on_conflict=name',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
   body:JSON.stringify([{name,data:mod.data,updated_at:new Date().toISOString()}])}).catch(()=>{});
 }
-/* 모듈을 현재 설계에 넣는다 — 같은 이름의 테이블이 있으면 그 블록을 재사용 */
-function insertModule(data,label){
- if(!data||!data.nodes)return;
+/* 삽입 모듈의 "외부 진입점"을 찾아 현재 선택 블록과 안전하게 연결한다.
+   - 대메뉴 선택 + 중분류 묶음 → 대메뉴→중분류
+   - 대메뉴/중분류 선택 + 화면 묶음 → →화면
+   - 화면 선택 + 테이블 묶음 → 화면→대표 테이블
+   모듈 안에 이미 상위 계층이 들어 있으면 그 내부 구조를 존중하고 억지로 재부모화하지 않는다. */
+function autoAttachModule(anchor,made,data){
+ if(!anchor||!made.length)return{count:0,skipped:0,names:[]};
+ const dn=data.nodes||[],de=data.edges||[];
+ const has=t=>dn.some(n=>n.type===t),incomingContains=i=>de.some(e=>e[1]===i&&e[2]==='contains');
+ let idx=[];
+ if(anchor.type==='module'&&!has('module')){
+  idx=dn.map((n,i)=>({n,i})).filter(x=>x.n.type==='section'&&!incomingContains(x.i)).map(x=>x.i);
+  if(!idx.length&&!has('section'))idx=dn.map((n,i)=>({n,i})).filter(x=>x.n.type==='screen'&&!incomingContains(x.i)).map(x=>x.i);
+ }else if(anchor.type==='section'&&!has('module')&&!has('section')){
+  idx=dn.map((n,i)=>({n,i})).filter(x=>x.n.type==='screen'&&!incomingContains(x.i)).map(x=>x.i);
+ }else if(anchor.type==='screen'&&!has('module')&&!has('section')&&!has('screen')){
+  const first=dn.findIndex(n=>n.type==='table');if(first>=0)idx=[first];
+ }
+ let count=0,skipped=0,names=[];
+ for(const i of idx){const child=made[i],k=contextKind(anchor,child);if(!child||!k||child.id===anchor.id)continue;
+  /* 메뉴 자식은 기본적으로 한 부모만 갖게 한다. 이미 다른 부모가 있으면 자동연결은 건너뛴다. */
+  if(k==='contains'&&D.edges.some(e=>e.kind==='contains'&&e.to===child.id&&e.from!==anchor.id)){skipped++;continue}
+  if(!hasEdge(anchor.id,child.id,k)){D.edges.push({id:uid(),from:anchor.id,to:child.id,kind:k,label:''});count++;names.push(child.name)}
+ }
+ return{count,skipped,names};
+}
+/* 모듈을 현재 설계에 넣는다. 테이블·같은 대메뉴는 재사용하고,
+   중분류/화면은 같은 부모 아래에 있을 때만 재사용하여 엉뚱한 메뉴와 합쳐지는 것을 막는다. */
+function insertModule(data,label,opts){
+ opts=opts||{};if(!data||!data.nodes)return;
+ const autoOn=opts.auto!==false&&(!$('lb_auto')||$('lb_auto').checked);
+ const anchor=autoOn&&sel&&sel.node?N(sel.node):null;
  const r=svg.getBoundingClientRect();
  let ox=Math.round(((r.width/2-view.x)/view.k-140)/8)*8, oy=Math.round(((60-view.y)/view.k)/8)*8;
  while(D.nodes.some(n=>Math.abs(n.x-ox)<30&&Math.abs(n.y-oy)<30))oy+=40;
  const made=[];
+ const parentIdx=i=>{const e=(data.edges||[]).find(e=>e[1]===i&&e[2]==='contains');return e?e[0]:-1};
+ const uniqueName=(type,base)=>{let nm=base,n=2;while(D.nodes.some(x=>x.type===type&&x.name===nm))nm=`${base} (${n++})`;return nm};
+ const uniqueFile=file=>{if(!file)return file;const clean=String(file).split('?')[0],q=String(file).slice(clean.length),m=clean.match(/^(.*?)(\.html?)$/i);
+  let stem=m?m[1]:clean,ext=m?m[2]:'.html',out=clean,n=2;const used=v=>D.nodes.some(x=>x.type==='screen'&&String(x.meta.file||'').split('?')[0].toLowerCase()===v.toLowerCase());
+  while(used(out))out=`${stem}_${n++}${ext}`;return out+q};
  data.nodes.forEach((n,i)=>{
-  const dup=D.nodes.find(x=>x.type===n.type&&x.name===n.name);
+  let dup=null;
+  if(n.type==='table'||n.type==='module')dup=D.nodes.find(x=>x.type===n.type&&x.name===n.name);
+  else if(n.type==='section'||n.type==='screen'){
+   const pi=parentIdx(i),parent=pi>=0?made[pi]:null;
+   const ctx=!parent&&anchor&&contextKind(anchor,{type:n.type})==='contains'?anchor:null;
+   const p=parent||ctx;
+   if(p)dup=D.nodes.find(x=>x.type===n.type&&x.name===n.name&&D.edges.some(e=>e.kind==='contains'&&e.from===p.id&&e.to===x.id));
+  }
   if(dup){made[i]=dup;return}
-  const node={id:uid(),type:n.type,name:n.name,meta:JSON.parse(JSON.stringify(n.meta||{})),
+  const meta=JSON.parse(JSON.stringify(n.meta||{}));let nodeName=n.name;
+  /* 화면명/파일명은 생성 시스템의 전역 키이므로 다른 메뉴에 같은 화면이 있으면 안전하게 새 이름을 준다. */
+  if(n.type==='screen'){nodeName=uniqueName('screen',nodeName);if(meta.file)meta.file=uniqueFile(meta.file)}
+  const node={id:uid(),type:n.type,name:nodeName,meta,
    x:ox+(n.dx!=null?(n.dx-data.nodes[0].dx||0):(n.type==='table'?300:0)),
    y:oy+(n.dy!=null?(n.dy-data.nodes[0].dy||0):i*70)};
   D.nodes.push(node);made[i]=node;
  });
+ let internal=0;
  for(const [a,b,kind,lab,card] of (data.edges||[]))
-  if(made[a]&&made[b]&&!D.edges.some(e=>e.from===made[a].id&&e.to===made[b].id))
-   D.edges.push({id:uid(),from:made[a].id,to:made[b].id,kind,label:lab||'',...(card?{card}:{})});
+  if(made[a]&&made[b]&&!D.edges.some(e=>e.from===made[a].id&&e.to===made[b].id&&e.kind===kind)){
+   const ex=inferredKind(made[a],made[b]);if(ex===kind){D.edges.push({id:uid(),from:made[a].id,to:made[b].id,kind,label:lab||'',...(card?{card}:{})});internal++}}
+ const at=autoOn?autoAttachModule(anchor,made,data):{count:0,skipped:0,names:[]};
  libDlg.classList.remove('on');
  select({node:made[0].id});
- $('stat').textContent=`모듈 '${label||''}' 삽입 — 블록 ${made.length}개. ○ 를 끌어 기존 블록과 연결하세요.`;
+ const ext=at.count?` · 선택 블록과 자동 연결 ${at.count}건 (${at.names.join(', ')})`:anchor&&autoOn?' · 자동 연결 대상 없음':'';
+ const skip=at.skipped?` · 기존 부모가 있어 ${at.skipped}건 건너뜀`:'';
+ $('stat').textContent=`모듈 '${label||''}' 삽입 — 블록 ${made.length}개 · 내부 연결 ${internal}건${ext}${skip}`;
 }
 
 
@@ -3153,6 +3235,11 @@ function validateDesign(show){
   if(e.kind==='ref'&&!String(e.label||'').trim())push('warning',`테이블 참조 '${a.name} → ${b.name}' 의 참조 컬럼 설명이 없습니다.`,'edge',e.id,'예: order_no → orders.order_no');
  }
 
+ // 완전히 같은 연결이 중복되면 생성 결과가 예측하기 어려우므로 잡는다.
+ for(const [key,rows] of dup(D.edges,e=>`${e.from}|${e.to}|${e.kind}`))for(const e of rows.slice(1))push('warning','같은 두 블록 사이에 동일한 관계가 중복되어 있습니다.','edge',e.id,'중복 연결은 하나만 남기는 것을 권장합니다.');
+
+ // 대메뉴명은 APP 객체의 키로 사용되므로 고유해야 한다.
+ for(const [name,rows] of dup(D.nodes.filter(n=>n.type==='module'),n=>n.name.trim()))for(const n of rows)push('error',`대메뉴명 '${name}' 이(가) 중복됩니다.`,'node',n.id,'대메뉴명은 생성 시스템의 메뉴 키이므로 고유해야 합니다.');
  // 중복 화면명: 메뉴/권한/PAGES 키 충돌
  for(const [name,rows] of dup(D.nodes.filter(n=>n.type==='screen'),n=>n.name.trim()))for(const n of rows)push('error',`화면명 '${name}' 이(가) 중복됩니다.`,'node',n.id,'화면명은 메뉴명·권한키로 사용되므로 고유해야 합니다.');
  // 중복 테이블명
@@ -3164,6 +3251,8 @@ function validateDesign(show){
  for(const m of D.nodes.filter(n=>n.type==='module')){
   const kids=D.edges.filter(e=>e.from===m.id&&e.kind==='contains').map(e=>N(e.to)).filter(Boolean);
   if(!kids.length)push('warning',`대메뉴 '${m.name}' 아래에 중분류/화면이 없습니다.`,'node',m.id);
+  const secs=kids.filter(n=>n.type==='section');
+  for(const [name,rows] of dup(secs,n=>n.name.trim()))for(const n of rows)push('error',`대메뉴 '${m.name}' 아래 중분류명 '${name}' 이(가) 중복됩니다.`,'node',n.id,'같은 대메뉴 안의 중분류명은 고유하게 지정하세요.');
  }
  for(const sec of D.nodes.filter(n=>n.type==='section')){
   const kids=D.edges.filter(e=>e.from===sec.id&&e.kind==='contains').map(e=>N(e.to)).filter(n=>n&&n.type==='screen');
@@ -5114,7 +5203,10 @@ function buildFromPages(start,pages,o){
   for(const t of (p.tables||[])){const key='T:'+t.name;if(!tbls.has(key))tbls.set(key,addNode('table',t.name,{cols:t.cols.length?t.cols:[{name:'id',label:labelFor(p.labels,'id'),type:'text',pk:true}],host,apikey:(p.creds||{})[host]||'',labels:Object.fromEntries(p.labels||[])},0,0));
    const tb=tbls.get(key);let linked=false;
    for(const [k,set] of (p.owns||new Map()))if(set.has(t.name)&&pageScr.has(k)){addEdge(pageScr.get(k).id,tb.id,'uses',host&&pages.size>1?host:'');linked=true}
-   if(!linked)addEdge((ownScr||mod).id,tb.id,'uses',ownScr?'':'공통');
+   if(!linked){
+    if(ownScr)addEdge(ownScr.id,tb.id,'uses','공통');
+    else for(const ps of pageScr.values())addEdge(ps.id,tb.id,'uses','공통');
+   }
   }
  }
  for(const [u,p] of pages){
