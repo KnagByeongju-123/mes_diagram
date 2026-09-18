@@ -212,7 +212,7 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
     <span><i style="border-color:#8b5cf6"></i>참조 (테이블 → 테이블, FK)</span>
     <span><i style="border-color:#2fb27c;border-style:dashed"></i>흐름 (화면 → 화면)</span>
   </div>
-  <div class="hint">블록 더블클릭 = 화면 미리보기 · 드래그 = 이동 · 오른쪽 ○ 를 끌어 다른 블록에 놓기 = 연결 · 선/블록 클릭 = 편집 · Delete = 삭제 · Ctrl+Z = 삭제 되돌리기 · 빈 곳 드래그 = 화면 이동 · 휠 = 확대/축소 · Ctrl+S = ☁ 저장</div>
+  <div class="hint">대분류·중분류·화면 더블클릭 = 미리보기 · 드래그 = 이동 · 오른쪽 ○ 를 끌어 다른 블록에 놓기 = 연결 · 선/블록 클릭 = 편집 · Delete = 삭제 · Ctrl+Z = 삭제 되돌리기 · 빈 곳 드래그 = 화면 이동 · 휠 = 확대/축소 · Ctrl+S = ☁ 저장</div>
   <div class="zoom"><button onclick="zoomBy(1.2)">+</button><button onclick="zoomBy(1/1.2)">−</button><button onclick="fitAll()" title="전체 보기">⤢</button></div>
 </div>
 
@@ -279,7 +279,7 @@ work_date, 일자, date"></textarea></div>
   <div class="bt"><button class="btn primary" onclick="applyPaste()">항목 만들기</button><button class="btn" onclick="pasteDlg.classList.remove('on')">닫기</button><span class="msg" id="pst_msg"></span></div>
 </div></div>
 <div class="mbg" id="pvDlg"><div class="modal">
-  <div class="t">화면 미리보기 <span id="pv_name" style="font-weight:400;color:#8a94a6;margin-left:8px"></span>
+  <div class="t"><span id="pv_title">미리보기</span> <span id="pv_name" style="font-weight:400;color:#8a94a6;margin-left:8px"></span>
     <span style="margin-left:auto;display:flex;gap:4px;align-items:center;font-weight:400">
       <button class="btn" style="height:26px;min-width:0;padding:0 8px;font-size:11.5px" onclick="pvZoom(-1)" title="축소 — 칸이 좁아 잘리면 축소하세요">−</button>
       <span id="pv_zoom" style="font-size:11.5px;color:#4a5568;min-width:38px;text-align:center">100%</span>
@@ -290,8 +290,8 @@ work_date, 일자, date"></textarea></div>
   <div class="bd" style="grid-template-columns:1fr;padding:0;min-height:0">
     <div id="pv_wrap"><iframe id="pv_frame"></iframe></div>
   </div>
-  <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button><button class="btn" onclick="pvMode('check')">체크시트로</button><button class="btn" onclick="pvMode('board')">보드로</button><button class="btn" onclick="pvMode('perm')">권한관리로</button><button class="btn" onclick="pvMode('paste')">붙여넣기로</button><button class="btn" onclick="pvMode('dash')">대시보드로</button>
-    <button class="btn" onclick="pvCode()">코드 보기</button><span class="msg" id="pv_msg"></span></div>
+  <div class="bt"><button class="btn pv-screen-only" onclick="pvMode('input')">등록 화면으로</button><button class="btn pv-screen-only" onclick="pvMode('status')">현황 화면으로</button><button class="btn pv-screen-only" onclick="pvMode('check')">체크시트로</button><button class="btn pv-screen-only" onclick="pvMode('board')">보드로</button><button class="btn pv-screen-only" onclick="pvMode('perm')">권한관리로</button><button class="btn pv-screen-only" onclick="pvMode('paste')">붙여넣기로</button><button class="btn pv-screen-only" onclick="pvMode('dash')">대시보드로</button>
+    <button class="btn pv-screen-only" onclick="pvCode()">코드 보기</button><span class="msg" id="pv_msg"></span></div>
 </div></div>
 <div class="mbg" id="libDlg"><div class="modal" style="width:min(720px,94vw)">
   <div class="t">모듈 보관함 <span class="x" onclick="libDlg.classList.remove('on')">×</span></div>
@@ -479,7 +479,7 @@ svg.addEventListener('pointerdown',e=>{
   if(lastHit.id===n.id&&now-lastHit.t<450){
    lastHit={id:null,t:0};drag=null;try{svg.releasePointerCapture(e.pointerId)}catch(_){}
    select({node:n.id});
-   if(n.type==='screen')previewScreen(n.id);
+   if(['module','section','screen'].includes(n.type))previewNode(n.id);
    else{const inp=$('f_name');if(inp){inp.focus();inp.select()}}
    return}
   lastHit={id:n.id,t:now};
@@ -502,7 +502,7 @@ svg.addEventListener('pointerup',e=>{
 svg.addEventListener('wheel',e=>{e.preventDefault();const r=svg.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,k=e.deltaY<0?1.1:1/1.1;
  view.x=mx-(mx-view.x)*k;view.y=my-(my-view.y)*k;view.k*=k;render()},{passive:false});
 svg.addEventListener('dblclick',e=>{const node=e.target.closest('.node');if(!node)return;
- const n=N(node.dataset.id);if(n&&n.type==='screen')previewScreen(n.id);
+ const n=N(node.dataset.id);if(n&&['module','section','screen'].includes(n.type))previewNode(n.id);
  else{const inp=$('f_name');if(inp){inp.focus();inp.select()}}});
 document.addEventListener('keydown',e=>{const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!typing){e.preventDefault();undoDelete();return}if((e.key==='Delete'||e.key==='Backspace')&&sel&&!typing){e.preventDefault();deleteSel()}});
 function zoomBy(k){const r=svg.getBoundingClientRect(),mx=r.width/2,my=r.height/2;view.x=mx-(mx-view.x)*k;view.y=my-(my-view.y)*k;view.k*=k;render()}
@@ -716,8 +716,10 @@ function renderPanel(){
     <option value="cards" ${n.meta.homeType==='cards'?'selected':''}>카드형 — 중분류를 큰 카드로 표시</option>
     <option value="erp" ${n.meta.homeType==='erp'?'selected':''}>ERP형 — 조밀한 업무 메뉴판</option>
     <option value="dashboard" ${n.meta.homeType==='dashboard'?'selected':''}>현황형 — 주요 현황/대시보드 화면 우선</option>
-   </select><div style="color:#8a94a6;font-size:11.5px">대분류를 클릭하면 이 형식의 업무영역 홈이 열립니다. 실제 업무 수치는 만들지 않고 설계된 메뉴·화면 구조만 자동 요약합니다.</div></div>`}
- if(n.type==='section'){h+=`<div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div>`}
+   </select><div style="color:#8a94a6;font-size:11.5px">대분류를 클릭하면 이 형식의 업무영역 홈이 열립니다. 실제 업무 수치는 만들지 않고 설계된 메뉴·화면 구조만 자동 요약합니다.</div></div>
+   <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewNode('${n.id}')">▶ 대분류 홈 미리보기</button></div>`}
+ if(n.type==='section'){h+=`<div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div>
+   <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewNode('${n.id}')">▶ 중분류 홈 미리보기</button></div>`}
  if(n.type==='screen'){h+=`<div class="row2"><div class="f"><label>파일명</label><input id="f_file" value="${esc(n.meta.file||'')}" placeholder="order_input.html"></div>
    <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="perm" ${n.meta.kind==='perm'?'selected':''}>권한관리 (사용자+메뉴별 4권한 트리)</option><option value="paste" ${n.meta.kind==='paste'?'selected':''}>엑셀 붙여넣기 등록 (대량 품목)</option><option value="dash" ${n.meta.kind==='dash'?'selected':''}>대시보드 (KPI·알림·그룹별 상태표·자동갱신)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
    <div class="f"><label>화면 CSS 테마 (이 화면만)</label><select id="f_skin"><option value="">설계 전체 테마 따름 — ${esc(SKIN[skinId()].name)}</option>${Object.entries(SKIN).map(([k,v])=>`<option value="${k}" ${n.meta.skin===k?'selected':''}>${esc(v.name)}</option>`).join('')}</select></div>
@@ -751,7 +753,7 @@ function renderPanel(){
  if($('f_origin'))$('f_origin').onchange=e=>{if(e.target.checked)n.meta.origin=true;else delete n.meta.origin;save();render();renderPanel()};
  if($('f_lock'))$('f_lock').onchange=e=>{n.meta.locked=e.target.checked;render()};
  if($('f_skin'))$('f_skin').onchange=e=>{const v=e.target.value;if(v)n.meta.skin=v;else delete n.meta.skin;save();
-  if(pvDlg.classList.contains('on')&&pvNode===n)previewScreen(n.id)};
+  if(pvDlg.classList.contains('on')&&pvNode===n)previewNode(n.id)};
  if(n.type==='table'){
   P.querySelectorAll('.cols [data-k]').forEach(el=>{const ev=el.type==='checkbox'||el.tagName==='SELECT'?'change':'input';
    el.addEventListener(ev,()=>{const c=n.meta.cols[+el.dataset.i];c[el.dataset.k]=el.type==='checkbox'?el.checked:el.value.trim();render()})});
@@ -3008,7 +3010,7 @@ function setSkin(id){
  if(!SKIN[id])return;
  D.skin=id==='base'?undefined:id;save();renderPanel();
  $('stat').textContent=`화면 테마: ${SKIN[id].name} — 미리보기와 [▶ 시스템 생성]의 mes_screen.css 에 함께 적용됩니다.`;
- if(pvDlg.classList.contains('on')&&pvNode)previewScreen(pvNode);
+ if(pvDlg.classList.contains('on')&&pvNode)previewNode(pvNode.id);
 }
 
 /* ═══════════════ 원본 파일 그대로 사용 ═══════════════
@@ -3208,6 +3210,108 @@ function skinMenuHtml(){
 }
 
 let pvNode=null;
+function pvSetToolbar(type){
+ const screen=type==='screen';
+ document.querySelectorAll('#pvDlg .pv-screen-only').forEach(b=>b.style.display=screen?'':'none');
+ const t=$('pv_title');if(t)t.textContent=type==='module'?'대분류 홈 미리보기':type==='section'?'중분류 홈 미리보기':'화면 미리보기';
+}
+function containsKidsOf(id,type){
+ return D.edges.filter(e=>e.from===id&&e.kind==='contains').map(e=>N(e.to)).filter(n=>n&&(!type||n.type===type)).sort((a,b)=>(a.y-b.y)||(a.x-b.x));
+}
+function parentModuleOfSection(sec){
+ return D.edges.filter(e=>e.to===sec.id&&e.kind==='contains').map(e=>N(e.from)).find(n=>n&&n.type==='module')||null;
+}
+function parentPathOfScreen(sc){
+ const p=D.edges.filter(e=>e.to===sc.id&&e.kind==='contains').map(e=>N(e.from)).filter(Boolean)[0]||null;
+ if(!p)return{module:null,section:null};
+ if(p.type==='module')return{module:p,section:null};
+ if(p.type==='section')return{module:parentModuleOfSection(p),section:p};
+ return{module:null,section:null};
+}
+function landingModeModule(n){
+ const forced=n.meta.homeType||'auto',sid=skinId();
+ if(forced==='erp')return'mod-erp';
+ if(forced==='dashboard')return'mod-dashboard'+(/dark|check|mon/i.test(sid)?' mod-dark':'');
+ if(forced==='cards')return /dark|check|mon/i.test(sid)?'mod-dark':'';
+ if(/erp|tjd/i.test(sid))return'mod-erp';
+ if(/dark|check|mon/i.test(sid))return'mod-dashboard mod-dark';
+ return'';
+}
+function landingModeSection(){
+ const sid=skinId();
+ if(/dark|check|mon/i.test(sid))return'sec-dark';
+ if(/erp|tjd/i.test(sid))return'sec-erp';
+ return'sec-cards';
+}
+function landingPreviewCss(){
+ const shell=(SKIN[skinId()]&&SKIN[skinId()].shell)||'';
+ return `:root{--steel:#1f2733;--steel-2:#28323f;--steel-3:#343f50;--paper:#f1f3f6;--white:#fff;--ink:#1c2430;--ink-2:#4a5568;--ink-3:#8a94a6;--line:#dfe3ea;--line-2:#303b4c;--amber:#f2a93b;--green:#2fb27c;--red:#e05a4a;--blue:#3b82f6;--r:6px}
+${shell}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}body{font-family:Pretendard,-apple-system,"Malgun Gothic",sans-serif;color:var(--ink);background:var(--paper);overflow:auto}button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.pv-crumb{height:40px;display:flex;align-items:center;gap:7px;padding:0 18px;background:var(--white);border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-3);position:sticky;top:0;z-index:5}.pv-crumb button{color:var(--blue);font-weight:700}.pv-crumb b{color:var(--ink)}
+.sec-home{min-height:calc(100vh - 40px);overflow:auto;background:var(--paper);padding:18px 22px}
+.sec-hero{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:17px 20px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
+.sec-hero .ico{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;background:var(--steel);color:#fff;font-size:20px;flex:0 0 auto}.sec-hero h1{font-size:20px;margin-bottom:3px}.sec-hero p{font-size:12px;color:var(--ink-3)}.sec-count{margin-left:auto;font-size:12px;color:var(--ink-3);white-space:nowrap}
+.sec-groups{display:grid;gap:12px}.sec-group{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:14px}.sec-group h3{font-size:13px;color:var(--ink-2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}.sec-group h3 small{font-weight:400;color:var(--ink-3)}
+.sec-items{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.sec-item{min-height:74px;border:1px solid var(--line);border-radius:var(--r);background:var(--white);padding:11px 12px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:7px}.sec-item b{font-size:13px}.sec-item small{font-size:11px;color:var(--ink-3)}.sec-item:hover{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue);color:var(--blue)}.sec-cards .sec-item{border-left:4px solid var(--blue)}
+.sec-erp{padding:10px}.sec-erp .sec-hero{border-radius:0;padding:10px 12px;margin-bottom:8px;background:linear-gradient(#f8fafc,#e9eef3)}.sec-erp .sec-hero .ico{width:32px;height:32px;border-radius:3px;background:var(--blue);font-size:15px}.sec-erp .sec-group{border-radius:0;padding:8px}.sec-erp .sec-group h3{padding:0 4px 6px;margin-bottom:6px;border-bottom:1px solid var(--line)}.sec-erp .sec-items{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.sec-erp .sec-item{min-height:46px;border-radius:2px;padding:7px 9px;background:linear-gradient(#fff,#f2f5f8)}.sec-erp .sec-item small{display:none}
+.sec-dark .sec-hero,.sec-dark .sec-group,.sec-dark .sec-item{background:var(--white)}.sec-dark .sec-hero .ico{background:var(--blue);color:#fff}.sec-dark .sec-item:hover{background:var(--steel-3);color:#fff}
+.module-home{min-height:calc(100vh - 40px);overflow:auto;background:var(--paper);padding:18px 22px;display:grid;gap:14px;align-content:start}.mod-hero{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;display:flex;align-items:center;gap:14px}.mod-hero>.ico{width:50px;height:50px;border-radius:12px;display:grid;place-items:center;background:var(--steel);color:#fff;font-size:23px;flex:0 0 auto}.mod-hero h1{font-size:22px;margin-bottom:3px}.mod-hero p{font-size:12px;color:var(--ink-3)}
+.mod-kpis{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.mod-kpi{min-width:88px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);padding:8px 10px;text-align:center}.mod-kpi b{display:block;font-size:18px;color:var(--ink)}.mod-kpi small{font-size:10.5px;color:var(--ink-3)}
+.mod-block{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:14px}.mod-block>h3{font-size:13px;color:var(--ink-2);margin-bottom:11px;display:flex;justify-content:space-between;align-items:center}.mod-block>h3 small{font-weight:400;color:var(--ink-3)}
+.mod-sections{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.mod-sec{border:1px solid var(--line);border-radius:var(--r);background:var(--white);padding:13px;text-align:left;min-height:126px;display:flex;flex-direction:column;gap:8px}.mod-sec:hover{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}.mod-sec .head{display:flex;align-items:center;gap:8px}.mod-sec .head .ico{width:30px;height:30px;border-radius:7px;background:var(--paper);display:grid;place-items:center}.mod-sec .head b{font-size:14px}.mod-sec .head small{margin-left:auto;color:var(--ink-3);font-size:10.5px}.mod-sec .screens{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}.mod-sec .screens span{font-size:10.5px;color:var(--ink-2);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:2px 7px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mod-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.mod-link{border:1px solid var(--line);border-radius:var(--r);padding:9px 10px;text-align:left;background:var(--white);display:grid;gap:3px}.mod-link:hover{border-color:var(--blue);color:var(--blue)}.mod-link small{color:var(--ink-3);font-size:10.5px}
+.mod-erp{padding:10px;gap:8px}.mod-erp .mod-hero{border-radius:0;padding:10px 12px;background:linear-gradient(#f8fafc,#e9eef3)}.mod-erp .mod-hero>.ico{width:34px;height:34px;border-radius:3px;background:var(--blue);font-size:16px}.mod-erp .mod-hero h1{font-size:17px}.mod-erp .mod-kpi{padding:4px 8px;min-width:74px;border-radius:2px}.mod-erp .mod-kpi b{font-size:14px}.mod-erp .mod-block{border-radius:0;padding:8px}.mod-erp .mod-sections{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.mod-erp .mod-sec{min-height:78px;border-radius:2px;padding:8px;background:linear-gradient(#fff,#f2f5f8)}.mod-erp .mod-sec .head .ico{width:24px;height:24px;border-radius:2px}.mod-erp .mod-sec .screens span{border-radius:2px;padding:1px 5px}
+.mod-dashboard .mod-hero{border-left:5px solid var(--blue)}.mod-dashboard .mod-links{grid-template-columns:repeat(3,minmax(0,1fr))}.mod-dark .mod-hero,.mod-dark .mod-block,.mod-dark .mod-sec,.mod-dark .mod-link{background:var(--white)}.mod-dark .mod-hero>.ico{background:var(--blue)}.mod-dark .mod-sec:hover,.mod-dark .mod-link:hover{background:var(--steel-3);color:#fff}
+.empty-note{color:var(--ink-3);padding:18px}
+@media(max-width:1100px){.sec-items,.sec-erp .sec-items{grid-template-columns:repeat(3,minmax(0,1fr))}.mod-sections{grid-template-columns:repeat(2,minmax(0,1fr))}.mod-links,.mod-dashboard .mod-links{grid-template-columns:repeat(3,minmax(0,1fr))}.mod-erp .mod-sections{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.sec-home,.module-home{padding:10px}.sec-items,.sec-erp .sec-items{grid-template-columns:repeat(2,minmax(0,1fr))}.sec-hero,.mod-hero{padding:12px}.sec-count,.mod-kpis{display:none}.mod-sections,.mod-erp .mod-sections{grid-template-columns:1fr}.mod-links,.mod-dashboard .mod-links{grid-template-columns:repeat(2,minmax(0,1fr))}}`;
+}
+function buildModulePreview(n){
+ const secs=containsKidsOf(n.id,'section');
+ const direct=containsKidsOf(n.id,'screen');
+ const secData=secs.map(sec=>({sec,screens:containsKidsOf(sec.id,'screen')}));
+ const all=[...secData.flatMap(x=>x.screens),...direct];
+ const seen=new Set(),unique=all.filter(x=>!seen.has(x.id)&&(seen.add(x.id),true));
+ const status=unique.filter(x=>/현황|대시보드|모니터|실적|일보|진행|추적|집계|통계/i.test(x.name)).slice(0,8);
+ const quick=(status.length?status:unique.slice(0,8));
+ const cards=secData.map(({sec,screens})=>`<button class="mod-sec" data-id="${sec.id}" onclick="parent.previewNode(this.dataset.id)"><span class="head"><span class="ico">${esc(sec.meta.icon||'▣')}</span><b>${esc(sec.name)}</b><small>${screens.length}개</small></span><span class="screens">${screens.slice(0,5).map(x=>`<span>${esc(x.name)}</span>`).join('')}${screens.length>5?`<span>+${screens.length-5}</span>`:''}</span></button>`).join('');
+ const directCard=direct.length?`<div class="mod-block"><h3><span>대분류 직속 화면</span><small>중분류 없이 직접 연결된 화면</small></h3><div class="mod-links">${direct.map(x=>`<button class="mod-link" data-id="${x.id}" onclick="parent.previewNode(this.dataset.id)"><b>${esc(x.name)}</b><small>화면 열기</small></button>`).join('')}</div></div>`:'';
+ const links=quick.map(x=>{const path=parentPathOfScreen(x);return`<button class="mod-link" data-id="${x.id}" onclick="parent.previewNode(this.dataset.id)"><b>${esc(x.name)}</b><small>${esc(path.section?.name||n.name)}</small></button>`}).join('');
+ return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${landingPreviewCss()}</style></head><body>
+ <div class="pv-crumb"><b>${esc(n.name)}</b><span>›</span><span>대분류 홈 미리보기</span></div>
+ <div class="module-home ${landingModeModule(n)}">
+  <div class="mod-hero"><div class="ico">${esc(n.meta.icon||'▣')}</div><div><h1>${esc(n.name)}</h1><p>${esc(n.meta.desc||'업무영역 홈')} · 중분류를 선택하거나 주요 화면으로 바로 이동합니다.</p></div>
+   <div class="mod-kpis"><div class="mod-kpi"><b>${secs.length}</b><small>중분류</small></div><div class="mod-kpi"><b>${unique.length}</b><small>화면</small></div><div class="mod-kpi"><b>${direct.length}</b><small>직속 화면</small></div></div></div>
+  <section class="mod-block"><h3><span>중분류</span><small>선택하면 중분류 홈으로 이동</small></h3><div class="mod-sections">${cards||'<div class="empty-note">이 대분류에 연결된 중분류가 없습니다.</div>'}</div></section>
+  ${directCard}
+  ${links?`<section class="mod-block"><h3><span>${status.length?'주요 현황 바로가기':'빠른 실행'}</span><small>${status.length?'현황·대시보드·실적 계열 화면 자동 선별':'등록된 화면 중 앞쪽 항목'}</small></h3><div class="mod-links">${links}</div></section>`:''}
+ </div></body></html>`;
+}
+function buildSectionPreview(n){
+ const mod=parentModuleOfSection(n),screens=containsKidsOf(n.id,'screen');
+ const items=screens.map(x=>`<button class="sec-item" data-id="${x.id}" onclick="parent.previewNode(this.dataset.id)"><b>${esc(x.name)}</b><small>${esc(mod?.name||'상위 대분류 미연결')} › ${esc(n.name)} › 화면 열기</small></button>`).join('');
+ const crumb=mod?`<button data-id="${mod.id}" onclick="parent.previewNode(this.dataset.id)">${esc(mod.name)}</button><span>›</span>`:'<span>상위 대분류 미연결</span><span>›</span>';
+ return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${landingPreviewCss()}</style></head><body>
+ <div class="pv-crumb">${crumb}<b>${esc(n.name)}</b><span>›</span><span>중분류 홈 미리보기</span></div>
+ <div class="sec-home ${landingModeSection()}"><div class="sec-hero"><div class="ico">${esc(n.meta.icon||'▣')}</div><div><h1>${esc(n.name)}</h1><p>${esc(mod?.name||'상위 대분류 미연결')}의 중분류 · 관련 화면을 한 곳에서 선택합니다.</p></div><div class="sec-count">화면 ${screens.length}개</div></div>
+  <div class="sec-groups"><section class="sec-group"><h3><span>업무 화면</span><small>${screens.length}개</small></h3><div class="sec-items">${items||'<div class="empty-note">이 중분류에 연결된 화면이 없습니다.</div>'}</div></section></div>
+ </div></body></html>`;
+}
+function openLandingPreview(n,html){
+ pvNode=n;pvSetToolbar(n.type);
+ $('pv_name').textContent=n.type==='module'?`${n.name} · 대분류 홈`: `${n.name} · 중분류 홈`;
+ pvScale=1;pvResetPos();$('pv_frame').srcdoc=html;$('pv_msg').textContent='미리보기 안의 항목을 클릭하면 다음 단계 화면으로 이동합니다.';pvDlg.classList.add('on');pvApply();
+}
+function previewModule(id){const n=N(id||(sel&&sel.node));if(!n||n.type!=='module')return;openLandingPreview(n,buildModulePreview(n))}
+function previewSection(id){const n=N(id||(sel&&sel.node));if(!n||n.type!=='section')return;openLandingPreview(n,buildSectionPreview(n))}
+function previewNode(id){
+ const n=N(id||(sel&&sel.node));if(!n)return;
+ if(n.type==='module')return previewModule(n.id);
+ if(n.type==='section')return previewSection(n.id);
+ if(n.type==='screen')return previewScreen(n.id);
+}
+window.previewNode=previewNode;
 function tablesOf(n){return D.edges.filter(e=>e.from===n.id&&e.kind==='uses').map(e=>N(e.to)).filter(t=>t&&t.type==='table')}
 function sampleRows(t,cnt){
  const cols=colsOf(t);const out=[];
@@ -3340,7 +3444,7 @@ function pvFull(){
 }
 function previewScreen(id,kind){
  const n=N(id||(sel&&sel.node));if(!n||n.type!=='screen')return;
- pvNode=n;
+ pvNode=n;pvSetToolbar('screen');
  if(n.meta.origin&&originUrl(n)&&!kind){return previewOrigin(n)}
  const {html}=buildPreview(n,kind);
  $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':(kind||n.meta.kind)==='check'?'체크시트':(kind||n.meta.kind)==='board'?'보드':(kind||n.meta.kind)==='perm'?'권한관리':(kind||n.meta.kind)==='paste'?'붙여넣기':(kind||n.meta.kind)==='dash'?'대시보드':'기타'}`;
@@ -3412,8 +3516,8 @@ async function previewOrigin(n){
    if(blank&&!/이동하려|알림/.test($('pv_msg').textContent))$('pv_msg').textContent='원본이 비어 보입니다 — 그 화면이 DB(Supabase) 조회에 실패했거나 로그인 세션을 요구하는 경우입니다. [↗ 원본 열기]로 실제 동작을 확인하세요.'},2500);
  }catch(e){$('pv_frame').srcdoc='<p style="font:14px sans-serif;padding:24px;color:#c00">원본을 받지 못했습니다: '+esc(e.message)+'<br><br>'+esc(url)+'</p>'}
 }
-function pvMode(k){if(!pvNode)return;pvNode.meta.kind=k;render();renderPanel();previewScreen(pvNode.id,k)}
-function pvCode(){if(!pvNode)return;const {code}=buildPreview(pvNode);
+function pvMode(k){if(!pvNode||pvNode.type!=='screen')return;pvNode.meta.kind=k;render();renderPanel();previewScreen(pvNode.id,k)}
+function pvCode(){if(!pvNode||pvNode.type!=='screen')return;const {code}=buildPreview(pvNode);
  GEN={[(pvNode.meta.file||'screen.html')]:code};genCur=Object.keys(GEN)[0];pvDlg.classList.remove('on');showGen();}
 
 /* ═══ 기존 설계의 미연결 중분류/화면 자동 연결 ═══ */
