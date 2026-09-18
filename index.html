@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
 :root{--steel:#1f2733;--steel-2:#28323f;--steel-3:#343f50;--paper:#eef1f5;--white:#fff;--ink:#1c2430;--ink-2:#4a5568;--ink-3:#8a94a6;--line:#d9dee6;--line-2:#303b4c;
- --amber:#f2a93b;--blue:#3b82f6;--green:#2fb27c;--red:#e05a4a;--violet:#8b5cf6;--r:6px;--side:300px}
+ --amber:#f2a93b;--blue:#3b82f6;--green:#2fb27c;--red:#e05a4a;--violet:#8b5cf6;--r:6px;--side:420px}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{font:13px/1.45 Pretendard,-apple-system,"Malgun Gothic",sans-serif;color:var(--ink);background:var(--paper);overflow:hidden}
@@ -63,27 +63,36 @@ svg.panning{cursor:grabbing}
 .legend span{display:flex;align-items:center;gap:8px}
 .legend i{width:26px;height:0;border-top:2px solid}
 /* side panel */
-aside{background:#fff;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+aside{background:#fff;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;min-width:0;position:relative}
+.resz{position:absolute;left:-4px;top:0;width:8px;height:100%;cursor:col-resize;z-index:40;background:transparent;transition:background .12s}
+.resz:hover,.resz.on{background:rgba(59,130,246,.35)}
+.resz:before{content:'';position:absolute;left:3px;top:50%;transform:translateY(-50%);width:2px;height:26px;background:#c5cdd8;border-radius:2px}
+.resz:hover:before,.resz.on:before{background:var(--blue)}
+body.resizing{cursor:col-resize;user-select:none}
+aside .pw{margin-left:6px;display:flex;gap:3px}
+aside .pw button{width:22px;height:20px;border:1px solid var(--line);border-radius:4px;font-size:11px;color:var(--ink-3);line-height:1}
+aside .pw button:hover{border-color:var(--blue);color:var(--blue)}
 aside .ph{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
 aside .ph h2{font-size:14px;font-weight:700}
 aside .ph .type{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:10px;color:#fff}
-aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-content:start}
-.f{display:grid;gap:4px}
+aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-content:start}
+.f{display:grid;gap:4px;min-width:0}
 .f label{font-size:11.5px;color:var(--ink-3)}
 .f input,.f select,.f textarea{height:30px;border:1px solid #c5cdd8;border-radius:var(--r);padding:0 8px;background:#fff;width:100%}
 .f textarea{height:auto;min-height:58px;padding:6px 8px;resize:vertical}
 .f input:focus,.f select:focus,.f textarea:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 2px #dbe7fb}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.ck{display:flex;gap:5px;align-items:center;white-space:nowrap;font-size:12.5px}
-.ck input{width:auto;height:auto}
-.src{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;display:grid;gap:8px;background:#fbfcfd}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.row3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:8px}
+.ck{display:block;font-size:12.5px;min-width:0;line-height:1.55;word-break:keep-all;padding-left:19px;text-indent:-19px}
+.ck input{width:auto;height:auto;display:inline-block;vertical-align:middle;margin:0 5px 2px 0;text-indent:0}
+.ck>b,.ck>code,.ck>span{text-indent:0}
+.src{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px;background:#fbfcfd;min-width:0}
 .src h4{font-size:12.5px;font-weight:700;color:var(--ink-2)}
 .src .acts{margin-top:2px}
 #c_log{font:12px/1.65 ui-monospace,Consolas,monospace;color:#3c4758;min-height:120px;max-height:260px;resize:vertical;overflow:auto;background:#f7f9fb;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;white-space:pre-wrap;word-break:break-all}
 #c_log:empty:before{content:'가져오기를 누르면 진행 상황이 여기에 표시됩니다.';color:#8a94a6}
 @media(max-width:640px){.row3{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
-.cols{border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.cols{border:1px solid var(--line);border-radius:var(--r);overflow:auto;max-width:100%}
 .cols table{width:100%;border-collapse:collapse;font-size:12px}
 .cols th{background:#f3f5f8;font-weight:600;color:var(--ink-2);padding:5px 6px;text-align:left;border-bottom:1px solid var(--line)}
 .cols td{padding:3px 4px;border-bottom:1px solid #eef1f4}
@@ -99,7 +108,7 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
 .links button:hover{border-color:var(--blue)}
 .links b{font-weight:600}.links small{color:var(--ink-3);margin-left:auto}
 .acts{display:flex;gap:6px;flex-wrap:wrap}
-.btn{height:30px;padding:0 12px;border:1px solid #c5cdd8;border-radius:var(--r);background:#fff}
+.btn{min-height:30px;padding:4px 12px;border:1px solid #c5cdd8;border-radius:var(--r);background:#fff;line-height:1.35;word-break:keep-all}
 .btn:hover{border-color:var(--blue);color:var(--blue)}
 .btn.danger:hover{border-color:var(--red);color:var(--red)}
 .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
@@ -142,6 +151,7 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
 @media(max-width:900px){
  .app{grid-template-columns:1fr;grid-template-rows:48px 1fr auto}
  aside{border-left:0;border-top:1px solid var(--line);max-height:44vh}
+ .resz{display:none}aside .pw{display:none}
  header{overflow-x:auto}#sysName{width:110px}
  .legend{display:none}
  .modal .bd{grid-template-columns:1fr}.modal .files{display:flex;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--line)}
@@ -163,10 +173,9 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
   <div class="dd"><button class="tb line" onclick="ddToggle(this)">설계 ▾</button><div class="menu">
     <button onclick="newDesign()">✧ 신규작성 (빈 화면)</button>
     <button onclick="newDesign(true)">✧ 신규작성 (기본 뼈대 한 벌)</button>
+    <button onclick="loadSample()">✦ 샘플 설계 불러오기</button>
     <button onclick="startWizard()">❓ 문답으로 만들기 (정방향 · 역방향)</button>
     <button onclick="openLib()">📦 모듈 보관함</button>
-    <button onclick="addApprovalMasterPack()">👥 통합 사용자·권한관리 모듈 추가</button>
-    <button onclick="loadSample()">✦ 샘플 설계 불러오기</button>
     <hr>
     <button onclick="openMerge()">◈ 기준정보 통합 (중복 마스터 합치기)</button>
     <button onclick="autoLinkOrphans()">🔗 기존 미연결 항목 자동 연결</button>
@@ -217,8 +226,11 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
   <div class="zoom"><button onclick="zoomBy(1.2)">+</button><button onclick="zoomBy(1/1.2)">−</button><button onclick="fitAll()" title="전체 보기">⤢</button></div>
 </div>
 
-<aside>
-  <div class="ph"><h2 id="pTitle">선택 없음</h2><span class="type" id="pType" style="display:none"></span></div>
+<aside id="aside">
+  <div class="resz" id="resz" title="드래그 = 패널 폭 조절 · 더블클릭 = 기본폭"></div>
+  <div class="ph"><h2 id="pTitle">선택 없음</h2><span class="type" id="pType" style="display:none"></span>
+    <span class="pw"><button onclick="sideW(-60)" title="좁게">◀</button><button onclick="sideW(60)" title="넓게">▶</button><button onclick="sideW(0)" title="기본폭(420px)">↺</button></span>
+  </div>
   <div class="body" id="panel"><div class="empty">블록이나 선을 클릭하면 여기서 편집합니다.<br><br><b>대메뉴 → 중분류 → 화면</b> 을 "포함" 으로 잇고,<br>화면이 쓰는 <b>테이블</b>을 "사용" 으로 이으면<br>[▶ 시스템 생성] 이 전체를 만들어 줍니다.</div></div>
   <div class="stat" id="stat"></div>
 </aside>
@@ -1177,7 +1189,8 @@ function loadSample(){
 const LIB_LS='sysdesign.modules';
 const COL=(name,label,type,pk,req,flow)=>({name,label,type:type||'text',pk:!!pk,req:!!req,...(flow?{flow}:{})});
 const BUILTIN=[
- {cat:'공통 기본',name:'통합 사용자 · 권한 · 조직 · 결재',desc:'최초 master 로그인 + 사용자 ID/비밀번호 + user/admin/master + 메뉴별 조회/저장/수정/삭제 + 검토/확인/승인 + 조직/직급 + 결재선 템플릿을 하나로 관리',data:{nodes:[
+ {cat:'공통 기본',name:'통합 사용자 · 권한 · 조직 · 결재',desc:'대분류 [시스템관리] + 중분류 [사용자·권한관리] 한 벌 — 최초 master 로그인 + 사용자 ID/비밀번호 + user/admin/master + 메뉴별 조회/저장/수정/삭제 + 검토/확인/승인 + 조직/직급 + 결재선 템플릿을 하나로 관리',data:{nodes:[
+  {type:'module',name:'시스템관리',meta:{icon:'⚙',desc:'로그인·사용자·메뉴권한·조직·결재선 통합 관리'}},
   {type:'section',name:'사용자·권한관리',meta:{icon:'👥'}},
   {type:'screen',name:'사용자정보',meta:{file:'user_information.html',kind:'perm'}},
   {type:'screen',name:'조직정보',meta:{file:'organization_management.html',kind:'input'}},
@@ -1188,10 +1201,11 @@ const BUILTIN=[
   {type:'table',name:'departments',meta:{cols:[COL('department_code','부서코드','text',1,1),COL('department_name','부서명','text',0,1),COL('parent_department_code','상위부서코드'),COL('manager_key','부서장 사용자키'),COL('sort_order','정렬순서','num'),COL('is_active','사용','bool')]}},
   {type:'table',name:'positions',meta:{cols:[COL('position_code','직급코드','text',1,1),COL('position_name','직급/직책명','text',0,1),COL('grade_order','직급순서','num'),COL('is_active','사용','bool')]}},
   {type:'table',name:'approval_route_templates',meta:{cols:[COL('template_code','결재선코드','text',1,1),COL('template_name','결재선명','text',0,1),COL('document_type','문서유형'),COL('department_code','적용부서코드'),COL('writer_key','작성자 사용자키'),COL('reviewer_key','검토자 사용자키'),COL('confirmer_key','확인자 사용자키'),COL('approver_key','승인자 사용자키'),COL('is_active','사용','bool')]}}],
-  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],
-   [1,4,'uses','계정·역할·결재권한'],[1,5,'uses','메뉴별 조회·저장·수정·삭제'],[1,6,'uses','초기 비밀번호 발급·재설정'],
-   [2,7,'uses','부서 관리'],[2,8,'uses','직급 관리'],[3,9,'uses','결재선 템플릿'],[3,4,'uses','결재자 선택'],
-   [5,4,'ref','user_key → users.user_key'],[6,4,'ref','user_id → users.user_id'],[4,7,'ref','department_code → departments.department_code'],[4,8,'ref','position_code → positions.position_code'],[9,7,'ref','department_code → departments.department_code'],[9,4,'ref','writer/reviewer/confirmer/approver_key → users.user_key']]}},
+  edges:[[0,1,'contains',''],
+   [1,2,'contains',''],[1,3,'contains',''],[1,4,'contains',''],
+   [2,5,'uses','계정·역할·결재권한'],[2,6,'uses','메뉴별 조회·저장·수정·삭제'],[2,7,'uses','초기 비밀번호 발급·재설정'],
+   [3,8,'uses','부서 관리'],[3,9,'uses','직급 관리'],[4,10,'uses','결재선 템플릿'],[4,5,'uses','결재자 선택'],
+   [6,5,'ref','user_key → users.user_key'],[7,5,'ref','user_id → users.user_id'],[5,8,'ref','department_code → departments.department_code'],[5,9,'ref','position_code → positions.position_code'],[10,8,'ref','department_code → departments.department_code'],[10,5,'ref','writer/reviewer/confirmer/approver_key → users.user_key']]}},
 {cat:'공통 기본',name:'공통 기준정보 (통합 마스터)',desc:'4개 저장소의 거래처·고객사·품목·설비·공정·금형·소재·사용자를 이름 기준 합집합으로 만든 공통 테이블 8종 — [설계 › ◈ 기준정보 통합]으로 기존 중복 테이블을 여기에 합칠 수 있음',data:{nodes:[
   {type:'section',name:'기준정보',meta:{icon:'▦'},dx:0,dy:0},
   {type:'screen',name:'거래처관리',meta:{file:'vendor_management.html',kind:'input'},dx:210,dy:0},
@@ -5885,6 +5899,34 @@ function resumeLast(){
  $('stat').textContent=`지난 작업을 불러왔습니다 — 블록 ${D.nodes.length} · 연결 ${D.edges.length}`;
 }
 window.addEventListener('resize',()=>render());
+
+/* ── 우측 패널 폭 조절 ───────────────────────────── */
+const SIDE_DEF=420, SIDE_MIN=300, SIDE_KEY='sysdesign.sideW';
+function sideMax(){return Math.max(SIDE_MIN,Math.round(window.innerWidth*0.7))}
+function setSide(w,save){
+ w=Math.max(SIDE_MIN,Math.min(sideMax(),Math.round(w)));
+ document.documentElement.style.setProperty('--side',w+'px');
+ if(save!==false){try{localStorage.setItem(SIDE_KEY,w)}catch(e){}}
+ return w;
+}
+function curSide(){return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--side'))||SIDE_DEF}
+function sideW(d){setSide(d?curSide()+d:SIDE_DEF);render()}
+(function initResz(){
+ try{const s=parseInt(localStorage.getItem(SIDE_KEY));if(s)setSide(s,false)}catch(e){}
+ const h=document.getElementById('resz');if(!h)return;
+ let drag=false;
+ const move=e=>{if(!drag)return;const x=(e.touches?e.touches[0].clientX:e.clientX);setSide(window.innerWidth-x)};
+ const up=()=>{if(!drag)return;drag=false;h.classList.remove('on');document.body.classList.remove('resizing');render()};
+ const down=e=>{drag=true;h.classList.add('on');document.body.classList.add('resizing');e.preventDefault()};
+ h.addEventListener('mousedown',down);
+ h.addEventListener('touchstart',down,{passive:false});
+ window.addEventListener('mousemove',move);
+ window.addEventListener('touchmove',move,{passive:false});
+ window.addEventListener('mouseup',up);
+ window.addEventListener('touchend',up);
+ h.addEventListener('dblclick',()=>{setSide(SIDE_DEF);render()});
+ window.addEventListener('resize',()=>setSide(curSide(),false));
+})();
 </script>
 </body>
 </html>
