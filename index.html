@@ -274,7 +274,7 @@ work_date, 일자, date"></textarea></div>
   <div class="bd" style="grid-template-columns:1fr;padding:0;min-height:0">
     <div id="pv_wrap"><iframe id="pv_frame"></iframe></div>
   </div>
-  <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button><button class="btn" onclick="pvMode('check')">체크시트로</button>
+  <div class="bt"><button class="btn" onclick="pvMode('input')">등록 화면으로</button><button class="btn" onclick="pvMode('status')">현황 화면으로</button><button class="btn" onclick="pvMode('check')">체크시트로</button><button class="btn" onclick="pvMode('board')">보드로</button>
     <button class="btn" onclick="pvCode()">코드 보기</button><span class="msg" id="pv_msg"></span></div>
 </div></div>
 <div class="mbg" id="libDlg"><div class="modal" style="width:min(720px,94vw)">
@@ -383,7 +383,7 @@ function render(){
   const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','node'+(sel&&sel.node===n.id?' sel':''));g.setAttribute('transform',`translate(${n.x},${n.y})`);g.dataset.id=n.id;
   let body='';
   if(n.type==='table'){const cols=n.meta.cols||[];body=cols.length?cols.map((c,i)=>`<text class="col${c.pk?' pk':''}" x="10" y="${44+i*17}">${c.pk?'🔑 ':''}${esc(c.name)}<tspan fill="#8a94a6"> ${esc(c.label||'')}</tspan><tspan fill="#b0b8c4" font-size="10"> ${c.type}</tspan>${c.sample?`<tspan fill="#2e7d5b" font-size="10.5"> ${esc(c.sample)}</tspan>`:''}</text>`).join(''):`<text class="sub" x="10" y="44">컬럼 없음 — 우측에서 추가</text>`}
-  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':'기타'}${detailOf(n)?' · 헤더+명세':''}</text>`;
+  else if(n.type==='screen')body=`<text class="sub" x="10" y="46">${n.meta.locked?'🔒 ':''}${esc(n.meta.file||'(파일명 없음)')} · ${n.meta.kind==='input'?'등록':n.meta.kind==='status'?'현황':n.meta.kind==='check'?'체크시트':n.meta.kind==='board'?'보드':'기타'}${detailOf(n)?' · 헤더+명세':''}</text>`;
   else body=`<text class="sub" x="10" y="38">${esc(n.meta.desc||n.meta.icon||'')}</text>`;
   g.innerHTML=`<rect class="box" width="${w}" height="${h}"/><rect class="head" width="${w}" height="26" fill="${t.color}"/><rect width="${w}" height="8" y="18" fill="${t.color}"/>
    <text class="title" x="10" y="18">${esc(n.name)}</text><text class="title" x="${w-8}" y="18" text-anchor="end" font-size="10" opacity=".7">${esc(n.type==='table'&&n.meta.host?String(n.meta.host).slice(0,14):t.name)}</text>${body}
@@ -503,7 +503,7 @@ function renderPanel(){
  if(n.type==='module'){h+=`<div class="row2"><div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div><div class="f"><label>설명 (홈 카드)</label><input id="f_desc" value="${esc(n.meta.desc||'')}"></div></div>`}
  if(n.type==='section'){h+=`<div class="f"><label>아이콘</label><input id="f_icon" value="${esc(n.meta.icon||'')}" placeholder="▣"></div>`}
  if(n.type==='screen'){h+=`<div class="row2"><div class="f"><label>파일명</label><input id="f_file" value="${esc(n.meta.file||'')}" placeholder="order_input.html"></div>
-   <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
+   <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
    <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewScreen()">▶ 화면 미리보기</button></div>
    <label class="ck" style="padding:4px 0"><input id="f_lock" type="checkbox" ${n.meta.locked?'checked':''}>이 화면은 직접 수정함 — 다시 생성해도 덮어쓰지 않기</label>
    <div class="f"><label>사용 테이블 (자동: "사용" 연결)</label><div style="color:#4a5568">${D.edges.filter(e=>e.from===n.id&&e.kind==='uses').map(e=>esc(N(e.to)?.name)).join(', ')||'<span style="color:#8a94a6">없음 — 오른쪽 ○ 를 테이블로 끌어 연결</span>'}</div></div>`}
@@ -958,24 +958,35 @@ const BUILTIN=[
   {type:'table',name:'design_results',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('work_date','작업일','date'),COL('step_name','세부공정'),COL('designer','설계자'),COL('progress','진척률','num')]}},
   {type:'table',name:'partlist_materials',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','부품번호'),COL('part_name','부품명'),COL('material','재질'),COL('spec','규격'),COL('qty','수량','num'),COL('process_code','공정')]}}],
   edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','계획 저장'],[1,5,'uses','세부공정'],[2,6,'uses','실적 저장'],[3,7,'uses','저장'],[5,4,'ref','job_no → design_plans.job_no'],[6,5,'ref','세부공정 실적'],[1,2,'flow','계획 후 실적']]}},
- {cat:'금형제작',name:'금형 구매 · 외주발주',desc:'원재료/구매품/외주가공 발주→입고→입고확정 한 테이블(order_lines)로, 외주가공 5화면 포함 (IPTK)',data:{nodes:[
+ {cat:'금형제작',name:'금형 구매 · 외주발주',desc:'원재료/구매품 발주→입고→입고확정 (order_lines) — 외주가공은 별도 모듈',data:{nodes:[
   {type:'section',name:'구매/외주',meta:{icon:'◆'}},
   {type:'screen',name:'발주등록',meta:{file:'material_order_input.html',kind:'input'}},
   {type:'screen',name:'입고확정',meta:{file:'material_receipt_confirmation.html',kind:'input'}},
   {type:'screen',name:'발주현황',meta:{file:'material_order_status.html',kind:'status'}},
-  {type:'screen',name:'외주가공 발주',meta:{file:'outsourcing_order_input.html',kind:'input'}},
+  {type:'table',name:'order_lines',meta:{cols:[COL('line_id','라인ID','num',1),COL('category','구분(원재료/구매품/외주가공)','text',0,1),COL('status','상태(발주/입고/입고확정)'),COL('job_no','제번'),COL('vendor_name','거래처'),COL('item_name','품명'),COL('process_code','공정코드'),COL('process_name','공정명'),COL('machining_process_code','가공공정'),COL('machining_process_name','가공공정명'),COL('step_no','공정순번','num'),COL('part_no','부품번호'),COL('part_name','부품명'),COL('material','재질'),COL('spec','규격'),COL('order_qty','발주수량','num'),COL('receipt_qty','입고수량','num'),COL('unit_price','단가','num'),COL('quote_price','견적금액','num'),COL('confirm_price','확정금액','num'),COL('order_date','발주일','date'),COL('required_date','요청납기','date'),COL('receipt_date','입고일','date'),COL('confirm_date','확정일','date')]}},
+  ],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],
+   [1,4,'uses','발주 insert'],[2,4,'uses','상태/입고일 갱신'],[3,4,'uses','조회'],
+   [1,2,'flow','발주 → 입고 → 입고확정']]}},
+ {cat:'금형제작',name:'외주가공 발주 (공정 파이프라인)',desc:'제번 → 부품×공정 매트릭스에서 업체 배정·발주 → 입고 → 확정 (TJD MES 외주가공)',data:{nodes:[
+  {type:'section',name:'외주가공',meta:{icon:'⚒'}},
+  {type:'screen',name:'외주가공 발주',meta:{file:'outsourcing_order_input.html',kind:'board'}},
   {type:'screen',name:'외주가공 입고',meta:{file:'outsourcing_receipt_input.html',kind:'input'}},
   {type:'screen',name:'외주가공 입고확정',meta:{file:'outsourcing_receipt_confirmation.html',kind:'input'}},
   {type:'screen',name:'외주가공 발주현황',meta:{file:'outsourcing_order_status.html',kind:'status'}},
-  {type:'screen',name:'외주가공 진척현황',meta:{file:'outsourcing_pipeline_board.html',kind:'status'}},
-  {type:'table',name:'order_lines',meta:{cols:[COL('line_id','라인ID','num',1),COL('category','구분(원재료/구매품/외주가공)','text',0,1),COL('status','상태(발주/입고/입고확정)'),COL('job_no','제번'),COL('vendor_name','거래처'),COL('item_name','품명'),COL('process_code','공정코드'),COL('process_name','공정명'),COL('machining_process_code','가공공정'),COL('machining_process_name','가공공정명'),COL('step_no','공정순번','num'),COL('part_no','부품번호'),COL('part_name','부품명'),COL('material','재질'),COL('spec','규격'),COL('order_qty','발주수량','num'),COL('receipt_qty','입고수량','num'),COL('unit_price','단가','num'),COL('quote_price','견적금액','num'),COL('confirm_price','확정금액','num'),COL('order_date','발주일','date'),COL('required_date','요청납기','date'),COL('receipt_date','입고일','date'),COL('confirm_date','확정일','date')]}},
+  {type:'screen',name:'외주가공 진척현황',meta:{file:'outsourcing_pipeline_board.html',kind:'board'}},
+  {type:'table',name:'job_pool',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('item_name','품명'),COL('process_code','공정'),COL('process_name','공정명'),COL('status','상태')]}},
   {type:'table',name:'machining_plan_parts',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','부품번호'),COL('part_name','부품명'),COL('qty','수량','num'),COL('standard_process','기준공정'),COL('steps','세부공정(JSON)')]}},
-  {type:'table',name:'processes',meta:{cols:[COL('process_code','공정코드','text',1),COL('process_name','공정명'),COL('seq','순서','num')]}}],
-  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[0,5,'contains',''],[0,6,'contains',''],[0,7,'contains',''],[0,8,'contains',''],
-   [1,9,'uses','발주 insert'],[2,9,'uses','상태/입고일 갱신'],[3,9,'uses','조회'],
-   [4,9,'uses','외주가공 발주 insert'],[4,10,'uses','가공계획 부품·공정 승계'],[4,11,'uses','공정 마스터'],
-   [5,9,'uses','입고수량·입고일'],[6,9,'uses','입고확정·확정금액'],[7,9,'uses','조회'],[8,9,'uses','공정순번별 진척'],[8,10,'uses','계획 대비'],
-   [1,2,'flow','발주 → 입고 → 입고확정'],[4,5,'flow','발주 → 입고 → 입고확정']]}},
+  {type:'table',name:'order_lines',meta:{cols:[COL('line_id','라인ID','num',1),COL('category','구분(원재료/구매품/외주가공)','text',0,1),COL('status','상태(발주/입고/입고확정)'),COL('job_no','제번'),COL('vendor_name','거래처'),COL('item_name','품명'),COL('process_code','공정코드'),COL('process_name','공정명'),COL('machining_process_code','가공공정'),COL('machining_process_name','가공공정명'),COL('step_no','공정순번','num'),COL('part_no','부품번호'),COL('part_name','부품명'),COL('material','재질'),COL('spec','규격'),COL('order_qty','발주수량','num'),COL('receipt_qty','입고수량','num'),COL('unit_price','단가','num'),COL('quote_price','견적금액','num'),COL('confirm_price','확정금액','num'),COL('order_date','발주일','date'),COL('required_date','요청납기','date'),COL('receipt_date','입고일','date'),COL('confirm_date','확정일','date')]}},
+  {type:'table',name:'vendors',meta:{cols:[COL('vendor_code','거래처코드','text',1),COL('vendor_name','거래처명','text',0,1),COL('vendor_type','구분'),COL('phone','전화'),COL('manager_name','담당자'),COL('is_active','사용','bool')]}},
+  {type:'table',name:'processes',meta:{cols:[COL('process_code','공정코드','text',1),COL('process_name','공정명'),COL('seq','순서','num')]}},
+  {type:'table',name:'partlist_materials',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','부품번호'),COL('part_name','부품명'),COL('material','재질'),COL('spec','규격'),COL('qty','수량','num'),COL('process_code','공정')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[0,4,'contains',''],[0,5,'contains',''],
+   [1,6,'uses','제번리스트'],[1,7,'uses','부품×공정 매트릭스'],[1,8,'uses','발주 insert · 출고/입고/완료 표시'],[1,9,'uses','협력업체 리스트'],[1,10,'uses','공정명'],[1,11,'uses','가공계획 없을 때 PartList 승계'],
+   [2,8,'uses','입고수량·입고일'],[3,8,'uses','입고확정·확정금액'],[4,8,'uses','조회'],
+   [5,7,'uses','계획 공정'],[5,8,'uses','공정순번별 진척'],
+   [7,6,'ref','job_no → job_pool'],[8,9,'ref','vendor_name → vendors'],[8,7,'ref','part_no·step_no → 계획 공정'],
+   [1,2,'flow','발주 → 입고'],[2,3,'flow','입고 → 입고확정']]}},
  {cat:'금형제작',name:'금형 가공 · 공정이력',desc:'가공계획(기준공정 라우팅·부품 전개)과 공정이력카드 (IPTK)',data:{nodes:[
   {type:'section',name:'가공',meta:{icon:'⚒'}},
   {type:'screen',name:'가공계획등록',meta:{file:'machining_plan_input.html',kind:'input'}},
@@ -1681,8 +1692,10 @@ function buildPreview(n,kindOverride){
  const kind=kindOverride||n.meta.kind||'input';
  if(!t)return {html:`<!doctype html><meta charset="utf-8"><style>${PV_CSS}</style><div class="screen"><div class="title"><h1>${esc(n.name)}</h1></div><div class="body"><section class="panel"><div class="empty">이 화면에 "사용" 연결된 테이블이 없습니다.<br>블록 오른쪽 ○ 를 끌어 테이블에 연결하면 입력칸이 만들어집니다.</div></section></div></div>`,code:''};
  const isChk=kind==='check'||(kind==='input'&&isCheckTable(t));
- const md=(kind==='status'||isChk)?null:detailOf(n);
+ const isBoard=kind==='board';
+ const md=(kind==='status'||isChk||isBoard)?null:detailOf(n);
  let html=md?masterDetailScreen(n,md.parent,md.child,md.edge,'미리보기',[])
+   :isBoard?boardScreen(n,ts,'미리보기')
    :isChk?checkScreen(n,t,'미리보기')
    :kind==='status'?statusScreen(n,t,'미리보기'):inputScreen(n,t,'미리보기',ts.slice(1));
  const code=html;
@@ -1697,6 +1710,14 @@ function buildPreview(n,kindOverride){
  if(md){const lk=linkCol(md.parent,md.child,md.edge);
   const ls=sampleRows(md.child,3).map((r,i)=>({...r,[lk.child]:JSON.parse(seed)[0][lk.parent]}));
   extraSeed=`lines.push(...${JSON.stringify(ls)});pick(String(rows[0][PK]));`}
+ if(isBoard){const R=boardRoles(ts);
+  const jobs=sampleRows(R.jobs,3).map((r,i)=>({...r,[R.f.job]:'J-2609-0'+(i+1),...(R.f.item?{[R.f.item]:['프레스금형 A','트랜스퍼 금형','프로그레시브 금형'][i]}:{})}));
+  const PN=['MC','GR','HT','WE','LA'];const parts=[];
+  jobs.forEach((j,ji)=>{for(let k=0;k<4;k++){const p={};p[R.f.pjob]=j[R.f.job];p[R.f.part]='P-'+(ji+1)+'0'+(k+1);if(R.f.pname)p[R.f.pname]=['상형 다이','하형 펀치','스트리퍼','가이드 블록'][k];if(R.f.pqty)p[R.f.pqty]=k+1;p[R.f.steps]=PN.slice(0,2+((k+ji)%3));parts.push(p)}});
+  const vendors=['미래써모텍','민성하이텍','보람테크','성광정밀','성보테크','승지금속','신성금속','우창정밀'].map((v,i)=>({[R.f.vname]:v}));
+  const lines=[{[R.f.ljob]:'J-2609-01',[R.f.lpart]:'P-101',[R.f.lstep]:1,[R.f.lmp]:'MC',[R.f.lstatus]:'입고확정',[R.f.lvendor]:'보람테크'},{[R.f.ljob]:'J-2609-01',[R.f.lpart]:'P-101',[R.f.lstep]:2,[R.f.lmp]:'GR',[R.f.lstatus]:'입고',[R.f.lvendor]:'성광정밀'},{[R.f.ljob]:'J-2609-01',[R.f.lpart]:'P-102',[R.f.lstep]:1,[R.f.lmp]:'MC',[R.f.lstatus]:'발주',[R.f.lvendor]:'미래써모텍'}];
+  html=html.replace('</body>',`<script>try{JOBS.push(...${JSON.stringify(jobs)});PARTS.push(...${JSON.stringify(parts)});VENDORS.push(...${JSON.stringify(vendors)});LINES.push(...${JSON.stringify(lines)});init();pickJob(JOBS[0]);if(window.msg)msg('미리보기 — 예시 제번 3건. 녹색 칸 클릭 → 업체 선택 → 요청추가 → 셀 더블클릭으로 출고·입고·완료 진행');}catch(e){document.body.insertAdjacentHTML('afterbegin','<pre style="color:#c00;padding:8px">'+e.message+'</pre>')}<\/script></body>`);
+  return{html,code};}
  html=html.replace('</body>',`<script>
 try{const seed=${seed};${arr}.push(...seed);
  ${md?extraSeed:(kind==='status'?'search();':'render();')}
@@ -1752,7 +1773,7 @@ function pvFull(){
 function previewScreen(id,kind){
  const n=N(id||(sel&&sel.node));if(!n||n.type!=='screen')return;
  pvNode=n;const {html}=buildPreview(n,kind);
- $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':(kind||n.meta.kind)==='check'?'체크시트':'기타'}`;
+ $('pv_name').textContent=`${n.name} · ${n.meta.file||''} · ${(kind||n.meta.kind)==='status'?'현황':(kind||n.meta.kind)==='input'?'등록':(kind||n.meta.kind)==='check'?'체크시트':(kind||n.meta.kind)==='board'?'보드':'기타'}`;
  pvScale=1;pvResetPos();
  $('pv_frame').srcdoc=html;$('pv_msg').textContent='';pvDlg.classList.add('on');
  pvApply();
@@ -1942,6 +1963,7 @@ if(C.MODE==='json'){C.SUPABASE={url:'local://db',key:'local'};const v='?v='+C.AP
   const use=D.edges.filter(e=>e.from===s.id&&e.kind==='uses').map(e=>N(e.to)).filter(t=>t&&t.type==='table');
   const t=use[0];const loc=locate(s.name);
   if(s.meta.kind==='other'||!t){if(s.meta.kind!=='other')warn.push(`화면 '${s.name}' 에 "사용" 테이블이 없어 빈 화면으로 만듭니다.`);GEN[file]=blankScreen(s,loc);continue}
+  if(s.meta.kind==='board'){GEN[file]=boardScreen(s,use,loc);continue}
   if(s.meta.kind==='check'||(s.meta.kind==='input'&&isCheckTable(t))){GEN[file]=checkScreen(s,t,loc);continue}
   const md=detailOf(s);
   if(md)GEN[file]=masterDetailScreen(s,md.parent,md.child,md.edge,loc,use.filter(x=>x!==md.parent&&x!==md.child));
@@ -1957,6 +1979,122 @@ const esc1=s=>String(s).replace(/'/g,"\\'");
 function slug(s){return s.replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase()||'screen_'+uid()}
 const colsOf=t=>(t.meta.cols||[]).filter(c=>c.name);
 const mapOf=t=>'{'+colsOf(t).map(c=>`${c.name}:${c.type==='text'?`'${c.name}'`:`{col:'${c.name}',type:'${c.type}'}`}`).join(',')+'}';
+/* ═══ 파이프라인 보드 화면 ═══
+   외주가공 발주형: [제번 목록] · [부품 × 공정1..N 매트릭스] · [협력업체] · [구매요청 리스트]
+   연결 테이블 역할은 이름·컬럼으로 추정: 제번(job), 부품(steps 컬럼), 라인(status+step_no), 업체(vendor). */
+function boardRoles(ts){
+ const has=(t,re)=>colsOf(t).some(c=>re.test(c.name));
+ const nm=(t,re)=>re.test(t.name);
+ const pick=(re1,re2)=>ts.find(t=>re1&&nm(t,re1))||ts.find(t=>re2&&has(t,re2));
+ const vendors=pick(/vendor|supplier|partner/i,/^vendor_name$|^supplier_name$/i);
+ const lines=ts.find(t=>t!==vendors&&has(t,/^status$/i)&&has(t,/step_no|category/i))||ts.find(t=>t!==vendors&&nm(t,/line|order/i));
+ const parts=ts.find(t=>t!==vendors&&t!==lines&&has(t,/^steps$/i))||ts.find(t=>t!==vendors&&t!==lines&&nm(t,/part/i));
+ const jobs=ts.find(t=>t!==vendors&&t!==lines&&t!==parts&&has(t,/^job_no$|^order_no$/i))||ts.find(t=>![vendors,lines,parts].includes(t))||parts;
+ const col=(t,re,d)=>{const c=t&&colsOf(t).find(x=>re.test(x.name));return c?c.name:d};
+ const f={
+  job:col(jobs,/^job_no$|^order_no$|_no$/i,'job_no'),item:col(jobs,/item_name|product|name$/i,null),
+  pjob:col(parts,/^job_no$|^order_no$/i,'job_no'),part:col(parts,/^part_no$|^part_code$|part/i,'part_no'),pname:col(parts,/part_name|name$/i,null),pqty:col(parts,/^qty$|quantity/i,null),steps:col(parts,/^steps$/i,'steps'),
+  ljob:col(lines,/^job_no$/i,'job_no'),lpart:col(lines,/^part_no$/i,'part_no'),lstep:col(lines,/^step_no$/i,'step_no'),lmp:col(lines,/machining_process_code|process_code/i,'machining_process_code'),lstatus:col(lines,/^status$/i,'status'),lvendor:col(lines,/vendor_name|vendor/i,'vendor_name'),lqty:col(lines,/order_qty|^qty$/i,'order_qty'),lrdate:col(lines,/required_date|due/i,'required_date'),lcat:col(lines,/^category$/i,null),
+  vname:col(vendors,/vendor_name|supplier_name|name$/i,'vendor_name')};
+ return{jobs,parts,lines,vendors,f};
+}
+function boardScreen(s,ts,loc){
+ const R=boardRoles(ts);if(!R.jobs)return blankScreen(s,loc);
+ const f=R.f;const NSTEP=7;
+ return `<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${s.name}</title>
+<script src="app_config.js"><\/script><link rel="stylesheet" href="mes_screen.css">
+<style>
+.body{display:flex;flex-direction:column;gap:6px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bar .lab{min-width:40px}.bar .field{width:160px}
+.panes{display:grid;grid-template-columns:minmax(220px,1fr) minmax(420px,2.6fr) 130px;gap:6px;min-height:0;flex:1 1 46%}
+.midbar{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+.req{flex:1 1 34%;min-height:120px}
+.hint{color:#5b6b7a;font-size:11.5px;border:1px solid #c8d3dc;background:#f3f7fa;padding:3px 8px;border-radius:3px}
+.legend{margin-left:10px;font-weight:400;color:#5b6b7a;font-size:11px}.legend i{display:inline-block;width:10px;height:10px;margin:0 3px 0 8px;vertical-align:-1px;border-radius:2px}
+td.st{text-align:center;cursor:pointer;font-size:11px;white-space:nowrap}
+td.st.next{background:#8fdc6b;font-weight:700}td.st.req{background:#8e6bb0;color:#fff}td.st.out{background:#e07a1f;color:#fff}td.st.in{background:#2f6fb5;color:#fff}td.st.done{background:#8b98a3;color:#fff}
+td.st.pick{outline:2px solid #f2a93b;outline-offset:-2px}
+tr.von td{background:var(--sel);color:#fff}
+@media(max-width:1100px){.panes{grid-template-columns:1fr;flex:none}.panes .panel{min-height:160px;max-height:260px}.req{flex:none;max-height:240px}}
+</style></head>
+<body><div class="screen">
+  <div class="title"><h1>${s.name}</h1><small>${loc}</small></div>
+  <div class="body">
+    <div class="bar"><div class="lab">제번</div><input id="qJob" class="field" placeholder="제번 입력/선택" list="dlJob"><datalist id="dlJob"></datalist>
+      <div class="lab">품명</div><input id="qItem" class="field" placeholder="품명 입력/선택">
+      <div class="lab">업체</div><input id="qVen" class="field" placeholder="" readonly title="오른쪽 협력업체에서 선택">
+      <button class="btn" onclick="renderJobs()">⌕ 조회</button><button class="btn" onclick="init()">⟳ 새로고침</button>
+      <span class="hint">※ 공정 칸 <b>더블클릭</b> → 발주 · 입고 · 입고확정 · 입고취소</span></div>
+    <section class="panes">
+      <div class="panel"><div class="cap">제번리스트</div><div class="tablewrap"><table><thead><tr><th>제번</th><th>품명</th><th class="c">부품</th><th class="c">진행</th></tr></thead><tbody id="jobBody"></tbody></table></div></div>
+      <div class="panel"><div class="cap">부품별 가공공정 리스트<span class="legend"><i style="background:#8fdc6b"></i>다음 공정(클릭)<i style="background:#8e6bb0"></i>요청<i style="background:#e07a1f"></i>출고<i style="background:#2f6fb5"></i>입고<i style="background:#8b98a3"></i>완료</span></div>
+        <div class="tablewrap"><table style="min-width:820px"><thead><tr><th style="width:36px">조</th><th style="width:90px">부품코드</th><th>부품명</th><th class="r" style="width:50px">수량</th>${Array.from({length:NSTEP},(_,i)=>`<th class="c" style="width:78px">공정${i+1}</th>`).join('')}</tr></thead><tbody id="routeBody"></tbody></table></div></div>
+      <div class="panel"><div class="cap">협력업체</div><div style="padding:4px"><input id="venQ" class="field" style="width:100%" placeholder="업체 검색" oninput="renderVen()"></div><div class="tablewrap"><table><tbody id="venBody"></tbody></table></div></div>
+    </section>
+    <div class="midbar"><span class="lab">입고요구일</span><input id="rdate" class="field" type="date" style="width:140px"><button class="btn primary" onclick="addReq()">⬇ 요청추가</button><button class="btn warn" onclick="delReq()">⬆ 요청삭제</button><button class="btn" onclick="submitReq()">▤ 발주등록</button></div>
+    <section class="panel req"><div class="cap">구매요청 리스트 <span class="right" id="reqCnt"></span></div>
+      <div class="tablewrap"><table><thead><tr><th style="width:36px">No</th><th style="width:36px" class="c">선택</th><th>협력업체</th><th>제번</th><th>품명</th><th>품번</th><th>부품명</th><th class="c">순번</th><th>가공공정</th><th class="r">수량</th><th>입고요구일</th><th>작성자</th></tr></thead><tbody id="reqBody"></tbody></table></div></section>
+  </div>
+  <footer class="foot"><button class="btn" onclick="window.parent?.closeActive?.()">⊠ 닫기</button><span class="msg" id="message">제번을 고르고, 녹색(다음 공정) 칸을 클릭한 뒤 업체를 선택해 요청을 추가하세요.</span></footer>
+</div>
+<script>
+const JOBS=[],PARTS=[],VENDORS=[],LINES=[],REQ=[];window.JOBS=JOBS;window.PARTS=PARTS;window.VENDORS=VENDORS;window.LINES=LINES;
+const F=${JSON.stringify(f)};const NSTEP=${NSTEP};
+const PROC={MC:'머시닝',GR:'연마',HT:'열처리',WE:'와이어',LA:'레이저',PL:'도금',ED:'방전',DR:'드릴'};
+const D2S={'발주':'out','입고':'in','입고확정':'done'},S2K={out:'출고',in:'입고',done:'완료',req:'요청',next:'다음'};
+let curJob=null,curVen='',PICK=new Set();
+const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today=()=>new Date().toISOString().slice(0,10);function msg(t){message.textContent=t}
+const stepCode=x=>String((x&&typeof x==='object')?(x.process_code||x.code||''):x||'');
+const stepsOf=p=>{let v=p[F.steps];if(typeof v==='string'){try{v=JSON.parse(v)}catch(e){v=v.split(/[,>→]/).map(x=>x.trim()).filter(Boolean)}}return Array.isArray(v)?v.map(stepCode):[]};
+const lineOf=(job,part,i)=>LINES.find(l=>l[F.ljob]===job&&l[F.lpart]===part&&Number(l[F.lstep])===i+1);
+const reqOf=(job,part,i)=>REQ.find(r=>r.job===job&&r.part===part&&r.sn===i+1);
+function init(){$('rdate').value=$('rdate').value||new Date(Date.now()+12*864e5).toISOString().slice(0,10);dlJob.innerHTML=JOBS.map(j=>'<option value="'+esc(j[F.job])+'">').join('');renderJobs();renderVen();renderReq();if(curJob)renderRoutes()}
+function partsOf(job){return PARTS.filter(p=>p[F.pjob]===job)}
+function progress(job){const ps=partsOf(job);let tot=0,done=0;for(const p of ps){const st=stepsOf(p);tot+=st.length;st.forEach((_,i)=>{const l=lineOf(job,p[F.part],i);if(l&&l[F.lstatus]==='입고확정')done++})}return tot?done+'/'+tot:'-'}
+function renderJobs(){const qj=($('qJob').value||'').toLowerCase(),qi=($('qItem').value||'').toLowerCase();
+ const v=JOBS.filter(j=>(!qj||String(j[F.job]).toLowerCase().includes(qj))&&(!qi||!F.item||String(j[F.item]||'').toLowerCase().includes(qi)));
+ jobBody.innerHTML=v.length?v.map(j=>'<tr class="'+(curJob===j[F.job]?'sel':'')+'" onclick="pickJob(JOBS.find(x=>x[F.job]===\\''+esc(j[F.job])+'\\'))"><td>'+esc(j[F.job])+'</td><td>'+esc(F.item?j[F.item]:'')+'</td><td class="c">'+partsOf(j[F.job]).length+'</td><td class="c">'+progress(j[F.job])+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">제번이 없습니다.</td></tr>'}
+function pickJob(j){if(!j)return;curJob=j[F.job];PICK.clear();renderJobs();renderRoutes();msg(curJob+' — 부품 '+partsOf(curJob).length+'개')}
+function cellState(job,part,st,i){const l=lineOf(job,part,i);if(l)return D2S[l[F.lstatus]]||'out';if(reqOf(job,part,i))return 'req';
+ const prev=i===0?null:lineOf(job,part,i-1);if(i===0||(prev&&prev[F.lstatus]==='입고확정'))return 'next';return ''}
+function renderRoutes(){const ps=curJob?partsOf(curJob):[];
+ routeBody.innerHTML=ps.length?ps.map((p,pi)=>{const st=stepsOf(p);let h='<tr><td class="c">'+(pi+1)+'</td><td>'+esc(p[F.part])+'</td><td>'+esc(F.pname?p[F.pname]:'')+'</td><td class="r">'+esc(F.pqty?p[F.pqty]:'')+'</td>';
+  for(let i=0;i<NSTEP;i++){const c=st[i];if(!c){h+='<td></td>';continue}const s=cellState(curJob,p[F.part],c,i);const k=curJob+'|'+p[F.part]+'|'+i;const l=lineOf(curJob,p[F.part],i);
+   h+='<td class="st '+s+(PICK.has(k)?' pick':'')+'" title="'+esc((PROC[c]||c)+(l?' · '+l[F.lvendor]+' · '+l[F.lstatus]:''))+'" onclick="tap(\\''+esc(k)+'\\',\\''+s+'\\')" ondblclick="act(\\''+esc(k)+'\\')">'+esc(PROC[c]||c)+(l?'<br><small>'+esc(l[F.lvendor]||'')+'</small>':s==='req'?'<br><small>요청</small>':'')+'</td>'}
+  return h+'</tr>'}).join(''):'<tr><td colspan="'+(4+NSTEP)+'" class="empty">왼쪽에서 제번을 선택하세요.</td></tr>'}
+function tap(k,s){if(s!=='next')return;PICK.has(k)?PICK.delete(k):PICK.add(k);renderRoutes();msg('선택 '+PICK.size+'건 — 오른쪽에서 업체를 고르고 [요청추가]')}
+function renderVen(){const q=($('venQ').value||'').toLowerCase();venBody.innerHTML=VENDORS.filter(v=>!q||String(v[F.vname]).toLowerCase().includes(q)).map(v=>'<tr class="'+(curVen===v[F.vname]?'von':'')+'" onclick="pickVen(\\''+esc(v[F.vname])+'\\')"><td>'+esc(v[F.vname])+'</td></tr>').join('')}
+function pickVen(n){curVen=n;$('qVen').value=n;renderVen();msg('업체: '+n)}
+function addReq(){if(!PICK.size)return msg('녹색(다음 공정) 칸을 먼저 클릭하세요.');if(!curVen)return msg('협력업체를 선택하세요.');
+ let n=0;for(const k of PICK){const [job,part,i]=k.split('|');const p=partsOf(job).find(x=>x[F.part]===part);const c=stepsOf(p)[+i];if(reqOf(job,part,+i))continue;
+  REQ.push({sel:false,vendor:curVen,job,item:F.item?(JOBS.find(j=>j[F.job]===job)||{})[F.item]:'',part,partName:F.pname?p[F.pname]:'',sn:+i+1,mp:c,mpName:PROC[c]||c,qty:F.pqty?(p[F.pqty]||1):1,rdate:$('rdate').value,writer:'담당자'});n++}
+ PICK.clear();renderRoutes();renderReq();msg('요청 '+n+'건 추가 — [발주등록] 으로 확정하세요.')}
+function delReq(){const b=REQ.length;for(let i=REQ.length-1;i>=0;i--)if(REQ[i].sel)REQ.splice(i,1);if(REQ.length===b)return msg('삭제할 요청을 체크하세요.');renderReq();renderRoutes();msg('요청 '+(b-REQ.length)+'건 삭제')}
+function renderReq(){reqBody.innerHTML=REQ.length?REQ.map((r,i)=>'<tr><td>'+(i+1)+'</td><td class="c"><input type="checkbox" '+(r.sel?'checked':'')+' onchange="REQ['+i+'].sel=this.checked"></td><td>'+esc(r.vendor)+'</td><td>'+esc(r.job)+'</td><td>'+esc(r.item)+'</td><td>'+esc(r.part)+'</td><td>'+esc(r.partName)+'</td><td class="c">'+r.sn+'</td><td>'+esc(r.mpName)+'</td><td class="r">'+r.qty+'</td><td>'+esc(r.rdate)+'</td><td>'+esc(r.writer)+'</td></tr>').join(''):'<tr><td colspan="12" class="empty">요청이 없습니다.</td></tr>';reqCnt.textContent=REQ.length+'건'}
+async function submitReq(){if(!REQ.length)return msg('등록할 요청이 없습니다.');
+ const rows=REQ.map(r=>({${f.lcat?`[F.lcat]:'외주가공',`:''}[F.lstatus]:'발주',[F.lvendor]:r.vendor,[F.ljob]:r.job,[F.lpart]:r.part,[F.lstep]:r.sn,[F.lmp]:r.mp,[F.lqty]:r.qty,[F.lrdate]:r.rdate||null}));
+ if(window.MESDB&&MESDB.online&&MESDB.newLines){try{await MESDB.newLines(rows)}catch(e){return msg('DB 등록 실패: '+e.message.slice(0,100))}}
+ LINES.push(...rows);const n=REQ.length;REQ.length=0;renderReq();renderRoutes();renderJobs();msg('외주가공 발주 '+n+'건 등록 (공정 리스트에 출고 표시)')}
+function act(k){const [job,part,i0]=k.split('|');const i=+i0;const l=lineOf(job,part,i);if(!l)return msg('아직 발주되지 않은 공정입니다. 녹색 칸을 클릭해 요청을 추가하세요.');
+ const cur=l[F.lstatus];const nx={'발주':'입고','입고':'입고확정'}[cur];
+ if(!nx){if(confirm(l[F.lpart]+' '+(i+1)+'공정 입고확정을 취소할까요?')){l[F.lstatus]='입고';renderRoutes();renderJobs();msg('입고확정 취소')}return}
+ if(!confirm(l[F.lpart]+' '+(i+1)+'공정 ('+esc(l[F.lvendor])+') → '+nx+' 처리할까요?'))return;
+ l[F.lstatus]=nx;if(window.MESDB&&MESDB.online){try{MESDB.table('${R.lines?R.lines.name:'order_lines'}').upsert(l)}catch(e){}}renderRoutes();renderJobs();msg(l[F.lpart]+' '+(i+1)+'공정 '+nx+' 처리')}
+window.MES={search:renderJobs,setMessage:msg};
+<\/script>
+<script src="mes_db.js"><\/script>
+<script>(async()=>{try{await MESDB.ready}catch(e){}if(!window.MESDB||!MESDB.online)return;
+ try{JOBS.length=0;JOBS.push(...await MESDB.table('${R.jobs.name}').select('select=*'))}catch(e){}
+ ${R.parts?`try{PARTS.length=0;PARTS.push(...await MESDB.table('${R.parts.name}').select('select=*'))}catch(e){}`:''}
+ ${R.vendors?`try{VENDORS.length=0;VENDORS.push(...await MESDB.table('${R.vendors.name}').select('select=*'))}catch(e){}`:''}
+ ${R.lines?`try{LINES.length=0;LINES.push(...await MESDB.table('${R.lines.name}').select('select=*${f.lcat?'&'+f.lcat+'=eq.외주가공':''}'))}catch(e){}`:''}
+ init()})();<\/script>
+<div id="toast"></div></body></html>
+`;
+}
 /* ═══ 체크시트 화면 ═══
    테이블의 chk_* 컬럼 = 점검항목. 헤더(점검일·점검자·대상)는 위에, 항목은 OK/NG/N.A 토글로 세로 나열.
    ng_count / result 는 자동 집계. 목록에는 헤더 + NG수 + 판정만 보인다. */
