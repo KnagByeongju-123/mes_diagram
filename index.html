@@ -1083,6 +1083,7 @@ function renderPanel(){
    <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewNode('${n.id}')">▶ 중분류 홈 미리보기</button></div>`}
  if(n.type==='screen'){h+=`<div class="row2"><div class="f"><label>파일명</label><input id="f_file" value="${esc(n.meta.file||'')}" placeholder="order_input.html"></div>
    <div class="f"><label>화면 종류</label><select id="f_kind"><option value="input" ${n.meta.kind==='input'?'selected':''}>등록 (입력폼+목록)</option><option value="status" ${n.meta.kind==='status'?'selected':''}>현황 (조회+상세)</option><option value="check" ${n.meta.kind==='check'?'selected':''}>체크시트 (헤더+점검항목 OK/NG)</option><option value="board" ${n.meta.kind==='board'?'selected':''}>파이프라인 보드 (제번·부품×공정·업체·요청)</option><option value="perm" ${n.meta.kind==='perm'?'selected':''}>권한관리 (사용자+메뉴별 4권한 트리)</option><option value="paste" ${n.meta.kind==='paste'?'selected':''}>엑셀 붙여넣기 등록 (대량 품목)</option><option value="dash" ${n.meta.kind==='dash'?'selected':''}>대시보드 (KPI·알림·그룹별 상태표·자동갱신)</option><option value="other" ${n.meta.kind==='other'?'selected':''}>기타 (빈 화면)</option></select></div></div>
+   <div class="acts" style="margin-top:-3px"><button class="btn" id="autoFileName" title="중분류 → 화면 → 연결 테이블의 대표 라벨 순서로 영문 약자를 조합합니다">⚡ 자동파일명</button><span id="autoFileHint" style="font-size:11px;color:#8a94a6">중분류 → 화면 → 대표 라벨(🔑 우선)</span></div>
    <div class="f"><label>화면 CSS 테마 (이 화면만)</label><select id="f_skin"><option value="">설계 전체 테마 따름 — ${esc(SKIN[skinId()].name)}</option>${Object.entries(SKIN).map(([k,v])=>`<option value="${k}" ${n.meta.skin===k?'selected':''}>${esc(v.name)}</option>`).join('')}</select></div>
    <div class="acts" style="margin-bottom:2px"><button class="btn primary" onclick="previewScreen()">▶ 화면 미리보기</button></div>
    <label class="ck" style="padding:4px 0 4px 25px"><input id="f_lock" type="checkbox" ${n.meta.locked?'checked':''}>이 화면은 직접 수정함 — 다시 생성해도 덮어쓰지 않기</label>
@@ -1127,6 +1128,7 @@ function renderPanel(){
  if($('f_desc'))$('f_desc').oninput=e=>{n.meta.desc=e.target.value;render()};
  if($('f_homeType'))$('f_homeType').onchange=e=>{const v=e.target.value;if(v&&v!=='auto')n.meta.homeType=v;else delete n.meta.homeType;save();render()};
  if($('f_file'))$('f_file').oninput=e=>{n.meta.file=e.target.value.trim();render()};
+ if($('autoFileName'))$('autoFileName').onclick=()=>{autoScreenFileName(n);renderPanel();render()};
  if($('f_kind'))$('f_kind').onchange=e=>{n.meta.kind=e.target.value;render()};
  if($('f_repo'))$('f_repo').onchange=e=>{const v=e.target.value;if(v)n.meta.repo=v;else delete n.meta.repo;if(!originUrl(n))delete n.meta.origin;save();render();renderPanel()};
  if($('f_src'))$('f_src').onchange=e=>{const v=e.target.value.trim();if(v)n.meta.src=v;else delete n.meta.src;if(!originUrl(n))delete n.meta.origin;save();render();renderPanel()};
@@ -1209,6 +1211,32 @@ function autoColumnContext(t){
   else mod=D.edges.filter(e=>e.kind==='contains'&&e.to===scr.id).map(e=>N(e.from)).find(x=>x?.type==='module')||null;}
  return{scr,sec,mod};
 }
+function autoScreenFileContext(scr){
+ let sec=D.edges.filter(e=>e.kind==='contains'&&e.to===scr.id).map(e=>N(e.from)).find(x=>x?.type==='section')||null;
+ let mod=null;if(sec)mod=D.edges.filter(e=>e.kind==='contains'&&e.to===sec.id).map(e=>N(e.from)).find(x=>x?.type==='module')||null;
+ else mod=D.edges.filter(e=>e.kind==='contains'&&e.to===scr.id).map(e=>N(e.from)).find(x=>x?.type==='module')||null;
+ const tables=D.edges.filter(e=>e.kind==='uses'&&e.from===scr.id).map(e=>N(e.to)).filter(x=>x?.type==='table');
+ let table=null,col=null;
+ for(const t of tables){const cs=t.meta?.cols||[];
+  const pick=cs.find(c=>c.pk&&String(c.label||'').trim())||cs.find(c=>String(c.label||'').trim()&&!['비고','수정일','수정일시','등록일','등록일시','작성일'].includes(String(c.label||'').trim()))||cs.find(c=>String(c.label||'').trim());
+  if(pick){table=t;col=pick;break}
+ }
+ return{sec,mod,table,col};
+}
+function autoScreenFileName(scr){
+ if(!scr||scr.type!=='screen')return;
+ const ctx=autoScreenFileContext(scr),secName=ctx.sec?.name||ctx.mod?.name||'공통',screenName=scr.name||'화면',label=String(ctx.col?.label||'').trim();
+ const sec=autoAbbrText(secName,'section')||'com',screen=autoAbbrText(screenName,'screen')||'scr',lab=autoAbbrText(label,'label');
+ const seen=new Set(),tokens=[...sec.split('_'),...screen.split('_'),...(lab?lab.split('_'):[])].filter(x=>x&&!seen.has(x)&&(seen.add(x),true));
+ let base=tokens.join('_').replace(/_+/g,'_').replace(/^_+|_+$/g,'').toLowerCase()||'screen';
+ if(!/^[a-z]/.test(base))base='scr_'+base;base=base.slice(0,72).replace(/_+$/,'');
+ const taken=new Set(D.nodes.filter(x=>x.type==='screen'&&x.id!==scr.id).map(x=>String(x.meta?.file||'').split('?')[0].toLowerCase()));
+ let fn=base+'.html',i=2;while(taken.has(fn.toLowerCase()))fn=base.slice(0,68)+'_'+i+++'.html';
+ scr.meta.file=fn;save();
+ const path=`${ctx.sec?.name||ctx.mod?.name||'공통'} → ${screenName}${label?' → '+label:''}`;
+ $('stat').textContent=`⚡ 자동파일명 적용: ${fn} · 기준: ${path}${label?'':' · 연결 테이블의 라벨이 없어 중분류+화면만 사용'}`;
+}
+
 function autoColumnNames(t){
  const cols=t?.meta?.cols||[];if(!cols.length){$('stat').textContent='⚡ 자동칼럼명 — 컬럼이 없습니다.';return}
  const ctx=autoColumnContext(t),secName=ctx.sec?.name||ctx.mod?.name||'공통',scrName=ctx.scr?.name||t.name||'화면';
