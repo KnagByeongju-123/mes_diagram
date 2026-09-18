@@ -168,7 +168,7 @@ aside .body{flex:1;overflow:auto;padding:12px 14px;display:grid;gap:10px;align-c
     <button onclick="loadSample()">✦ 샘플 설계 불러오기</button>
     <hr>
     <button onclick="openMerge()">◈ 기준정보 통합 (중복 마스터 합치기)</button>
-    <button onclick="autoLinkOrphans()">🔗 미연결 부모 자동정리</button>
+    <button onclick="autoLinkOrphans()">🔗 기존 미연결 항목 자동 연결</button>
     <button onclick="autoLayout()">⇶ 자동정렬</button>
     <button onclick="fitAll()">⤢ 전체 보기</button>
   </div></div>
@@ -302,14 +302,14 @@ work_date, 일자, date"></textarea></div>
       <div class="acts"><button class="btn primary" onclick="saveModule()">＋ 모듈로 저장</button><button class="btn" onclick="saveModule(true)">현재 설계 전체를 모듈로</button><span class="msg" id="lb_msg" style="font-size:11.5px;color:#8a94a6"></span></div>
     </section>
     <section class="src">
-      <h4>모듈 삽입 시 연관관계</h4>
-      <label class="ck"><input id="lb_auto" type="checkbox" checked>부모 자동판단 및 자동 연결 (현재 선택 블록 우선)</label>
+      <h4>모듈 삽입 시 자동 연결 <span style="font-size:11px;font-weight:500;color:#2e7d5b">항상 사용</span></h4>
+      <div style="font-size:12px;color:#4a5568;line-height:1.65;margin-bottom:4px">삽입한 모듈의 진입 블록을 기존 대분류·중분류·화면과 자동으로 연결합니다. 후보가 비슷할 때만 상위 분류를 선택합니다.</div>
       <div id="lb_anchor" style="font-size:11.5px;color:#8a94a6;line-height:1.6">선택한 블록이 없어도 기존 설계에서 적절한 부모 후보를 자동 판단합니다.</div>
     </section>
     <div class="f"><label>기본 모듈 — 구분별 뼈대 (공통 · 금형제작 · ESG 스마트팩토리 · 철강 수입무역 · mm 통합 MES · GI MES) — 🎨 화면 테마: mm 3종 · ESG 3종 · GI 2종</label><div class="links" id="lb_builtin"></div></div>
     <div class="f"><label>내 모듈 <span style="color:#8a94a6;font-size:11px">(이 브라우저 · ☁ 연결 시 Supabase 공유)</span></label><div class="links" id="lb_mine"></div></div>
   </div>
-  <div class="bt"><button class="btn" onclick="libDlg.classList.remove('on')">닫기</button><span class="msg">선택한 대메뉴·중분류·화면이 있으면 삽입 모듈의 진입 블록을 자동 연결합니다. 필요하면 ○ 드래그로 추가 연결하세요.</span></div>
+  <div class="bt"><button class="btn" onclick="libDlg.classList.remove('on')">닫기</button><span class="msg">모듈은 항상 자동 연결됩니다. 부모 후보가 애매할 때만 선택창이 뜹니다.</span></div>
 </div></div>
 <div class="mbg" id="crawlDlg"><div class="modal" style="width:min(660px,94vw)">
   <div class="t">웹 사이트 가져오기 <span class="x" onclick="crawlDlg.classList.remove('on')">×</span></div>
@@ -2182,7 +2182,7 @@ function autoAttachModuleSmart(made,data,label,contextNode){
    중분류/화면은 같은 부모 아래에 있을 때만 재사용하여 엉뚱한 메뉴와 합쳐지는 것을 막는다. */
 function insertModule(data,label,opts){
  opts=opts||{};if(!data||!data.nodes)return;
- const autoOn=opts.auto!==false&&(!$('lb_auto')||$('lb_auto').checked);
+ const autoOn=opts.auto!==false;  /* 일반 모듈 삽입은 항상 자동 연결. 편집용 내부 호출만 auto:false 허용 */
  const contextNode=autoOn&&sel&&sel.node?N(sel.node):null;
  const dn0=data.nodes||[],de0=data.edges||[];
  const has0=t=>dn0.some(n=>n.type===t),inc0=(i,k)=>de0.some(e=>e[1]===i&&e[2]===k);
@@ -3416,10 +3416,10 @@ function pvMode(k){if(!pvNode)return;pvNode.meta.kind=k;render();renderPanel();p
 function pvCode(){if(!pvNode)return;const {code}=buildPreview(pvNode);
  GEN={[(pvNode.meta.file||'screen.html')]:code};genCur=Object.keys(GEN)[0];pvDlg.classList.remove('on');showGen();}
 
-/* ═══ 기존 설계의 미연결 중분류/화면 자동정리 ═══ */
+/* ═══ 기존 설계의 미연결 중분류/화면 자동 연결 ═══ */
 function autoLinkOrphans(){
  const orphans=D.nodes.filter(n=>(n.type==='section'||n.type==='screen')&&!D.edges.some(e=>e.kind==='contains'&&e.to===n.id));
- if(!orphans.length){$('stat').textContent='미연결 중분류/화면이 없습니다.';return}
+ if(!orphans.length){$('stat').textContent='연결이 필요한 기존 중분류/화면이 없습니다.';return}
  REPAIR_QUEUE=orphans.map(n=>n.id);REPAIR_COUNT=0;processRepairQueue();
 }
 function processRepairQueue(){
@@ -3428,9 +3428,9 @@ function processRepairQueue(){
   const cands=rankParentCandidates(child,null);if(!cands.length)continue;
   const best=clearParentDecision(cands);
   if(best){const r=attachToParent(best.node,[child]);REPAIR_COUNT+=r.count;continue}
-  openParentChoice([child],cands,'미연결 부모 자동정리',(p,r)=>{REPAIR_COUNT+=r.count||0;processRepairQueue()});return;
+  openParentChoice([child],cands,'기존 미연결 항목 자동 연결',(p,r)=>{REPAIR_COUNT+=r.count||0;processRepairQueue()});return;
  }
- render();$('stat').textContent=`미연결 부모 자동정리 완료 · 자동 연결 ${REPAIR_COUNT}건`;
+ render();$('stat').textContent=`기존 미연결 항목 자동 연결 완료 · 자동 연결 ${REPAIR_COUNT}건`;
 }
 
 /* ═══════════════ 설계 검증 ═══════════════ */
