@@ -861,14 +861,14 @@ const BUILTIN=[
  {cat:'공통 기본',name:'사용자 · 권한',desc:'로그인 계정 + 메뉴별 4권한(조회/저장/수정/삭제) 트리 — 상위 체크 시 하위 일괄, 권한복사',data:{nodes:[
   {type:'section',name:'사용자',meta:{icon:'👥'}},
   {type:'screen',name:'사용자정보',meta:{file:'user_information.html',kind:'perm'}},
-  {type:'table',name:'users',meta:{cols:[COL('user_key','사용자키','text',1),COL('user_id','아이디'),COL('name','성명','text',0,1),COL('english_name','성명(영문)'),COL('department_code','부서코드'),COL('department_name','부서'),COL('business_division','사업부'),COL('position_code','직급코드'),COL('position_name','직급'),COL('user_group','사용자그룹'),COL('process_group','공정그룹'),COL('employee_no','사원번호'),COL('mobile_phone','휴대폰'),COL('phone','전화번호'),COL('email','이메일'),COL('auth_email','로그인메일'),COL('role','권한역할(user/admin/master)'),COL('registered_date','등록일','date'),COL('is_active','사용','bool'),COL('remark','비고')]}},
+  {type:'table',name:'users',meta:{cols:[COL('user_key','사용자키','text',1),COL('user_id','아이디'),COL('name','성명','text',0,1),COL('english_name','성명(영문)'),COL('department_code','부서코드'),COL('department_name','부서'),COL('business_division','사업부'),COL('position_code','직급코드'),COL('position_name','직급'),COL('user_group','사용자그룹'),COL('process_group','공정그룹'),COL('factory','공장'),COL('employee_no','사원번호'),COL('mobile_phone','휴대폰'),COL('phone','전화번호'),COL('email','이메일'),COL('auth_email','로그인메일'),COL('role','권한역할(user/admin/master)'),COL('registered_date','등록일','date'),COL('is_active','사용','bool'),COL('remark','비고')]}},
   {type:'table',name:'user_permissions',meta:{cols:[COL('user_key','사용자키','text',1),COL('menu_name','메뉴경로(대메뉴/중분류/화면)','text',1),COL('menu_path','경로배열'),COL('can_view','조회','bool'),COL('can_save','저장','bool'),COL('can_edit','수정','bool'),COL('can_delete','삭제','bool')]}},
   {type:'table',name:'user_initial_passwords',meta:{cols:[COL('user_id','아이디','text',1),COL('temp_password','발급 비밀번호'),COL('issued_by','발급자'),COL('issued_at','발급시각','date'),COL('changed_by_user','본인변경','bool')]}}],
   edges:[[0,1,'contains',''],
    [1,2,'uses','계정 등록·수정·삭제'],[1,3,'uses','메뉴별 권한 저장·복사'],[1,4,'uses','비밀번호 발급·재설정(마스터 조회)'],
    [3,2,'ref','user_key → users.user_key'],[4,2,'ref','user_id → users.user_id']]}},
  {cat:'공통 기본',name:'거래처 · 품목',desc:'어느 업종에나 필요한 기준정보 2종',data:{nodes:[
-  {type:'table',name:'vendors',meta:{cols:[COL('vendor_code','거래처코드','text',1),COL('vendor_name','거래처명','text',0,1),COL('vendor_type','구분'),COL('phone','전화'),COL('manager_name','담당자'),COL('is_active','사용','bool')]}},
+  {type:'table',name:'vendors',meta:{cols:[COL('vendor_code','업체코드','text',1),COL('vendor_name','업체명','text',0,1),COL('vendor_type','구분(고객/공급/외주)'),COL('partner_type','협력업체구분'),COL('raw_material_flag','원자재','bool'),COL('milling_flag','면삭','bool'),COL('purchase_item_flag','구매품','bool'),COL('outsourcing_flag','외주가공','bool'),COL('location_type','소재지(국내/해외)'),COL('ceo_name','대표자명'),COL('manager_name','담당자'),COL('phone','전화번호'),COL('fax','팩스'),COL('postal_code','우편번호'),COL('address','주소'),COL('is_active','사용','bool')]}},
   {type:'table',name:'items',meta:{cols:[COL('item_code','품번','text',1),COL('item_name','품명','text',0,1),COL('spec','규격'),COL('unit','단위'),COL('unit_price','단가','num'),COL('customer_name','고객사')]}},
   {type:'screen',name:'거래처관리',meta:{file:'vendor_management.html',kind:'input'}},
   {type:'screen',name:'품목관리',meta:{file:'item_management.html',kind:'input'}}],
@@ -905,7 +905,7 @@ const BUILTIN=[
  {cat:'공통 기본',name:'체크시트 공통 (템플릿형)',desc:'점검표를 데이터로 정의 — 종류가 늘어도 화면·테이블을 더 만들지 않음',data:{nodes:[
   {type:'section',name:'점검관리',meta:{icon:'☑'}},
   {type:'screen',name:'점검표 설계',meta:{file:'check_template_design.html',kind:'input'}},
-  {type:'screen',name:'체크시트 입력',meta:{file:'check_sheet_input.html',kind:'check'}},
+  {type:'screen',name:'체크시트 입력',meta:{file:'check_sheet_input.html',kind:'input'}},
   {type:'screen',name:'점검 종합현황',meta:{file:'check_dashboard.html',kind:'status'}},
   {type:'screen',name:'미점검 알림판',meta:{file:'check_alert_board.html',kind:'status'}},
   {type:'table',name:'check_templates',meta:{cols:[COL('template_code','점검표코드','text',1),COL('template_name','점검표명','text',0,1),COL('category','구분(설비/금형/검사기/소방/세척기/안전)'),COL('cycle','주기(일상/주간/월간/분기)'),COL('target_master','점검대상 마스터(설비/금형/계측기)'),COL('approval_yn','결재사용','bool'),COL('is_active','사용','bool')]}},
@@ -919,7 +919,7 @@ const BUILTIN=[
    [3,7,'uses','일자·대상별 집계'],[3,8,'uses','항목별 NG 분석'],
    [4,9,'uses','주기 대비 미점검'],[4,7,'uses','최종 점검일'],
    [6,5,'ref','template_code → check_templates'],[7,5,'ref','template_code → check_templates'],
-   [8,7,'ref','log_id → check_logs'],[8,6,'ref','item_id → check_items'],[9,5,'ref','template_code → check_templates'],
+   [8,7,'ref','log_id → check_logs','1N'],[8,6,'ref','item_id → check_items'],[9,5,'ref','template_code → check_templates'],
    [1,2,'flow','점검표 설계 → 현장 점검']]}},
  {cat:'공통 기본',name:'전자결재 (범용)',desc:'어떤 업무 문서든 결재선을 붙인다 — 상신·전결·합의·반려·대결, 결재이력 보존',data:{nodes:[
   {type:'section',name:'전자결재',meta:{icon:'✍'}},
@@ -941,7 +941,7 @@ const BUILTIN=[
    [4,6,'uses','양식 정의'],[4,7,'uses','부서별 결재선'],
    [5,10,'uses','위임 등록'],
    [7,6,'ref','form_code → approval_forms'],[8,6,'ref','form_code → approval_forms'],
-   [9,8,'ref','doc_no → approval_docs'],
+   [9,8,'ref','doc_no → approval_docs','1N'],
    [8,11,'ref','drafter_key → users.user_key'],[9,11,'ref','approver_key → users.user_key'],[10,11,'ref','owner_key → users.user_key'],
    [1,2,'flow','상신 → 결재 → 완결']]}},
  {cat:'공통 기본',name:'PIN 사용자관리 (현장형)',desc:'4자리 PIN 로그인 — 마스터 PIN 관리자화면, 엑셀 일괄등록, PIN 첫자리로 부서 자동배정 (smtec user_pin)',data:{nodes:[
@@ -972,8 +972,8 @@ const BUILTIN=[
   {type:'screen',name:'PartList 등록(구매품)',meta:{file:'partlist_purchase_input.html',kind:'paste'}},
   {type:'screen',name:'PartList 현황',meta:{file:'partlist_status.html',kind:'status'}},
   {type:'screen',name:'PartList 복사',meta:{file:'partlist_copy.html',kind:'input'}},
-  {type:'table',name:'design_plans',meta:{cols:[COL('job_no','제번','text',1),COL('item_name','품명'),COL('customer_name','고객사'),COL('design_completion_planned_date','설계완료계획','date')]}},
-  {type:'table',name:'design_plan_steps',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('step_name','세부공정'),COL('planned_date','계획일','date'),COL('completed_date','완료일','date'),COL('designer','설계자')]}},
+  {type:'table',name:'design_plans',meta:{cols:[COL('job_no','제번','text',1),COL('item_name','품명'),COL('customer_name','고객사'),COL('plant_name','공장'),COL('customer_request_date','고객요청일','date'),COL('design_completion_planned_date','설계완료계획일','date'),COL('s1_date','T1일','date')]}},
+  {type:'table',name:'design_plan_steps',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('process_code','공정코드'),COL('process_name','공정명'),COL('machining_process_code','가공공정코드'),COL('machining_process_name','가공공정명'),COL('manager_name','담당자'),COL('completion_planned_date','완료계획일','date'),COL('completed_date','완료일','date')]}},
   {type:'table',name:'design_results',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('work_date','작업일','date'),COL('step_name','세부공정'),COL('designer','설계자'),COL('progress','진척률','num')]}},
   {type:'table',name:'partlist_materials',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','품번','text',0,1),COL('part_name','품명'),COL('material','재질'),COL('spec','규격'),COL('thickness_dia','두께·직경'),COL('qty','수량','num'),COL('created_by','등록자'),COL('created_date','등록일자','date')]}},
   {type:'table',name:'partlist_purchases',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','품번','text',0,1),COL('part_name','품명'),COL('type','형식'),COL('spec','규격'),COL('maker','제조사'),COL('qty','수량','num'),COL('created_by','등록자'),COL('created_date','등록일자','date')]}},
@@ -983,7 +983,7 @@ const BUILTIN=[
    [3,10,'uses','엑셀 붙여넣기 대량 등록'],[3,12,'uses','제번 선택'],
    [4,11,'uses','엑셀 붙여넣기 대량 등록'],[4,12,'uses','제번 선택'],
    [5,10,'uses','조회'],[5,11,'uses','조회'],[6,10,'uses','다른 제번에서 복사'],[6,11,'uses','다른 제번에서 복사'],
-   [8,7,'ref','job_no → design_plans.job_no'],[9,8,'ref','세부공정 실적'],[10,12,'ref','job_no → job_pool'],[11,12,'ref','job_no → job_pool'],
+   [8,7,'ref','job_no → design_plans.job_no','1N'],[9,8,'ref','세부공정 실적'],[10,12,'ref','job_no → job_pool'],[11,12,'ref','job_no → job_pool'],
    [1,2,'flow','계획 후 실적'],[2,3,'flow','설계 완료 → PartList 전개']]}},
  {cat:'금형제작',name:'금형 구매 · 외주발주',desc:'원재료/구매품 발주→입고→입고확정 (order_lines) — 외주가공은 별도 모듈',data:{nodes:[
   {type:'section',name:'구매/외주',meta:{icon:'◆'}},
@@ -1005,7 +1005,7 @@ const BUILTIN=[
   {type:'table',name:'job_pool',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('item_name','품명'),COL('process_code','공정'),COL('process_name','공정명'),COL('status','상태')]}},
   {type:'table',name:'machining_plan_parts',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','부품번호'),COL('part_name','부품명'),COL('qty','수량','num'),COL('standard_process','기준공정'),COL('steps','세부공정(JSON)')]}},
   {type:'table',name:'order_lines',meta:{cols:[COL('line_id','라인ID','num',1),COL('category','구분(원재료/구매품/외주가공)','text',0,1),COL('status','상태(발주/입고/입고확정)'),COL('job_no','제번'),COL('vendor_name','거래처'),COL('item_name','품명'),COL('process_code','공정코드'),COL('process_name','공정명'),COL('machining_process_code','가공공정'),COL('machining_process_name','가공공정명'),COL('step_no','공정순번','num'),COL('part_no','부품번호'),COL('part_name','부품명'),COL('material','재질'),COL('spec','규격'),COL('order_qty','발주수량','num'),COL('receipt_qty','입고수량','num'),COL('unit_price','단가','num'),COL('quote_price','견적금액','num'),COL('confirm_price','확정금액','num'),COL('order_date','발주일','date'),COL('required_date','요청납기','date'),COL('receipt_date','입고일','date'),COL('confirm_date','확정일','date')]}},
-  {type:'table',name:'vendors',meta:{cols:[COL('vendor_code','거래처코드','text',1),COL('vendor_name','거래처명','text',0,1),COL('vendor_type','구분'),COL('phone','전화'),COL('manager_name','담당자'),COL('is_active','사용','bool')]}},
+  {type:'table',name:'vendors',meta:{cols:[COL('vendor_code','업체코드','text',1),COL('vendor_name','업체명','text',0,1),COL('vendor_type','구분(고객/공급/외주)'),COL('partner_type','협력업체구분'),COL('raw_material_flag','원자재','bool'),COL('milling_flag','면삭','bool'),COL('purchase_item_flag','구매품','bool'),COL('outsourcing_flag','외주가공','bool'),COL('location_type','소재지(국내/해외)'),COL('ceo_name','대표자명'),COL('manager_name','담당자'),COL('phone','전화번호'),COL('fax','팩스'),COL('postal_code','우편번호'),COL('address','주소'),COL('is_active','사용','bool')]}},
   {type:'table',name:'processes',meta:{cols:[COL('process_code','공정코드','text',1),COL('process_name','공정명'),COL('seq','순서','num')]}},
   {type:'table',name:'partlist_materials',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','부품번호'),COL('part_name','부품명'),COL('material','재질'),COL('spec','규격'),COL('qty','수량','num'),COL('process_code','공정')]}},
   {type:'table',name:'machining_standard_routes',meta:{cols:[COL('row_no','No','num',1),COL('standard_process_no','표준번호','num',0,1),COL('standard_process_name','가공공정표준명'),COL('steps','공정순서(JSON: 공정코드 배열)')]}}],
@@ -1027,7 +1027,7 @@ const BUILTIN=[
   {type:'table',name:'job_pool',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번'),COL('item_name','품명'),COL('status','상태')]}},
   {type:'table',name:'partlist_materials',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('part_no','부품번호'),COL('part_name','부품명'),COL('material','재질'),COL('spec','규격'),COL('qty','수량','num'),COL('process_code','공정')]}},
   {type:'table',name:'process_history_cards',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번'),COL('part_no','부품번호'),COL('process_code','공정코드'),COL('work_date','작업일','date'),COL('worker','작업자'),COL('qty','수량','num'),COL('status','상태')]}}],
-  edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','계획 저장'],[1,4,'uses','부품별 공정 전개'],[1,5,'uses','라우팅 저장'],[1,6,'uses','기준공정 마스터'],[1,7,'uses','기준공정 세부'],[1,8,'uses','제번 선택'],[1,9,'uses','PartList 승계'],[2,10,'uses','이력 조회/기록'],[4,3,'ref','job_no → machining_plans'],[7,6,'ref','standard_process_id → standard_processes'],[5,6,'ref','기준공정 참조'],[1,2,'flow','계획 후 실적 기록']]}},
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','계획 저장'],[1,4,'uses','부품별 공정 전개'],[1,5,'uses','라우팅 저장'],[1,6,'uses','기준공정 마스터'],[1,7,'uses','기준공정 세부'],[1,8,'uses','제번 선택'],[1,9,'uses','PartList 승계'],[2,10,'uses','이력 조회/기록'],[4,3,'ref','job_no → machining_plans','1N'],[7,6,'ref','standard_process_id → standard_processes'],[5,6,'ref','기준공정 참조'],[1,2,'flow','계획 후 실적 기록']]}},
  {cat:'금형제작',name:'금형 조립 · 검사',desc:'사내조립 실적과 검사실적 (IPTK)',data:{nodes:[
   {type:'section',name:'조립',meta:{icon:'⚙'}},
   {type:'screen',name:'조립실적등록',meta:{file:'assembly_result_input.html',kind:'input'}},
@@ -1035,7 +1035,7 @@ const BUILTIN=[
   {type:'table',name:'assembly_jobs',meta:{cols:[COL('job_no','제번','text',1),COL('item_name','품명'),COL('start_date','착수일','date'),COL('end_date','완료일','date'),COL('status','상태')]}},
   {type:'table',name:'assembly_steps',meta:{cols:[COL('row_no','No','num',1),COL('job_no','제번','text',0,1),COL('machining_process_code','공정'),COL('step_name','세부작업'),COL('worker','작업자'),COL('work_date','작업일','date'),COL('man_hour','공수','num'),COL('status','상태')]}},
   {type:'table',name:'inspection_results',meta:{cols:[COL('insp_no','검사번호','text',1),COL('insp_date','검사일','date'),COL('job_no','제번'),COL('part_no','부품번호'),COL('insp_code','검사항목'),COL('value','측정값','num'),COL('judge','판정'),COL('worker','검사자')]}}],
-  edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','조립건 관리'],[1,4,'uses','세부작업 저장'],[2,5,'uses','검사 저장'],[4,3,'ref','job_no → assembly_jobs.job_no'],[1,2,'flow','조립 완료 후 검사']]}},
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','조립건 관리'],[1,4,'uses','세부작업 저장'],[2,5,'uses','검사 저장'],[4,3,'ref','job_no → assembly_jobs.job_no','1N'],[1,2,'flow','조립 완료 후 검사']]}},
  {cat:'금형제작',name:'금형 원가 · 경비',desc:'제번별 경비와 실시간 제조원가 (IPTK)',data:{nodes:[
   {type:'section',name:'원가',meta:{icon:'◴'}},
   {type:'screen',name:'경비등록',meta:{file:'expense_registration.html',kind:'input'}},
@@ -1057,13 +1057,13 @@ const BUILTIN=[
   {type:'screen',name:'부적합등록',meta:{file:'nonconformance_input.html',kind:'input'}},
   {type:'screen',name:'계측기대장',meta:{file:'gauge_management.html',kind:'input'}},
   {type:'screen',name:'도면개정등록',meta:{file:'drawing_revision_input.html',kind:'input'}},
-  {type:'table',name:'nonconformances',meta:{cols:[COL('ncr_no','부적합번호','text',1),COL('occur_date','발생일','date'),COL('job_no','제번'),COL('part_no','부품번호'),COL('qty','수량','num'),COL('reason','사유'),COL('status','상태')]}},
-  {type:'table',name:'corrective_actions',meta:{cols:[COL('ca_no','조치번호','text',1),COL('ncr_no','부적합번호','text',0,1),COL('action_date','조치일','date'),COL('action','조치내용'),COL('owner','담당'),COL('status','상태')]}},
-  {type:'table',name:'gauges',meta:{cols:[COL('gauge_no','계측기번호','text',1),COL('gauge_name','계측기명'),COL('model','모델'),COL('cal_cycle','교정주기'),COL('next_cal_date','차기교정일','date')]}},
-  {type:'table',name:'gauge_calibrations',meta:{cols:[COL('row_no','No','num',1),COL('gauge_no','계측기번호','text',0,1),COL('cal_date','교정일','date'),COL('result','판정'),COL('agency','교정기관')]}},
+  {type:'table',name:'nonconformances',meta:{cols:[COL('nc_no','부적합번호','text',1),COL('nc_date','발생일','date',0,1),COL('nc_source','발생구분(수입/공정/출하/고객)'),COL('job_no','제번'),COL('part_no','품번'),COL('part_name','품명'),COL('process_code','공정'),COL('vendor_name','업체'),COL('defect_type','불량유형'),COL('lot_qty','로트수량','num'),COL('defect_qty','불량수량','num'),COL('description','부적합 내용'),COL('disposition','처리(재작업/폐기/특채/반품)'),COL('reporter','발견자'),COL('nc_status','상태'),COL('close_date','완료일','date'),COL('remark','비고')]}},
+  {type:'table',name:'corrective_actions',meta:{cols:[COL('ca_no','조치번호','text',1),COL('nc_no','부적합번호','text',0,1),COL('action_date','조치일','date'),COL('action','조치내용'),COL('owner','담당'),COL('status','상태')]}},
+  {type:'table',name:'gauges',meta:{cols:[COL('gauge_code','계측기코드','text',1),COL('gauge_name','계측기명','text',0,1),COL('gauge_type','형식'),COL('spec_range','측정범위'),COL('resolution','최소눈금'),COL('maker','제작사'),COL('serial_no','제조번호'),COL('location','보관위치'),COL('owner','관리자'),COL('cycle_months','교정주기(월)','num'),COL('last_cal_date','최근교정일','date'),COL('next_cal_date','차기교정일','date'),COL('gauge_status','상태(사용/교정중/폐기)'),COL('is_active','사용','bool'),COL('remark','비고')]}},
+  {type:'table',name:'gauge_calibrations',meta:{cols:[COL('row_no','No','num',1),COL('gauge_code','계측기코드','text',0,1),COL('cal_date','교정일','date'),COL('result','판정'),COL('agency','교정기관'),COL('cert_no','성적서번호'),COL('next_cal_date','차기교정일','date')]}},
   {type:'table',name:'drawings',meta:{cols:[COL('drawing_no','도면번호','text',1),COL('job_no','제번'),COL('drawing_name','도면명'),COL('current_rev','현재개정')]}},
-  {type:'table',name:'drawing_revisions',meta:{cols:[COL('row_no','No','num',1),COL('drawing_no','도면번호','text',0,1),COL('rev','개정'),COL('rev_date','개정일','date'),COL('reason','개정사유')]}}],
-  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','저장'],[2,6,'uses','대장 관리'],[2,7,'uses','교정이력'],[3,8,'uses','도면 관리'],[3,9,'uses','개정 저장'],[5,4,'ref','ncr_no → nonconformances.ncr_no'],[7,6,'ref','gauge_no → gauges.gauge_no'],[9,8,'ref','drawing_no → drawings.drawing_no']]}},
+  {type:'table',name:'drawing_revisions',meta:{cols:[COL('rev_key','개정키','text',1),COL('drawing_no','도면번호','text',0,1),COL('rev','REV','text',0,1),COL('rev_date','개정일','date'),COL('rev_reason','개정사유'),COL('change_no','4M변경번호'),COL('approver','승인자'),COL('obsolete_confirmed','구본폐기확인','bool'),COL('distributed_to','배포처'),COL('file_url','파일 링크'),COL('remark','비고')]}}],
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[0,3,'contains',''],[1,4,'uses','저장'],[2,6,'uses','대장 관리'],[2,7,'uses','교정이력'],[3,8,'uses','도면 관리'],[3,9,'uses','개정 저장'],[5,4,'ref','nc_no → nonconformances.nc_no'],[7,6,'ref','gauge_code → gauges.gauge_code'],[9,8,'ref','drawing_no → drawings.drawing_no']]}},
  {cat:'ESG 스마트팩토리',name:'설비 · 금형 일상점검',desc:'생산설비/금형 체크시트와 종합현황 (smtec)',data:{nodes:[
   {type:'section',name:'일상점검',meta:{icon:'☑'}},
   {type:'screen',name:'생산설비 일상점검',meta:{file:'P_machine_check.html',kind:'check'}},
@@ -1224,7 +1224,7 @@ const BUILTIN=[
   {type:'screen',name:'수입계약현황',meta:{file:'import_contract_status.html',kind:'status'}},
   {type:'table',name:'import_contracts',meta:{cols:[COL('contract_no','계약번호','text',1),COL('contract_date','계약일','date',0,1),COL('supplier_code','공급사','text',0,1),COL('incoterms','인코텀즈(FOB/CFR/CIF)'),COL('payment_type','결제(LC/TT/DA/DP)'),COL('lc_no','LC번호'),COL('lc_open_date','LC개설일','date'),COL('currency','통화'),COL('total_amount','계약금액(외화)','num'),COL('shipment_due','선적기한','date'),COL('port_loading','선적항'),COL('port_discharge','도착항'),COL('status','상태(계약/선적중/완료)'),COL('remark','비고')]}},
   {type:'table',name:'import_contract_lines',meta:{cols:[COL('line_id','라인ID','num',1),COL('contract_no','계약번호','text',0,1),COL('item_code','품목코드'),COL('steel_grade','강종'),COL('spec','규격(두께x폭)'),COL('qty_ton','계약수량(톤)','num'),COL('unit_price','단가(USD/톤)','num'),COL('amount','금액','num'),COL('shipped_ton','선적수량(톤)','num'),COL('remain_ton','잔량(톤)','num')]}}],
-  edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','계약 저장'],[1,4,'uses','품목 라인'],[2,3,'uses','조회·잔량'],[4,3,'ref','contract_no → import_contracts']]}},
+  edges:[[0,1,'contains',''],[0,2,'contains',''],[1,3,'uses','계약 저장'],[1,4,'uses','품목 라인'],[2,3,'uses','조회·잔량'],[4,3,'ref','contract_no → import_contracts','1N']]}},
  {cat:'철강 수입무역',name:'선적 · 통관',desc:'B/L 선적관리와 수입신고 — 관세/부가세, 통관비용, 입항 스케줄',data:{nodes:[
   {type:'section',name:'선적/통관',meta:{icon:'⚓'}},
   {type:'screen',name:'선적등록(B/L)',meta:{file:'shipment_bl_input.html',kind:'input'}},
@@ -1377,7 +1377,7 @@ function packIdsAsModule(ids,name){
  if(!ids.length)return null;
  const idx=new Map(ids.map((id,i)=>[id,i]));
  const nodes=ids.map(id=>{const n=N(id);return{type:n.type,name:n.name,meta:JSON.parse(JSON.stringify(n.meta)),dx:n.x,dy:n.y}});
- const edges=D.edges.filter(e=>idx.has(e.from)&&idx.has(e.to)).map(e=>[idx.get(e.from),idx.get(e.to),e.kind,e.label||'']);
+ const edges=D.edges.filter(e=>idx.has(e.from)&&idx.has(e.to)).map(e=>e.card?[idx.get(e.from),idx.get(e.to),e.kind,e.label||'',e.card]:[idx.get(e.from),idx.get(e.to),e.kind,e.label||'']);
  const mod={name,data:{nodes,edges},at:Date.now()};
  /* 이름이 기본 모듈과 같으면 → 기본 모듈 자체를 이 내용으로 업데이트(오버레이) */
  if(BUILTIN.some(b=>b.name===name)){
@@ -1436,7 +1436,7 @@ function saveModule(whole,force){
  }
  const idx=new Map(ids.map((id,i)=>[id,i]));
  const nodes=ids.map(id=>{const n=N(id);return{type:n.type,name:n.name,meta:JSON.parse(JSON.stringify(n.meta)),dx:n.x,dy:n.y}});
- const edges=D.edges.filter(e=>idx.has(e.from)&&idx.has(e.to)).map(e=>[idx.get(e.from),idx.get(e.to),e.kind,e.label||'']);
+ const edges=D.edges.filter(e=>idx.has(e.from)&&idx.has(e.to)).map(e=>e.card?[idx.get(e.from),idx.get(e.to),e.kind,e.label||'',e.card]:[idx.get(e.from),idx.get(e.to),e.kind,e.label||'']);
  const mod={name,data:{nodes,edges},at:Date.now()};
  /* 기본 모듈과 같은 이름이면 기본 모듈을 업데이트(오버레이) */
  if(BUILTIN.some(b=>b.name===name)){
@@ -1467,9 +1467,9 @@ function insertModule(data,label){
    y:oy+(n.dy!=null?(n.dy-data.nodes[0].dy||0):i*70)};
   D.nodes.push(node);made[i]=node;
  });
- for(const [a,b,kind,lab] of (data.edges||[]))
+ for(const [a,b,kind,lab,card] of (data.edges||[]))
   if(made[a]&&made[b]&&!D.edges.some(e=>e.from===made[a].id&&e.to===made[b].id))
-   D.edges.push({id:uid(),from:made[a].id,to:made[b].id,kind,label:lab||''});
+   D.edges.push({id:uid(),from:made[a].id,to:made[b].id,kind,label:lab||'',...(card?{card}:{})});
  libDlg.classList.remove('on');
  select({node:made[0].id});
  $('stat').textContent=`모듈 '${label||''}' 삽입 — 블록 ${made.length}개. ○ 를 끌어 기존 블록과 연결하세요.`;
