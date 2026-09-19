@@ -190,5 +190,11 @@ tr.dirty td:first-child{box-shadow:inset 3px 0 0 #f2a93b}
   .filters .field{width:100%}.filters .lab{width:100%}
   .body{padding:5px}.foot{flex-wrap:wrap;height:auto;min-height:40px}
   .actions .btn{flex:1 1 30%}
+  /* 표는 좁은 화면에서 칸을 짓누르지 말고 가로로 밀어서 본다.
+     (min-width:0 이 없으면 표 폭이 패널을 밀어내 화면 전체가 옆으로 넘친다) */
+  .body>*,.panel,.panel>*{min-width:0}
+  .tablewrap{overflow:auto;-webkit-overflow-scrolling:touch}
+  .tablewrap table{table-layout:auto;width:max-content;min-width:100%}
+  .tablewrap th,.tablewrap td{max-width:220px}
 }
 `;
